@@ -1,0 +1,5 @@
+{
+  "*.json": ["sortier --write", "prettier --write"],
+  "*.md": ["prettier --write"],
+  "*.{ts,tsx,js,cjs,mjs}": ["eslint --fix", "sortier --write", "prettier --write"]
+}
