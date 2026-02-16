@@ -5,7 +5,7 @@ export const envSchema = createEnv({
   client: {
     NEXT_PUBLIC_APP_URL: z.url(),
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string(),
-    NEXT_PUBLIC_POSTHOG_HOST: z.url(),
+    NEXT_PUBLIC_POSTHOG_HOST: z.string(),
     NEXT_PUBLIC_POSTHOG_KEY: z.string(),
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
   },
@@ -39,6 +39,6 @@ export const envSchema = createEnv({
     STRIPE_WEBHOOK_SECRET: z.string(),
     UPLOADTHING_TOKEN: z.string(),
     UPSTASH_REDIS_REST_TOKEN: z.string(),
-    UPSTASH_REDIS_REST_URL: z.url(),
+    UPSTASH_REDIS_REST_URL: z.string(),
   },
 });
