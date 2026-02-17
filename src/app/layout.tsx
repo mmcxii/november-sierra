@@ -1,7 +1,9 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -24,10 +26,12 @@ const RootLayout: React.FC<RootLayoutProps> = (props) => {
   const { children } = props;
 
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
-      <Analytics />
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>{children}</body>
+        <Analytics />
+      </html>
+    </ClerkProvider>
   );
 };
 
