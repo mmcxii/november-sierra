@@ -3,6 +3,8 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { initTranslations } from "@/lib/i18n/server";
+import { TranslationsProvider } from "@/lib/i18n/translations-provider";
 import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
@@ -22,15 +24,20 @@ export const metadata: Metadata = {
 
 export type RootLayoutProps = React.PropsWithChildren;
 
-const RootLayout: React.FC<RootLayoutProps> = (props) => {
+const RootLayout: React.FC<RootLayoutProps> = async (props) => {
   const { children } = props;
+
+  //* Variables
+  const { resources } = await initTranslations("en");
 
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>{children}</body>
-        <Analytics />
-      </html>
+      <TranslationsProvider locale="en" resources={resources}>
+        <html lang="en">
+          <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>{children}</body>
+          <Analytics />
+        </html>
+      </TranslationsProvider>
     </ClerkProvider>
   );
 };
