@@ -8,6 +8,12 @@ Next.js 16 app with React 19, TypeScript, and Tailwind CSS 4.
 - **Path alias**: `@/*` maps to `./src/*`
 - **Linting/formatting**: ESLint, Prettier (with Tailwind plugin), Sortier — all enforced via lint-staged on pre-commit
 
+## i18n
+
+- All translation keys must be a **camelCased version of the English string** they represent. No dot notation, no abbreviations, no namespacing — the key is the value in camelCase.
+- Examples: `signIn` → "Sign in", `somethingWentWrong` → "Something went wrong", `looksLikeYouveDriftedOffCourseThePageYoureLookingForDoesntExistOrHasBeenMoved` → "Looks like you've drifted off course. The page you're looking for doesn't exist or has been moved."
+- When a string contains interpolation variables, include the `{{variable}}` placeholder in the key: `helloThere{{name}}` → "Hello there, {{name}}!"
+
 ## Git Conventions
 
 - Always use `git add -A` when adding all unstaged files.

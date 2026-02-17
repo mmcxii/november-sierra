@@ -1,3 +1,9 @@
 {
-  "anchr": "Anchr"
+  "anchr": "Anchr",
+  "looksLikeYouveDriftedOffCourseThePageYoureLookingForDoesntExistOrHasBeenMoved": "Looks like you've drifted off course. The page you're looking for doesn't exist or has been moved.",
+  "pageNotFound": "Page Not Found",
+  "returnHome": "Return home",
+  "somethingWentWrong": "Something Went Wrong",
+  "tryAgain": "Try again",
+  "weHitUnexpectedWatersPleaseTryAgainAndIfTheIssuePersistsWeAreAlreadyOnIt": "We hit unexpected waters. Please try again, and if the issue persists, we're already on it."
 }
