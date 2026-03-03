@@ -16,7 +16,7 @@ export const Hero: React.FC<HeroProps> = (props) => {
     <section className="relative px-6 pt-16 pb-16 lg:pt-20 lg:pb-24">
       {/* Ambient glow */}
       <div
-        className="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-[120px]"
+        className="pointer-events-none absolute inset-0 m-auto h-[600px] w-[600px] max-w-full rounded-full opacity-40 blur-[120px]"
         style={{ background: `rgb(var(--m-glow))` }}
       />
 
