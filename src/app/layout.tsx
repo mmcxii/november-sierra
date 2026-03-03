@@ -19,7 +19,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   description: "A single harbor for all your links.",
-  title: "Anchr",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL!),
+  openGraph: {
+    locale: "en_US",
+    siteName: "Anchr",
+    type: "website",
+    url: "/",
+  },
+  title: {
+    default: "Anchr — Your Harbor for Every Connection",
+    template: "%s | Anchr",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export type RootLayoutProps = React.PropsWithChildren;

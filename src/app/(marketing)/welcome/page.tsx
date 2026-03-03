@@ -1,10 +1,16 @@
 import { Home } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { SiteWordmark } from "@/components/marketing/site-wordmark";
 import { Button } from "@/components/ui/button";
 import { initTranslations } from "@/lib/i18n/server";
+
+export const metadata: Metadata = {
+  robots: { index: false },
+  title: "Welcome Aboard",
+};
 
 const WelcomePage: React.FC = async () => {
   const { t } = await initTranslations("en-US");

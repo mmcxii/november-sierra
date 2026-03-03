@@ -25,18 +25,9 @@ const eslintConfig = defineConfig([
     },
   },
 
-  // Enable default exports for required components and config files
+  // Enable default exports for Next.js file conventions and config files
   {
-    files: [
-      "src/**/page.tsx",
-      "src/**/layout.tsx",
-      "src/**/global-error.tsx",
-      "src/**/error.tsx",
-      "src/**/not-found.tsx",
-      "src/**/middleware.ts",
-      "src/**/route.ts",
-      "./*.config.{ts,mjs,cjs}",
-    ],
+    files: ["src/app/**/*.{ts,tsx}", "./*.config.{ts,mjs,cjs}"],
     rules: {
       "import/no-default-export": "off",
     },

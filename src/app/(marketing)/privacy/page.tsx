@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
+
 import { Footer } from "@/components/marketing/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { initTranslations } from "@/lib/i18n/server";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+};
 
 const sections = [
   {
