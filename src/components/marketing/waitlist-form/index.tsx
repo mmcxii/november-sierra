@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import { useTranslation } from "react-i18next";
 
 import { joinWaitlist, type WaitlistState } from "@/app/(marketing)/actions";
@@ -16,13 +17,15 @@ const initialState: WaitlistState = { success: false };
 export const WaitlistForm: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const posthog = usePostHog();
   const [state, action, isPending] = useActionState(joinWaitlist, initialState);
 
   useEffect(() => {
     if (state.success) {
+      posthog.capture("waitlist_signup");
       router.push("/welcome");
     }
-  }, [state.success, router]);
+  }, [state.success, posthog, router]);
 
   const showOverlay = isPending || state.success;
 
