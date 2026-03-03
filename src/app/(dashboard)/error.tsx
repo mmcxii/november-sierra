@@ -1,8 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Anchor, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+import { SiteLogo } from "@/components/marketing/site-logo";
+import { Button } from "@/components/ui/button";
 
 export type DashboardErrorPageProps = {
   error: Error & { digest?: string };
@@ -16,11 +18,9 @@ const DashboardErrorPage: React.FC<DashboardErrorPageProps> = (props) => {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-24">
       <div className="flex max-w-sm flex-col items-center text-center">
-        {/* Compact anchor icon — tilted */}
+        {/* Logo — tilted to convey "off-kilter" state */}
         <div className="mb-6">
-          <div className="flex size-14 -rotate-12 items-center justify-center rounded-xl border border-[#92b0be]/15 bg-[#1e2d42]/60">
-            <Anchor className="size-6 text-[#92b0be]/60" strokeWidth={1.5} />
-          </div>
+          <SiteLogo accent="146 176 190" cardBg="rgba(30, 45, 66, 0.6)" className="-rotate-12" size="sm" />
         </div>
 
         {/* Heading */}

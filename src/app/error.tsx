@@ -1,8 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Anchor, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+import { SiteLogo } from "@/components/marketing/site-logo";
+import { Button } from "@/components/ui/button";
 
 export type ErrorPageProps = {
   error: Error & { digest?: string };
@@ -22,11 +24,9 @@ const ErrorPage: React.FC<ErrorPageProps> = (props) => {
 
       {/* Content */}
       <div className="relative z-10 flex max-w-md flex-col items-center text-center">
-        {/* Anchor icon — tilted to convey "off-kilter" state */}
+        {/* Logo — tilted to convey "off-kilter" state */}
         <div className="mb-8">
-          <div className="flex size-20 -rotate-12 items-center justify-center rounded-2xl border border-[#92b0be]/15 bg-[#1e2d42]/60 shadow-lg shadow-black/20 backdrop-blur-sm">
-            <Anchor className="size-9 text-[#92b0be]/60" strokeWidth={1.5} />
-          </div>
+          <SiteLogo accent="146 176 190" cardBg="rgba(30, 45, 66, 0.6)" className="-rotate-12" />
         </div>
 
         {/* Error code */}

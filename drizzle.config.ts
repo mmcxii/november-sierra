@@ -1,7 +1,7 @@
 import { envSchema } from "@/lib/env";
 import { defineConfig } from "drizzle-kit";
 
-export default defineConfig({
+const drizzleConfig = defineConfig({
   dbCredentials: {
     url: envSchema.DATABASE_URL,
   },
@@ -9,3 +9,5 @@ export default defineConfig({
   out: "./drizzle",
   schema: "./src/lib/db/schema/**/*.ts",
 });
+
+export default drizzleConfig;

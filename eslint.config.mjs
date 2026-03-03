@@ -1,6 +1,7 @@
-import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import pluginImport from "eslint-plugin-import";
+import { defineConfig, globalIgnores } from "eslint/config";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -13,6 +14,33 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.mjs", "**/*.cjs"],
+    plugins: {
+      import: pluginImport,
+    },
+    rules: {
+      curly: ["error", "all"],
+      "import/no-default-export": "error",
+    },
+  },
+
+  // Enable default exports for required components and config files
+  {
+    files: [
+      "src/**/page.tsx",
+      "src/**/layout.tsx",
+      "src/**/global-error.tsx",
+      "src/**/error.tsx",
+      "src/**/not-found.tsx",
+      "src/**/middleware.ts",
+      "src/**/route.ts",
+      "./*.config.{ts,mjs,cjs}",
+    ],
+    rules: {
+      "import/no-default-export": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

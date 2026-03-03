@@ -1,7 +1,9 @@
+import { Home } from "lucide-react";
+import Link from "next/link";
+
+import { SiteLogo } from "@/components/marketing/site-logo";
 import { Button } from "@/components/ui/button";
 import { initTranslations } from "@/lib/i18n/server";
-import { Anchor, Home } from "lucide-react";
-import Link from "next/link";
 
 const NotFound: React.FC = async () => {
   //* Variables
@@ -14,11 +16,9 @@ const NotFound: React.FC = async () => {
 
       {/* Content */}
       <div className="relative z-10 flex max-w-md flex-col items-center text-center">
-        {/* Anchor icon with subtle sway animation */}
+        {/* Logo with subtle sway animation */}
         <div className="mb-8 animate-[sway_4s_ease-in-out_infinite]">
-          <div className="flex size-20 items-center justify-center rounded-2xl border border-[#92b0be]/20 bg-[#1e2d42]/60 shadow-lg shadow-black/20 backdrop-blur-sm">
-            <Anchor className="size-9 text-[#d4b896]" strokeWidth={1.5} />
-          </div>
+          <SiteLogo accent="212 184 150" cardBg="rgba(30, 45, 66, 0.6)" />
         </div>
 
         {/* Error code */}
