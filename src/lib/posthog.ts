@@ -6,3 +6,7 @@ export const posthogClient = posthog.init(envSchema.NEXT_PUBLIC_POSTHOG_KEY, {
   capture_pageleave: true,
   capture_pageview: false,
 });
+
+if (typeof window !== "undefined" && localStorage.getItem("cookie-consent") === "rejected") {
+  posthogClient?.opt_out_capturing();
+}

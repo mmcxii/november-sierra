@@ -1,3 +1,4 @@
+import { CookieBanner } from "@/components/marketing/cookie-banner";
 import { MarketingThemeProvider } from "@/components/marketing/theme-provider";
 import { ThemeToggle } from "@/components/marketing/theme-toggle";
 
@@ -41,6 +42,7 @@ const MarketingLayout: React.FC<MarketingLayoutProps> = (props) => {
         </div>
 
         {children}
+        <CookieBanner />
         <ThemeToggle />
       </div>
     </MarketingThemeProvider>

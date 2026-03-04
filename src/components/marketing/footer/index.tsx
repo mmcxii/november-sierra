@@ -17,8 +17,19 @@ export const Footer: React.FC<FooterProps> = (props) => {
           <span className="text-sm font-semibold">{t("anchr")}</span>
         </div>
         <div className="flex items-center gap-6">
-          <Link className="text-xs transition-colors" href="/privacy" style={{ color: `rgb(var(--m-muted) / 0.4)` }}>
+          <Link
+            className="text-xs transition-colors"
+            href="/legal/privacy"
+            style={{ color: `rgb(var(--m-muted) / 0.4)` }}
+          >
             {t("privacyPolicy")}
+          </Link>
+          <Link
+            className="text-xs transition-colors"
+            href="/legal/terms"
+            style={{ color: `rgb(var(--m-muted) / 0.4)` }}
+          >
+            {t("termsOfService")}
           </Link>
           <p className="text-xs" style={{ color: `rgb(var(--m-muted) / 0.4)` }}>
             &copy; {new Date().getFullYear()} {t("anchr")}. {t("allRightsReserved")}
