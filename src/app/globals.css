@@ -187,6 +187,449 @@
   --m-shadow: 80 60 20;
 }
 
+/* ── Marketing shared utilities ────────────────────────────────────────── */
+
+.m-grain-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.m-grain-opacity {
+  opacity: var(--m-grain-opacity);
+}
+
+.m-wave-mask {
+  -webkit-mask-image: linear-gradient(to bottom, black 20%, transparent 85%);
+  mask-image: linear-gradient(to bottom, black 20%, transparent 85%);
+}
+
+.m-wave-stroke {
+  stroke: var(--m-wave-stroke);
+}
+
+.m-accent-gradient-bg {
+  background: var(--m-accent-gradient);
+}
+
+.m-accent-bg {
+  background: rgb(var(--m-accent));
+}
+
+.m-accent-color {
+  color: rgb(var(--m-accent));
+}
+
+.m-page-bg-color {
+  color: var(--m-page-bg);
+}
+
+.m-page-bg-bg {
+  background-color: var(--m-page-bg);
+}
+
+.m-card-bg-bg {
+  background: var(--m-card-bg);
+}
+
+.m-embed-bg-bg {
+  background: var(--m-embed-bg);
+}
+
+.m-glow-bg {
+  background: rgb(var(--m-glow));
+}
+
+/* ── Marketing color utilities ────────────────────────────────────────── */
+
+.m-muted-70 {
+  color: rgb(var(--m-muted) / 0.7);
+}
+
+.m-muted-80 {
+  color: rgb(var(--m-muted) / 0.8);
+}
+
+.m-muted-60 {
+  color: rgb(var(--m-muted) / 0.6);
+}
+
+.m-muted-50 {
+  color: rgb(var(--m-muted) / 0.5);
+}
+
+.m-muted-45 {
+  color: rgb(var(--m-muted) / 0.45);
+}
+
+.m-muted-40 {
+  color: rgb(var(--m-muted) / 0.4);
+}
+
+.m-muted-30 {
+  color: rgb(var(--m-muted) / 0.30);
+}
+
+.m-muted-28 {
+  color: rgb(var(--m-muted) / 0.28);
+}
+
+.m-muted-25 {
+  color: rgb(var(--m-muted) / 0.25);
+}
+
+.m-card-border {
+  border: 1px solid rgb(var(--m-muted) / 0.15);
+}
+
+.m-card-border-2 {
+  border: 2px solid rgb(var(--m-accent));
+}
+
+.m-border-top-muted {
+  border-top: 1px solid rgb(var(--m-muted) / 0.10);
+}
+
+.m-border-color-muted-15 {
+  border-color: rgb(var(--m-muted) / 0.15);
+}
+
+.m-divider-bg {
+  background: rgb(var(--m-muted) / 0.10);
+}
+
+.m-accent-divider-25 {
+  background: rgb(var(--m-accent) / 0.25);
+}
+
+/* ── Analytics preview utilities ──────────────────────────────────────── */
+
+.m-muted-bg-08 {
+  background: rgb(var(--m-muted) / 0.08);
+}
+
+.m-muted-bg-10 {
+  background: rgb(var(--m-muted) / 0.10);
+}
+
+.m-accent-bg-22 {
+  background: rgb(var(--m-accent) / 0.22);
+}
+
+/* ── Features card utilities ──────────────────────────────────────────── */
+
+.m-embed-border {
+  border: 1px solid rgb(var(--m-muted) / 0.12);
+}
+
+.m-icon-box {
+  background: var(--m-embed-bg);
+  border: 1px solid rgb(var(--m-accent) / 0.20);
+  box-shadow: 0 4px 12px rgb(var(--m-shadow) / 0.2);
+}
+
+.m-muted-bg-55-color {
+  color: rgb(var(--m-muted) / 0.55);
+}
+
+.m-accent-05-bg {
+  background: rgb(var(--m-accent) / 0.05);
+}
+
+.m-accent-18-border {
+  border: 1px solid rgb(var(--m-accent) / 0.18);
+}
+
+.m-accent-55-color {
+  color: rgb(var(--m-accent) / 0.55);
+}
+
+.m-accent-60-color {
+  color: rgb(var(--m-accent) / 0.60);
+}
+
+.m-muted-12-border {
+  border: 1px solid rgb(var(--m-muted) / 0.12);
+}
+
+.m-accent-16-bg {
+  background: rgb(var(--m-accent) / 0.16);
+}
+
+/* ── Cookie banner utilities ──────────────────────────────────────────── */
+
+.m-muted-10-bg {
+  background-color: rgb(var(--m-muted) / 0.1);
+}
+
+/* ── Pricing utilities ────────────────────────────────────────────────── */
+
+.m-accent-12-bg {
+  background: rgb(var(--m-accent) / 0.12);
+}
+
+/* ── FadeIn component ─────────────────────────────────────────────────── */
+
+.m-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.m-fade-in.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Waitlist overlay ─────────────────────────────────────────────────── */
+
+.m-waitlist-overlay {
+  background: rgb(var(--m-glow) / 0.85);
+}
+
+.m-sonar-ring {
+  border: 2px solid rgb(var(--m-accent) / 0.4);
+}
+
+/* ── Analytics peak marker ────────────────────────────────────────────── */
+
+.m-sonar-sm-28 {
+  background: rgb(var(--m-accent) / 0.28);
+  animation: sonar-ring 4s ease-out infinite;
+}
+
+.m-sonar-sm-22 {
+  background: rgb(var(--m-accent) / 0.22);
+  animation: sonar-ring 4s ease-out 0.55s infinite;
+}
+
+.m-sonar-dot {
+  background: rgb(var(--m-accent));
+  box-shadow: 0 0 6px rgb(var(--m-accent) / 0.55);
+}
+
+/* ── LinkPageMockup utilities ─────────────────────────────────────────── */
+
+.m-mockup-shadow {
+  filter: drop-shadow(0 30px 60px rgb(var(--m-shadow) / 0.35));
+}
+
+.m-backface-hidden {
+  backface-visibility: hidden;
+}
+
+.m-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.m-mockup-nav-btn {
+  background: var(--m-embed-bg);
+  border: 1px solid rgb(var(--m-muted) / 0.20);
+  color: rgb(var(--m-muted) / 0.50);
+}
+
+.m-wave-front-mask {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 26%, transparent 40%);
+}
+
+/* ── LinkPageMockup theme-driven styles ───────────────────────────────── */
+/* All styles reference --_mc-* CSS custom properties set on .m-mockup-card */
+
+.m-mockup-card {
+  /* defaults — overridden per theme via JS ref callback */
+  --_mc-card-bg: transparent;
+  --_mc-border: transparent;
+  --_mc-hairline: transparent;
+  --_mc-glow-bg: transparent;
+  --_mc-avatar-outer-ring: transparent;
+  --_mc-avatar-bg: transparent;
+  --_mc-avatar-inner-border: transparent;
+  --_mc-anchor-color: currentColor;
+  --_mc-name-color: currentColor;
+  --_mc-link-text: currentColor;
+  --_mc-link-icon-bg: transparent;
+  --_mc-link-icon-color: currentColor;
+  --_mc-link-border: transparent;
+  --_mc-link-bg: transparent;
+  --_mc-featured-bg: transparent;
+  --_mc-featured-border: transparent;
+  --_mc-featured-icon-bg: transparent;
+  --_mc-featured-icon-color: currentColor;
+  --_mc-featured-text: currentColor;
+  --_mc-divider: transparent;
+  --_mc-brand: currentColor;
+}
+
+.mc-front {
+  backface-visibility: hidden;
+  background: var(--_mc-card-bg);
+  border: 1px solid var(--_mc-border);
+}
+
+.mc-hairline {
+  background: linear-gradient(to right, transparent, color-mix(in srgb, var(--_mc-hairline) 60%, transparent), transparent);
+}
+
+.mc-glow {
+  background: var(--_mc-glow-bg);
+}
+
+.mc-avatar-outer {
+  border: 1px solid var(--_mc-avatar-outer-ring);
+}
+
+.mc-avatar-inner {
+  background: var(--_mc-avatar-bg);
+  border: 1px solid var(--_mc-avatar-inner-border);
+}
+
+.mc-anchor-color {
+  color: var(--_mc-anchor-color);
+}
+
+.mc-name-color {
+  color: var(--_mc-name-color);
+}
+
+.mc-link-text {
+  color: var(--_mc-link-text);
+}
+
+.mc-social-icon {
+  background: var(--_mc-link-icon-bg);
+  border: 1px solid var(--_mc-link-border);
+}
+
+.mc-link-icon-color {
+  color: var(--_mc-link-icon-color);
+}
+
+.mc-featured {
+  background: var(--_mc-featured-bg);
+  border: 1px solid var(--_mc-featured-border);
+}
+
+.mc-featured-icon-bg {
+  background: var(--_mc-featured-icon-bg);
+}
+
+.mc-featured-icon-color {
+  color: var(--_mc-featured-icon-color);
+}
+
+.mc-featured-text {
+  color: var(--_mc-featured-text);
+}
+
+.mc-link {
+  background: var(--_mc-link-bg);
+  border: 1px solid var(--_mc-link-border);
+}
+
+.mc-link-icon-bg {
+  background: var(--_mc-link-icon-bg);
+}
+
+.mc-branding {
+  border-top: 1px solid var(--_mc-divider);
+}
+
+.mc-brand-color {
+  color: var(--_mc-brand);
+}
+
+/* ── Mockup theme dots ────────────────────────────────────────────────── */
+
+.m-dot-active {
+  background: rgb(var(--m-accent) / 0.70);
+  height: 4px;
+  width: 16px;
+}
+
+.m-dot-inactive {
+  background: rgb(var(--m-muted) / 0.25);
+  height: 4px;
+  width: 4px;
+}
+
+/* ── Redirect hub URL preview ─────────────────────────────────────────── */
+
+.m-seg-visible {
+  color: rgb(var(--m-accent) / 0.7);
+  display: inline-block;
+  opacity: 1;
+  transform: translateY(0px);
+  transition: opacity 0.26s ease, transform 0.26s ease;
+}
+
+.m-seg-hidden {
+  color: rgb(var(--m-accent) / 0.7);
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.26s ease, transform 0.26s ease;
+}
+
+/* ── Sonner toaster ───────────────────────────────────────────────────── */
+
+.toaster-theme {
+  --border-radius: var(--radius);
+  --normal-bg: var(--popover);
+  --normal-border: var(--border);
+  --normal-text: var(--popover-foreground);
+}
+
+/* ── Site logo ────────────────────────────────────────────────────────── */
+
+.site-logo {
+  --_logo-a: var(--m-accent);
+  --_logo-bg: var(--m-card-bg);
+  background: var(--_logo-bg);
+  border: 2px solid rgb(var(--_logo-a) / 0.50);
+  box-shadow: 0 0 40px rgb(var(--_logo-a) / 0.08);
+}
+
+.site-logo-inner {
+  border: 1px solid rgb(var(--_logo-a) / 0.20);
+}
+
+.site-logo-icon {
+  color: rgb(var(--_logo-a));
+}
+
+/* ── Speed animation (features blazing-fast) ──────────────────────────── */
+
+@keyframes speed-bar {
+  0%   { width: 0%;   opacity: 0.85; }
+  10%  { width: 100%; opacity: 0.85; }
+  18%  { width: 100%; opacity: 0; }
+  19%  { width: 0%; }
+  100% { width: 0%; opacity: 0; }
+}
+
+@keyframes speed-content {
+  0%   { opacity: 0; }
+  10%  { opacity: 0; }
+  16%  { opacity: 1; }
+  82%  { opacity: 1; }
+  88%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes sonar-ring {
+  0%   { transform: scale(0.4); opacity: 0.45; }
+  22%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes sonar {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(3);   opacity: 0; }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

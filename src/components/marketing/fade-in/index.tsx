@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type FadeInProps = {
   children: React.ReactNode;
@@ -30,16 +31,21 @@ export const FadeIn: React.FC<FadeInProps> = ({ children, className, delay = 0 }
     return () => observer.disconnect();
   }, []);
 
+  const delayRef = useCallback(
+    (el: null | HTMLDivElement) => {
+      if (!el) {
+        return;
+      }
+      ref.current = el;
+      if (delay > 0) {
+        el.style.setProperty("transition-delay", `${delay}ms`);
+      }
+    },
+    [delay],
+  );
+
   return (
-    <div
-      className={className}
-      ref={ref}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(20px)",
-        transition: `opacity 0.55s ease ${delay}ms, transform 0.55s ease ${delay}ms`,
-      }}
-    >
+    <div className={cn("m-fade-in", { "is-visible": visible }, className)} ref={delayRef}>
       {children}
     </div>
   );

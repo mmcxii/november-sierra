@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── Analytics preview ────────────────────────────────────────────────────────
 
@@ -24,6 +25,31 @@ const CHART_LINE = [
 const CHART_AREA = `${CHART_LINE} L 280 48 L 0 48 Z`;
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 const PEAK_IDX = 4;
+
+type ProgressBarProps = {
+  clicks: number;
+  index: number;
+  maxClicks: number;
+  triggered: boolean;
+};
+
+const ProgressBar: React.FC<ProgressBarProps> = ({ clicks, index, maxClicks, triggered }) => {
+  const barRef = useCallback(
+    (el: null | HTMLDivElement) => {
+      if (!el) {
+        return;
+      }
+      const opacity = 0.65 - index * 0.18;
+      el.style.setProperty("background", `rgb(var(--m-accent) / ${opacity})`);
+      el.style.setProperty("transition", "width 0.7s ease");
+      el.style.setProperty("transition-delay", triggered ? `${400 + index * 150}ms` : "0ms");
+      el.style.setProperty("width", triggered ? `${(clicks / maxClicks) * 100}%` : "0%");
+    },
+    [clicks, index, maxClicks, triggered],
+  );
+
+  return <div className="h-full rounded-full" ref={barRef} />;
+};
 
 export const AnalyticsPreview: React.FC = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -77,23 +103,14 @@ export const AnalyticsPreview: React.FC = () => {
           <span className="text-[28px] leading-none font-bold tracking-tight tabular-nums">
             {count.toLocaleString()}
           </span>
-          <span className="text-[11px] font-semibold" style={{ color: `rgb(var(--m-accent))` }}>
-            ↑ 12%
-          </span>
+          <span className="m-accent-color text-[11px] font-semibold">↑ 12%</span>
         </div>
-        <p className="mt-1 text-[10px] tracking-[0.06em]" style={{ color: `rgb(var(--m-muted) / 0.4)` }}>
-          clicks this week
-        </p>
+        <p className="m-muted-40 mt-1 text-[10px] tracking-[0.06em]">clicks this week</p>
       </div>
 
       <div>
         <div className="relative">
-          <svg
-            className="w-full overflow-visible"
-            preserveAspectRatio="none"
-            style={{ height: "52px" }}
-            viewBox="0 -10 280 58"
-          >
+          <svg className="h-[52px] w-full overflow-visible" preserveAspectRatio="none" viewBox="0 -10 280 58">
             <defs>
               <linearGradient id="tideGrad" x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stopColor="rgb(var(--m-accent))" stopOpacity="0.22" />
@@ -132,38 +149,21 @@ export const AnalyticsPreview: React.FC = () => {
           </svg>
 
           {/* Peak marker */}
-          <style>{`
-            @keyframes sonar-ring {
-              0%   { transform: scale(0.4); opacity: 0.45; }
-              22%  { transform: scale(2.2); opacity: 0; }
-              100% { transform: scale(2.2); opacity: 0; }
-            }
-          `}</style>
-          <div
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: "66.67%", top: "9px" }}
-          >
-            <div
-              className="absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{ animation: "sonar-ring 4s ease-out infinite", background: `rgb(var(--m-accent) / 0.28)` }}
-            />
-            <div
-              className="absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{ animation: "sonar-ring 4s ease-out 0.55s infinite", background: `rgb(var(--m-accent) / 0.22)` }}
-            />
-            <div
-              className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{ background: `rgb(var(--m-accent))`, boxShadow: `0 0 6px rgb(var(--m-accent) / 0.55)` }}
-            />
+          <div className="pointer-events-none absolute top-[9px] left-[66.67%] -translate-x-1/2 -translate-y-1/2">
+            <div className="m-sonar-sm-28 absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+            <div className="m-sonar-sm-22 absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+            <div className="m-sonar-dot absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full" />
           </div>
         </div>
 
         <div className="mt-1.5 flex justify-between">
           {DAYS.map((day, i) => (
             <span
-              className="text-[9px] font-semibold"
+              className={cn("text-[9px] font-semibold", {
+                "m-accent-color": i === PEAK_IDX,
+                "m-muted-25": i !== PEAK_IDX,
+              })}
               key={i}
-              style={{ color: i === PEAK_IDX ? `rgb(var(--m-accent))` : `rgb(var(--m-muted) / 0.25)` }}
             >
               {day}
             </span>
@@ -171,38 +171,20 @@ export const AnalyticsPreview: React.FC = () => {
         </div>
       </div>
 
-      <div className="h-px" style={{ background: `rgb(var(--m-muted) / 0.10)` }} />
+      <div className="m-divider-bg h-px" />
 
       <div className="space-y-2.5">
-        <p
-          className="text-[9px] font-semibold tracking-[0.18em] uppercase"
-          style={{ color: `rgb(var(--m-muted) / 0.28)` }}
-        >
-          Top links
-        </p>
+        <p className="m-muted-28 text-[9px] font-semibold tracking-[0.18em] uppercase">Top links</p>
         {TOP_LINKS.map(({ clicks, label }, i) => (
           <div key={label}>
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="truncate text-[11px]" style={{ color: `rgb(var(--m-muted) / 0.6)` }}>
-                {label}
-              </span>
-              <span
-                className="ml-2 shrink-0 text-[11px] font-semibold tabular-nums"
-                style={{ color: `rgb(var(--m-muted) / 0.4)` }}
-              >
+              <span className="m-muted-60 truncate text-[11px]">{label}</span>
+              <span className="m-muted-40 ml-2 shrink-0 text-[11px] font-semibold tabular-nums">
                 {clicks.toLocaleString()}
               </span>
             </div>
-            <div className="h-[2px] overflow-hidden rounded-full" style={{ background: `rgb(var(--m-muted) / 0.08)` }}>
-              <div
-                className="h-full rounded-full"
-                style={{
-                  background: `rgb(var(--m-accent) / ${0.65 - i * 0.18})`,
-                  transition: "width 0.7s ease",
-                  transitionDelay: triggered ? `${400 + i * 150}ms` : "0ms",
-                  width: triggered ? `${(clicks / TOP_LINKS[0].clicks) * 100}%` : "0%",
-                }}
-              />
+            <div className="m-muted-bg-08 h-[2px] overflow-hidden rounded-full">
+              <ProgressBar clicks={clicks} index={i} maxClicks={TOP_LINKS[0].clicks} triggered={triggered} />
             </div>
           </div>
         ))}

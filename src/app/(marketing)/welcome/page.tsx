@@ -1,11 +1,10 @@
-import { Home } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { SiteWordmark } from "@/components/marketing/site-wordmark";
 import { Button } from "@/components/ui/button";
 import { initTranslations } from "@/lib/i18n/server";
+import { Home } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   robots: { index: false },
@@ -34,7 +33,7 @@ const WelcomePage: React.FC = async () => {
         <h1 className="mb-4 text-3xl font-bold tracking-tight text-[rgb(var(--m-text))]">{t("welcomeAboard")}</h1>
 
         {/* Accent divider */}
-        <div className="mx-auto mb-6 h-px w-16" style={{ background: `var(--m-accent-gradient)` }} />
+        <div className="m-accent-gradient-bg mx-auto mb-6 h-px w-16" />
 
         {/* Description */}
         <p className="mb-10 leading-relaxed text-[rgb(var(--m-muted))]/80">
@@ -42,28 +41,13 @@ const WelcomePage: React.FC = async () => {
         </p>
 
         {/* CTA */}
-        <Button
-          asChild
-          className="h-11 gap-2 px-6 font-medium"
-          style={{
-            background: `rgb(var(--m-accent))`,
-            color: `var(--m-page-bg)`,
-          }}
-        >
+        <Button asChild className="font-medium" size="lg">
           <Link href="/">
             <Home className="size-4" />
             {t("returnHome")}
           </Link>
         </Button>
       </div>
-
-      {/* Sway keyframes */}
-      <style>{`
-        @keyframes sway {
-          0%, 100% { transform: rotate(-2deg); }
-          50% { transform: rotate(2deg); }
-        }
-      `}</style>
     </div>
   );
 };

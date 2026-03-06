@@ -1,10 +1,9 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
-import { useTranslation } from "react-i18next";
-
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export type DashboardErrorPageProps = {
   error: Error & { digest?: string };
@@ -16,7 +15,7 @@ const DashboardErrorPage: React.FC<DashboardErrorPageProps> = (props) => {
   const [t] = useTranslation();
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-24">
+    <div className="flex flex-1 flex-col items-center justify-center px-6 py-24" data-marketing-theme="dark">
       <div className="flex max-w-sm flex-col items-center text-center">
         {/* Logo — tilted to convey "off-kilter" state */}
         <div className="mb-6">
@@ -32,10 +31,7 @@ const DashboardErrorPage: React.FC<DashboardErrorPageProps> = (props) => {
         </p>
 
         {/* CTA */}
-        <Button
-          className="border border-[#92b0be]/30 bg-[#1e2d42] text-white hover:border-[#92b0be]/50 hover:bg-[#2d3e56]"
-          onClick={reset}
-        >
+        <Button onClick={reset}>
           <RefreshCw className="size-4" />
           {t("tryAgain")}
         </Button>

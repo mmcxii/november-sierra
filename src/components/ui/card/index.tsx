@@ -1,17 +1,41 @@
 import { cn } from "@/lib/utils";
+import { type VariantProps, cva } from "class-variance-authority";
+import { Anchor } from "lucide-react";
 import * as React from "react";
 
-export type CardProps = React.ComponentProps<"div">;
+const cardVariants = cva("flex flex-col gap-6 rounded-xl py-6 shadow-sm", {
+  defaultVariants: {
+    variant: "default",
+  },
+  variants: {
+    variant: {
+      default: "bg-card text-card-foreground border",
+      featured: "relative overflow-hidden border-0 bg-(--m-card-bg) text-[rgb(var(--m-text))]",
+    },
+  },
+});
+
+const CORNER_POSITIONS = ["top-4 left-4", "top-4 right-4 rotate-180", "bottom-4 left-4 rotate-180", "bottom-4 right-4"];
+
+export type CardProps = React.ComponentProps<"div"> & VariantProps<typeof cardVariants>;
 
 export const Card: React.FC<CardProps> = (props) => {
-  const { className, ...rest } = props;
+  const { children, className, variant, ...rest } = props;
 
   return (
-    <div
-      className={cn("bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm", className)}
-      data-slot="card"
-      {...rest}
-    />
+    <div className={cn(cardVariants({ variant }), className)} data-slot="card" {...rest}>
+      {variant === "featured" && (
+        <>
+          <div className="pointer-events-none absolute inset-[10px] rounded-xl border border-[rgb(var(--m-accent)/0.25)]" />
+          {CORNER_POSITIONS.map((pos) => (
+            <div className={cn("pointer-events-none absolute text-[rgb(var(--m-accent)/0.35)]", pos)} key={pos}>
+              <Anchor className="size-3.5" strokeWidth={1.5} />
+            </div>
+          ))}
+        </>
+      )}
+      {children}
+    </div>
   );
 };
 

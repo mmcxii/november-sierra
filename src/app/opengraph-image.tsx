@@ -1,3 +1,4 @@
+/* eslint-disable anchr/no-inline-style */
 import { ImageResponse } from "next/og";
 
 export const alt = "Anchr — Your Harbor for Every Connection";

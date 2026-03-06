@@ -9,7 +9,7 @@ export const Toaster: React.FC<ToasterProps> = (props) => {
 
   return (
     <Sonner
-      className="toaster group"
+      className="toaster toaster-theme group"
       icons={{
         error: <OctagonXIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
@@ -17,14 +17,6 @@ export const Toaster: React.FC<ToasterProps> = (props) => {
         success: <CircleCheckIcon className="size-4" />,
         warning: <TriangleAlertIcon className="size-4" />,
       }}
-      style={
-        {
-          "--border-radius": "var(--radius)",
-          "--normal-bg": "var(--popover)",
-          "--normal-border": "var(--border)",
-          "--normal-text": "var(--popover-foreground)",
-        } as React.CSSProperties
-      }
       theme={theme as ToasterProps["theme"]}
       {...props}
     />

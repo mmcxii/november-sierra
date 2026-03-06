@@ -1,10 +1,9 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
-import { useTranslation } from "react-i18next";
-
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export type ErrorPageProps = {
   error: Error & { digest?: string };
@@ -18,7 +17,10 @@ const ErrorPage: React.FC<ErrorPageProps> = (props) => {
   const [t] = useTranslation();
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0a1729] px-6">
+    <div
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0a1729] px-6"
+      data-marketing-theme="dark"
+    >
       {/* Ambient glow — shifted warm to signal error state */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#2d1a1a] opacity-30 blur-[120px]" />
 
@@ -41,11 +43,7 @@ const ErrorPage: React.FC<ErrorPageProps> = (props) => {
         </p>
 
         {/* CTA */}
-        <Button
-          className="border border-[#92b0be]/30 bg-[#1e2d42] text-white hover:border-[#92b0be]/50 hover:bg-[#2d3e56]"
-          onClick={reset}
-          size="lg"
-        >
+        <Button onClick={reset} size="lg">
           <RefreshCw className="size-4" />
           {t("tryAgain")}
         </Button>

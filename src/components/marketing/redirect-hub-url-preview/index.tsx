@@ -7,14 +7,6 @@ import { useEffect, useRef, useState } from "react";
 const HANDLES = ["calvin", "marina", "alexis", "oliver", "jordan"];
 const PLATFORMS = ["instagram", "youtube", "tiktok", "linkedin", "x", "nostr"];
 
-const seg = (hidden: boolean): React.CSSProperties => ({
-  color: `rgb(var(--m-accent) / 0.7)`,
-  display: "inline-block",
-  opacity: hidden ? 0 : 1,
-  transform: hidden ? "translateY(-4px)" : "translateY(0px)",
-  transition: "opacity 0.26s ease, transform 0.26s ease",
-});
-
 export const RedirectHubUrlPreview: React.FC = () => {
   const [handleIdx, setHandleIdx] = useState(0);
   const [platformIdx, setPlatformIdx] = useState(0);
@@ -39,23 +31,12 @@ export const RedirectHubUrlPreview: React.FC = () => {
   }, []);
 
   return (
-    <div
-      className="flex items-center gap-0.5 rounded-lg px-3 py-2 font-mono text-[11px]"
-      style={{ background: `var(--m-embed-bg)`, border: `1px solid rgb(var(--m-muted) / 0.10)` }}
-    >
-      <span className="shrink-0" style={{ color: `rgb(var(--m-muted) / 0.30)` }}>
-        anchr.to/
-      </span>
-      <span style={seg(hidden === "handle")}>{HANDLES[handleIdx]}</span>
-      <span className="shrink-0" style={{ color: `rgb(var(--m-muted) / 0.30)` }}>
-        /
-      </span>
-      <span style={seg(hidden === "platform")}>{PLATFORMS[platformIdx]}</span>
-      <ArrowUpRight
-        className="ml-auto size-3 shrink-0"
-        strokeWidth={1.5}
-        style={{ color: `rgb(var(--m-muted) / 0.25)` }}
-      />
+    <div className="m-embed-bg-bg m-muted-12-border flex items-center gap-0.5 rounded-lg px-3 py-2 font-mono text-[11px]">
+      <span className="m-muted-30 shrink-0">anchr.to/</span>
+      <span className={hidden === "handle" ? "m-seg-hidden" : "m-seg-visible"}>{HANDLES[handleIdx]}</span>
+      <span className="m-muted-30 shrink-0">/</span>
+      <span className={hidden === "platform" ? "m-seg-hidden" : "m-seg-visible"}>{PLATFORMS[platformIdx]}</span>
+      <ArrowUpRight className="m-muted-25 ml-auto size-3 shrink-0" strokeWidth={1.5} />
     </div>
   );
 };

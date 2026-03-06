@@ -1,13 +1,11 @@
-import type { Metadata } from "next";
-
-import { ChevronDown } from "lucide-react";
-
 import { FadeIn } from "@/components/marketing/fade-in";
 import { Footer } from "@/components/marketing/footer";
 import { PricingCards } from "@/components/marketing/pricing-toggle";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
 import { initTranslations } from "@/lib/i18n/server";
+import { ChevronDown } from "lucide-react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   description: "Simple, transparent pricing for Anchr. Free forever or upgrade to Pro for $7/mo.",
@@ -39,9 +37,7 @@ const PricingPage: React.FC = async () => {
         <FadeIn>
           <div className="mx-auto mb-16 max-w-2xl text-center">
             <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">{t("simpleTransparentPricing")}</h1>
-            <p className="text-lg" style={{ color: `rgb(var(--m-muted) / 0.7)` }}>
-              {t("choosePlanThatFitsYourNeeds")}
-            </p>
+            <p className="m-muted-70 text-lg">{t("choosePlanThatFitsYourNeeds")}</p>
           </div>
         </FadeIn>
 
@@ -68,25 +64,13 @@ const PricingPage: React.FC = async () => {
             </h2>
             <div className="flex flex-col gap-4">
               {FAQ.map(({ answer, question }) => (
-                <details
-                  className="group rounded-2xl"
-                  key={question}
-                  style={{
-                    background: `var(--m-card-bg)`,
-                    border: `1px solid rgb(var(--m-muted) / 0.15)`,
-                  }}
-                >
+                <details className="m-card-bg-bg m-card-border group rounded-2xl" key={question}>
                   <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5 font-medium [&::-webkit-details-marker]:hidden">
                     {t(question)}
-                    <ChevronDown
-                      className="size-5 shrink-0 transition-transform duration-200 group-open:rotate-180"
-                      style={{ color: `rgb(var(--m-muted) / 0.4)` }}
-                    />
+                    <ChevronDown className="m-muted-40 size-5 shrink-0 transition-transform duration-200 group-open:rotate-180" />
                   </summary>
                   <div className="px-6 pb-5">
-                    <p className="leading-relaxed" style={{ color: `rgb(var(--m-muted) / 0.7)` }}>
-                      {t(answer)}
-                    </p>
+                    <p className="m-muted-70 leading-relaxed">{t(answer)}</p>
                   </div>
                 </details>
               ))}

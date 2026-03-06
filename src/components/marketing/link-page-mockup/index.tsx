@@ -1,5 +1,7 @@
 "use client";
 
+import { SiteLogo } from "@/components/marketing/site-logo";
+import { cn } from "@/lib/utils";
 import {
   Anchor,
   BookOpen,
@@ -12,10 +14,8 @@ import {
   Youtube,
   Zap,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { siInstagram, siTelegram, siX } from "simple-icons";
-
-import { SiteLogo } from "@/components/marketing/site-logo";
 
 const BASE = { rotateX: 12, rotateY: 22, rotateZ: -3 };
 const FLIP_DURATION = 1600;
@@ -172,14 +172,7 @@ const LINKS = [
 ] as const;
 
 const CardBack: React.FC = () => (
-  <div
-    className="absolute inset-0 overflow-hidden rounded-2xl border border-[#92b0be]/20"
-    style={{
-      backfaceVisibility: "hidden",
-      background: "#0a1729",
-      transform: "rotateY(180deg)",
-    }}
-  >
+  <div className="m-backface-hidden absolute inset-0 [transform:rotateY(180deg)] overflow-hidden rounded-2xl border border-[#92b0be]/20 bg-[#0a1729]">
     {/* Wave pattern */}
     <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -201,7 +194,7 @@ const CardBack: React.FC = () => (
 
     {/* Corner anchors */}
     {["top-4 left-4", "top-4 right-4 rotate-180", "bottom-4 left-4 rotate-180", "bottom-4 right-4"].map((pos) => (
-      <div className={`absolute ${pos} text-[#d4b896]/35`} key={pos}>
+      <div className={cn("absolute text-[#d4b896]/35", pos)} key={pos}>
         <Anchor className="size-3.5" strokeWidth={1.5} />
       </div>
     ))}
@@ -271,6 +264,51 @@ export const LinkPageMockup: React.FC = () => {
 
   const theme = THEMES[themeIndex];
 
+  /** Single ref that pushes every theme token into CSS custom properties. */
+  const cardRef = useCallback(
+    (el: null | HTMLDivElement) => {
+      if (!el) {
+        return;
+      }
+      el.style.setProperty("--_mc-card-bg", theme.cardBg);
+      el.style.setProperty("--_mc-border", theme.border);
+      el.style.setProperty("--_mc-hairline", theme.hairline);
+      el.style.setProperty("--_mc-glow-bg", theme.glowBg);
+      el.style.setProperty("--_mc-avatar-outer-ring", theme.avatarOuterRing);
+      el.style.setProperty("--_mc-avatar-bg", theme.avatarBg);
+      el.style.setProperty("--_mc-avatar-inner-border", theme.avatarInnerBorder);
+      el.style.setProperty("--_mc-anchor-color", theme.anchorColor);
+      el.style.setProperty("--_mc-name-color", theme.nameColor);
+      el.style.setProperty("--_mc-link-text", theme.linkText);
+      el.style.setProperty("--_mc-link-icon-bg", theme.linkIconBg);
+      el.style.setProperty("--_mc-link-icon-color", theme.linkIconColor);
+      el.style.setProperty("--_mc-link-border", theme.linkBorder);
+      el.style.setProperty("--_mc-link-bg", theme.linkBg);
+      el.style.setProperty("--_mc-featured-bg", theme.featuredBg);
+      el.style.setProperty("--_mc-featured-border", theme.featuredBorder);
+      el.style.setProperty("--_mc-featured-icon-bg", theme.featuredIconBg);
+      el.style.setProperty("--_mc-featured-icon-color", theme.featuredIconColor);
+      el.style.setProperty("--_mc-featured-text", theme.featuredText);
+      el.style.setProperty("--_mc-divider", theme.divider);
+      el.style.setProperty("--_mc-brand", theme.brand);
+    },
+    [theme],
+  );
+
+  /** Ref for the 3D rotating inner wrapper — sets transform dynamically. */
+  const flipRef = useCallback(
+    (el: null | HTMLDivElement) => {
+      if (!el) {
+        return;
+      }
+      el.style.setProperty(
+        "transform",
+        `rotateX(${rotation.rotateX}deg) rotateY(${rotation.rotateY}deg) rotateZ(${rotation.rotateZ}deg)`,
+      );
+    },
+    [rotation],
+  );
+
   return (
     <div
       className="flex flex-col items-center gap-4 select-none"
@@ -282,59 +320,35 @@ export const LinkPageMockup: React.FC = () => {
       }}
     >
       {/* Card */}
-      <div
-        className="relative h-[460px] w-[280px]"
-        style={{
-          filter: `drop-shadow(0 30px 60px rgb(var(--m-shadow) / 0.35))`,
-          perspective: "700px",
-        }}
-      >
+      <div className="m-mockup-shadow relative h-[460px] w-[280px] [perspective:700px]">
         <div
-          className="relative h-full w-full"
-          style={{
-            transform: `rotateX(${rotation.rotateX}deg) rotateY(${rotation.rotateY}deg) rotateZ(${rotation.rotateZ}deg)`,
-            transformStyle: "preserve-3d",
-            transition: "transform 1.6s ease-in-out",
+          className="m-preserve-3d m-mockup-card relative h-full w-full transition-[transform] duration-[1.6s] ease-in-out"
+          ref={(el) => {
+            cardRef(el);
+            flipRef(el);
           }}
         >
           {/* FRONT */}
-          <div
-            className="absolute inset-0 overflow-hidden rounded-2xl"
-            style={{
-              backfaceVisibility: "hidden",
-              background: theme.cardBg,
-              border: `1px solid ${theme.border}`,
-            }}
-          >
+          <div className="mc-front absolute inset-0 overflow-hidden rounded-2xl">
             {/* Hairline accent */}
-            <div
-              className="absolute inset-x-0 top-0 h-px"
-              style={{
-                background: `linear-gradient(to right, transparent, ${theme.hairline}99, transparent)`,
-              }}
-            />
+            <div className="mc-hairline absolute inset-x-0 top-0 h-px" />
 
             {/* Radial glow */}
-            <div
-              className="pointer-events-none absolute top-0 left-1/2 h-36 w-52 -translate-x-1/2 rounded-full opacity-25 blur-2xl"
-              style={{ background: theme.glowBg }}
-            />
+            <div className="mc-glow pointer-events-none absolute top-0 left-1/2 h-36 w-52 -translate-x-1/2 rounded-full opacity-25 blur-2xl" />
 
             {/* Wave texture */}
             <svg
-              className="pointer-events-none absolute inset-0 h-full w-full"
-              style={{
-                maskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 26%, transparent 40%)",
-              }}
+              className="m-wave-front-mask pointer-events-none absolute inset-0 h-full w-full"
               xmlns="http://www.w3.org/2000/svg"
             >
               <defs>
                 <pattern height="18" id="frontWaves" patternUnits="userSpaceOnUse" width="280" x="0" y="0">
                   <path
+                    className="mc-anchor-color"
                     d="M-70,9 C-52.5,2 -17.5,16 0,9 C17.5,2 52.5,16 70,9 C87.5,2 122.5,16 140,9 C157.5,2 192.5,16 210,9 C227.5,2 262.5,16 280,9 C297.5,2 332.5,16 350,9"
                     fill="none"
                     opacity="0.18"
-                    stroke={theme.hairline}
+                    stroke="currentColor"
                     strokeWidth="0.75"
                   />
                 </pattern>
@@ -346,51 +360,26 @@ export const LinkPageMockup: React.FC = () => {
               {/* Avatar */}
               <div className="mb-3 flex flex-col items-center pt-1">
                 <div className="relative mb-3">
-                  <div
-                    className="flex size-[68px] items-center justify-center rounded-full"
-                    style={{ border: `1px solid ${theme.avatarOuterRing}` }}
-                  >
-                    <div
-                      className="flex size-[52px] items-center justify-center rounded-full"
-                      style={{
-                        background: theme.avatarBg,
-                        border: `1px solid ${theme.avatarInnerBorder}`,
-                      }}
-                    >
-                      <Anchor className="size-6" strokeWidth={1.25} style={{ color: theme.anchorColor }} />
+                  <div className="mc-avatar-outer flex size-[68px] items-center justify-center rounded-full">
+                    <div className="mc-avatar-inner flex size-[52px] items-center justify-center rounded-full">
+                      <Anchor className="mc-anchor-color size-6" strokeWidth={1.25} />
                     </div>
                   </div>
                 </div>
-                <p className="text-sm font-bold tracking-wide" style={{ color: theme.nameColor }}>
-                  {theme.name}
-                </p>
-                <p
-                  className="mt-0.5 text-[10px] font-medium tracking-[0.2em] uppercase"
-                  style={{ color: theme.linkText }}
-                >
-                  {theme.handle}
-                </p>
+                <p className="mc-name-color text-sm font-bold tracking-wide">{theme.name}</p>
+                <p className="mc-link-text mt-0.5 text-[10px] font-medium tracking-[0.2em] uppercase">{theme.handle}</p>
 
                 {/* Social icons */}
                 <div className="mt-2.5 flex items-center gap-1.5">
                   {SOCIAL_ICONS.map((social) => (
                     <div
-                      className="flex size-[22px] items-center justify-center rounded-full"
+                      className="mc-social-icon flex size-[22px] items-center justify-center rounded-full"
                       key={social.label}
-                      style={{
-                        background: theme.linkIconBg,
-                        border: `1px solid ${theme.linkBorder}`,
-                      }}
                     >
                       {"Icon" in social ? (
-                        <social.Icon className="size-2.5" strokeWidth={1.75} style={{ color: theme.linkIconColor }} />
+                        <social.Icon className="mc-link-icon-color size-2.5" strokeWidth={1.75} />
                       ) : (
-                        <svg
-                          className="size-2.5"
-                          fill="currentColor"
-                          style={{ color: theme.linkIconColor }}
-                          viewBox="0 0 24 24"
-                        >
+                        <svg className="mc-link-icon-color size-2.5" fill="currentColor" viewBox="0 0 24 24">
                           <path d={social.path} />
                         </svg>
                       )}
@@ -402,28 +391,12 @@ export const LinkPageMockup: React.FC = () => {
               {/* Links */}
               <div className="flex flex-col gap-1.5">
                 {/* Featured */}
-                <div
-                  className="relative overflow-hidden rounded-xl px-3.5 py-3"
-                  style={{
-                    background: theme.featuredBg,
-                    border: `1px solid ${theme.featuredBorder}`,
-                  }}
-                >
+                <div className="mc-featured relative overflow-hidden rounded-xl px-3.5 py-3">
                   <div className="relative flex items-center gap-2.5">
-                    <div
-                      className="flex size-6 shrink-0 items-center justify-center rounded-lg"
-                      style={{ background: theme.featuredIconBg }}
-                    >
-                      <GraduationCap
-                        className="size-3.5"
-                        strokeWidth={1.75}
-                        style={{ color: theme.featuredIconColor }}
-                      />
+                    <div className="mc-featured-icon-bg flex size-6 shrink-0 items-center justify-center rounded-lg">
+                      <GraduationCap className="mc-featured-icon-color size-3.5" strokeWidth={1.75} />
                     </div>
-                    <span
-                      className="flex-1 text-center text-[11px] leading-tight font-semibold"
-                      style={{ color: theme.featuredText }}
-                    >
+                    <span className="mc-featured-text flex-1 text-center text-[11px] leading-tight font-semibold">
                       Master Video Editing — Enroll Now
                     </span>
                   </div>
@@ -431,36 +404,19 @@ export const LinkPageMockup: React.FC = () => {
 
                 {/* Regular links */}
                 {LINKS.map(({ icon: Icon, label }) => (
-                  <div
-                    className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5"
-                    key={label}
-                    style={{
-                      background: theme.linkBg,
-                      border: `1px solid ${theme.linkBorder}`,
-                    }}
-                  >
-                    <div
-                      className="flex size-6 shrink-0 items-center justify-center rounded-lg"
-                      style={{ background: theme.linkIconBg }}
-                    >
-                      <Icon className="size-3.5" strokeWidth={1.75} style={{ color: theme.linkIconColor }} />
+                  <div className="mc-link flex items-center gap-2.5 rounded-xl px-3.5 py-2.5" key={label}>
+                    <div className="mc-link-icon-bg flex size-6 shrink-0 items-center justify-center rounded-lg">
+                      <Icon className="mc-link-icon-color size-3.5" strokeWidth={1.75} />
                     </div>
-                    <span className="flex-1 text-center text-[11px] font-medium" style={{ color: theme.linkText }}>
-                      {label}
-                    </span>
+                    <span className="mc-link-text flex-1 text-center text-[11px] font-medium">{label}</span>
                   </div>
                 ))}
               </div>
 
               {/* Branding */}
-              <div
-                className="mt-auto flex items-center justify-center gap-1.5 pt-2"
-                style={{ borderTop: `1px solid ${theme.divider}` }}
-              >
-                <Anchor className="size-2.5" strokeWidth={1.5} style={{ color: theme.brand }} />
-                <span className="text-[9px] font-bold tracking-[0.25em] uppercase" style={{ color: theme.brand }}>
-                  Anchr
-                </span>
+              <div className="mc-branding mt-auto flex items-center justify-center gap-1.5 pt-2">
+                <Anchor className="mc-brand-color size-2.5" strokeWidth={1.5} />
+                <span className="mc-brand-color text-[9px] font-bold tracking-[0.25em] uppercase">Anchr</span>
               </div>
             </div>
           </div>
@@ -473,24 +429,17 @@ export const LinkPageMockup: React.FC = () => {
       {/* Controls */}
       <div className="mt-7 flex flex-col items-center gap-2.5">
         {/* Theme name */}
-        <span
-          className="text-[10px] font-medium tracking-[0.18em] uppercase"
-          style={{ color: `rgb(var(--m-muted) / 0.45)` }}
-        >
-          {theme.themeName}
-        </span>
+        <span className="m-muted-45 text-[10px] font-medium tracking-[0.18em] uppercase">{theme.themeName}</span>
 
         {/* Theme dots */}
         <div className="flex items-center gap-1.5">
           {THEMES.map((_, i) => (
             <div
-              className="rounded-full transition-all duration-300"
+              className={cn("rounded-full transition-all duration-300", {
+                "m-dot-active": i === themeIndex,
+                "m-dot-inactive": i !== themeIndex,
+              })}
               key={i}
-              style={{
-                background: i === themeIndex ? `rgb(var(--m-accent) / 0.70)` : `rgb(var(--m-muted) / 0.25)`,
-                height: "4px",
-                width: i === themeIndex ? "16px" : "4px",
-              }}
             />
           ))}
         </div>
@@ -499,26 +448,16 @@ export const LinkPageMockup: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             aria-label="Previous theme"
-            className="flex size-7 cursor-pointer items-center justify-center rounded-full backdrop-blur-sm transition-colors"
+            className="m-mockup-nav-btn flex size-7 cursor-pointer items-center justify-center rounded-full backdrop-blur-sm transition-colors"
             onClick={() => navigate(-1)}
-            style={{
-              background: `var(--m-embed-bg)`,
-              border: `1px solid rgb(var(--m-muted) / 0.20)`,
-              color: `rgb(var(--m-muted) / 0.50)`,
-            }}
           >
             <ChevronLeft className="size-3.5" strokeWidth={1.5} />
           </button>
 
           <button
             aria-label={playing ? "Pause" : "Play"}
-            className="flex size-7 cursor-pointer items-center justify-center rounded-full backdrop-blur-sm transition-colors"
+            className="m-mockup-nav-btn flex size-7 cursor-pointer items-center justify-center rounded-full backdrop-blur-sm transition-colors"
             onClick={handlePlayPause}
-            style={{
-              background: `var(--m-embed-bg)`,
-              border: `1px solid rgb(var(--m-muted) / 0.20)`,
-              color: `rgb(var(--m-muted) / 0.50)`,
-            }}
           >
             {playing ? (
               <Pause className="size-3" strokeWidth={1.5} />
@@ -529,13 +468,8 @@ export const LinkPageMockup: React.FC = () => {
 
           <button
             aria-label="Next theme"
-            className="flex size-7 cursor-pointer items-center justify-center rounded-full backdrop-blur-sm transition-colors"
+            className="m-mockup-nav-btn flex size-7 cursor-pointer items-center justify-center rounded-full backdrop-blur-sm transition-colors"
             onClick={() => navigate(1)}
-            style={{
-              background: `var(--m-embed-bg)`,
-              border: `1px solid rgb(var(--m-muted) / 0.20)`,
-              color: `rgb(var(--m-muted) / 0.50)`,
-            }}
           >
             <ChevronRight className="size-3.5" strokeWidth={1.5} />
           </button>

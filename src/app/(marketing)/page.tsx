@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
-
 import { Cta } from "@/components/marketing/cta";
 import { Features } from "@/components/marketing/features";
 import { Footer } from "@/components/marketing/footer";
 import { Hero } from "@/components/marketing/hero";
 import { initTranslations } from "@/lib/i18n/server";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   description:
@@ -18,7 +17,7 @@ const MarketingPage: React.FC = async () => {
   return (
     <>
       <Hero t={t} />
-      <Features t={t} />
+      <Features />
       <Cta t={t} />
       <Footer t={t} />
     </>

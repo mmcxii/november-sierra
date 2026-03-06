@@ -1,60 +1,69 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-
-import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { usePostHog } from "posthog-js/react";
-import { useTranslation } from "react-i18next";
-
 import { joinWaitlist, type WaitlistState } from "@/app/(marketing)/actions";
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { type WaitlistValues, waitlistSchema } from "@/lib/schemas/waitlist";
+import { cn } from "@/lib/utils";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 const initialState: WaitlistState = { success: false };
 
 export const WaitlistForm: React.FC = () => {
+  //* State
   const { t } = useTranslation();
   const router = useRouter();
   const posthog = usePostHog();
-  const [state, action, isPending] = useActionState(joinWaitlist, initialState);
+  const [serverState, setServerState] = React.useState(initialState);
+  const {
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    setError,
+  } = useForm<WaitlistValues>({ resolver: standardSchemaResolver(waitlistSchema) });
 
-  useEffect(() => {
-    if (state.success) {
+  //* Variables
+  const showOverlay = isSubmitting || serverState.success;
+
+  //* Handlers
+  const onSubmit = async (data: WaitlistValues) => {
+    const formData = new FormData();
+    formData.set("email", data.email);
+
+    const result = await joinWaitlist(initialState, formData);
+    setServerState(result);
+
+    if (result.success) {
       posthog.capture("waitlist_signup");
       router.push("/welcome");
+    } else if (result.error) {
+      setError("email", { message: t(result.error) });
     }
-  }, [state.success, posthog, router]);
-
-  const showOverlay = isPending || state.success;
+  };
 
   return (
     <>
       {showOverlay && (
         <div
           aria-label={t("joiningWaitlist")}
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="m-waitlist-overlay fixed inset-0 z-50 flex items-center justify-center"
           role="status"
-          style={{ background: `rgb(var(--m-glow) / 0.85)` }}
         >
-          <style>{`
-            @keyframes sonar {
-              0%   { transform: scale(1);   opacity: 0.6; }
-              100% { transform: scale(3);   opacity: 0; }
-            }
-          `}</style>
-
           {/* Sonar rings */}
-          {[0, 0.5, 1].map((delay) => (
+          {["[animation-delay:0s]", "[animation-delay:0.5s]", "[animation-delay:1s]"].map((delayClass) => (
             <div
-              className="absolute size-28 rounded-full"
-              key={delay}
-              style={{
-                animation: `sonar 2s ease-out infinite`,
-                animationDelay: `${delay}s`,
-                border: `2px solid rgb(var(--m-accent) / 0.4)`,
-              }}
+              className={cn(
+                "m-sonar-ring absolute size-28 [animation:sonar_2s_ease-out_infinite] rounded-full",
+                delayClass,
+              )}
+              key={delayClass}
             />
           ))}
 
@@ -63,30 +72,19 @@ export const WaitlistForm: React.FC = () => {
         </div>
       )}
 
-      <form action={action} className="flex w-full max-w-sm flex-col gap-2 sm:flex-row">
+      <form className="flex w-full max-w-sm flex-col gap-2 sm:flex-row" onSubmit={handleSubmit(onSubmit)}>
         <Input
           className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] placeholder:text-[rgb(var(--m-muted))]/50 focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
-          disabled={isPending}
-          name="email"
+          disabled={isSubmitting}
           placeholder={t("enterYourEmail")}
-          required
           type="email"
+          {...register("email")}
         />
-        <Button
-          className="shrink-0 font-semibold tracking-wide transition-opacity hover:opacity-90"
-          disabled={isPending}
-          style={{
-            background: `rgb(var(--m-accent))`,
-            color: `var(--m-page-bg)`,
-          }}
-          type="submit"
-        >
-          {isPending ? <Loader2 className="size-4 animate-spin" /> : t("joinTheWaitlist")}
+        <Button className="shrink-0 font-semibold tracking-wide" disabled={isSubmitting} type="submit">
+          {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("joinTheWaitlist")}
         </Button>
-        {state.error && (
-          <p className="text-xs sm:absolute sm:top-full sm:mt-2" style={{ color: `rgb(var(--m-accent))` }}>
-            {t(state.error)}
-          </p>
+        {errors.email && (
+          <p className="m-accent-color text-xs sm:absolute sm:top-full sm:mt-2">{errors.email.message}</p>
         )}
       </form>
     </>

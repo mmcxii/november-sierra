@@ -1,16 +1,18 @@
-import { Home } from "lucide-react";
-import Link from "next/link";
-
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { Button } from "@/components/ui/button";
 import { initTranslations } from "@/lib/i18n/server";
+import { Home } from "lucide-react";
+import Link from "next/link";
 
 const NotFound: React.FC = async () => {
   //* Variables
   const { t } = await initTranslations("en-US");
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0a1729] px-6">
+    <div
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0a1729] px-6"
+      data-marketing-theme="dark"
+    >
       {/* Ambient glow */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1e2d42] opacity-40 blur-[120px]" />
 
@@ -33,11 +35,7 @@ const NotFound: React.FC = async () => {
         </p>
 
         {/* CTA */}
-        <Button
-          asChild
-          className="border border-[#92b0be]/30 bg-[#1e2d42] text-white hover:border-[#92b0be]/50 hover:bg-[#2d3e56]"
-          size="lg"
-        >
+        <Button asChild size="lg">
           <Link href="/">
             <Home className="size-4" />
             {t("returnHome")}

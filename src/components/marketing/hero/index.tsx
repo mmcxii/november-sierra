@@ -1,9 +1,8 @@
-import type { TFunction } from "i18next";
-
 import { LinkPageMockup } from "@/components/marketing/link-page-mockup";
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { SiteWordmark } from "@/components/marketing/site-wordmark";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
+import type { TFunction } from "i18next";
 
 export type HeroProps = {
   t: TFunction;
@@ -15,17 +14,14 @@ export const Hero: React.FC<HeroProps> = (props) => {
   return (
     <section className="relative px-6 pt-16 pb-16 lg:pt-20 lg:pb-24">
       {/* Ambient glow */}
-      <div
-        className="pointer-events-none absolute inset-0 m-auto h-[600px] w-[600px] max-w-full rounded-full opacity-40 blur-[120px]"
-        style={{ background: `rgb(var(--m-glow))` }}
-      />
+      <div className="m-glow-bg pointer-events-none absolute inset-0 m-auto h-[600px] w-[600px] max-w-full rounded-full opacity-40 blur-[120px]" />
 
       <div className="relative z-10 mx-auto max-w-6xl">
         {/* Site logo */}
         <div className="mb-10 flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:gap-5">
             <SiteLogo size="md" />
-            <div className="hidden h-7 w-px lg:block" style={{ background: `rgb(var(--m-accent) / 0.25)` }} />
+            <div className="m-accent-divider-25 hidden h-7 w-px lg:block" />
             <SiteWordmark size="md" />
           </div>
           <p className="text-center text-sm font-medium tracking-[0.22em] uppercase lg:text-right">
@@ -46,17 +42,12 @@ export const Hero: React.FC<HeroProps> = (props) => {
 
           {/* Subtext + form — row 3 on mobile, col 1 row 2 on desktop */}
           <div className="flex flex-col items-center gap-10 lg:col-start-1 lg:row-start-2 lg:items-start">
-            <p
-              className="mx-auto max-w-lg text-lg leading-relaxed sm:text-xl lg:mx-0"
-              style={{ color: `rgb(var(--m-muted) / 0.8)` }}
-            >
+            <p className="m-muted-80 mx-auto max-w-lg text-lg leading-relaxed sm:text-xl lg:mx-0">
               {t("everythingThatMattersToYouAllInOnePlace")}
             </p>
             <div className="relative flex flex-col items-center gap-3 lg:items-start">
               <WaitlistForm />
-              <p className="text-xs" style={{ color: `rgb(var(--m-muted) / 0.4)` }}>
-                {t("wellReachOutWhenWereReadyNoSpamEver")}
-              </p>
+              <p className="m-muted-40 text-xs">{t("wellReachOutWhenWereReadyNoSpamEver")}</p>
             </div>
           </div>
         </div>
