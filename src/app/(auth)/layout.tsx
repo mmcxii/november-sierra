@@ -11,7 +11,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = (props) => {
     <MarketingThemeProvider>
       <div className="relative flex min-h-dvh flex-col bg-(--m-page-bg) text-[rgb(var(--m-text))] transition-colors duration-300 lg:flex-row">
         {/* Grain overlay — full page */}
-        <div className="m-grain-bg opacity-(--m-grain-opacity)] pointer-events-none fixed inset-0 z-50" />
+        <div className="m-grain-bg m-grain-opacity pointer-events-none fixed inset-0 z-50" />
         {/* Wave background — full page */}
         <div className="pointer-events-none fixed inset-0">
           <svg className="h-full w-full" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
