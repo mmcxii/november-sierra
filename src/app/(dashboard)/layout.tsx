@@ -1,5 +1,6 @@
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export type DashboardLayoutProps = React.PropsWithChildren;
 
@@ -8,6 +9,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = async (props) => {
 
   //* Variables
   const user = await requireUser();
+
+  if (!user.onboardingComplete) {
+    redirect("/onboarding");
+  }
 
   return (
     <div className="bg-background text-foreground flex min-h-dvh flex-col lg:flex-row">

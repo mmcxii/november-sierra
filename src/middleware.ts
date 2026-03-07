@@ -1,8 +1,14 @@
 import { defaultLocale } from "@/lib/i18n/config";
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-export default clerkMiddleware(() => {
+const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/onboarding(.*)"]);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    await auth.protect();
+  }
+
   const response = NextResponse.next();
   response.headers.set("x-next-i18n-router-locale", defaultLocale);
   return response;

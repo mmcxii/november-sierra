@@ -72,7 +72,7 @@ export const SignUpForm: React.FC = () => {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/dashboard");
+        router.push("/onboarding");
       }
     } catch (err) {
       handleClerkError(verifyForm, err);
