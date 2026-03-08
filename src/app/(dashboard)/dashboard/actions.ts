@@ -68,3 +68,21 @@ export async function updateLink(id: string, title: string, url: string): Promis
 
   return { success: true };
 }
+
+export async function deleteLink(id: string): Promise<ActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  const deleted = await db.delete(linksTable).where(and(eq(linksTable.id, id), eq(linksTable.userId, userId)));
+
+  if (deleted.rowCount === 0) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  revalidatePath("/dashboard");
+
+  return { success: true };
+}
