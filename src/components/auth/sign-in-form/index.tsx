@@ -125,7 +125,7 @@ export const SignInForm: React.FC = () => {
             <p className="text-center text-xs text-[rgb(var(--m-accent))]">{errors.root.message}</p>
           )}
           <Button className="w-full" disabled={!isLoaded || isSubmitting} type="submit">
-            {isSubmitting != null ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
+            {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
           </Button>
         </form>
       </CardContent>

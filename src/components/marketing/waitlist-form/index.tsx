@@ -29,7 +29,7 @@ export const WaitlistForm: React.FC = () => {
   } = useForm<WaitlistValues>({ resolver: standardSchemaResolver(waitlistSchema) });
 
   //* Variables
-  const showOverlay = isSubmitting ?? serverState.success;
+  const showOverlay = isSubmitting || serverState.success;
 
   //* Handlers
   const onSubmit = async (data: WaitlistValues) => {
@@ -49,7 +49,7 @@ export const WaitlistForm: React.FC = () => {
 
   return (
     <>
-      {showOverlay != null && (
+      {showOverlay && (
         <div
           aria-label={t("joiningWaitlist")}
           className="m-waitlist-overlay fixed inset-0 z-50 flex items-center justify-center"
@@ -80,7 +80,7 @@ export const WaitlistForm: React.FC = () => {
           {...register("email")}
         />
         <Button className="shrink-0 font-semibold tracking-wide" disabled={isSubmitting} type="submit">
-          {isSubmitting != null ? <Loader2 className="size-4 animate-spin" /> : t("joinTheWaitlist")}
+          {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("joinTheWaitlist")}
         </Button>
         {errors.email != null && (
           <p className="m-accent-color text-xs sm:absolute sm:top-full sm:mt-2">{errors.email.message}</p>

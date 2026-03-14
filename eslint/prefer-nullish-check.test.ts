@@ -121,5 +121,33 @@ ruleTester.run("prefer-nullish-check", preferNullishCheck, {
       code: "declare const flag: boolean | null; declare function doSomething(): void; const x = !flag && doSomething();",
       name: "negated boolean | null in && — has boolean, skip",
     },
+    {
+      code: 'declare const isSubmitting: boolean; const x = isSubmitting ? "loading" : "submit";',
+      name: "boolean in ternary — skip (prevents isSubmitting != null drift)",
+    },
+    {
+      code: "declare const isSubmitting: boolean; declare function render(): void; const x = isSubmitting && render();",
+      name: "boolean in && — skip (prevents isSubmitting != null && <Loader> drift)",
+    },
+    {
+      code: "declare const isSubmitting: boolean; const disabled = isSubmitting || false;",
+      name: "boolean in || — skip (prevents isSubmitting ?? false drift)",
+    },
+    {
+      code: "declare const mobileOpen: boolean; if (mobileOpen) {}",
+      name: "boolean state in if — skip (prevents mobileOpen != null drift)",
+    },
+    {
+      code: 'declare const mobileOpen: boolean; const icon = mobileOpen ? "close" : "open";',
+      name: "boolean state in ternary — skip (prevents mobileOpen != null ternary drift)",
+    },
+    {
+      code: "declare const mobileOpen: boolean; declare function render(): void; const x = mobileOpen && render();",
+      name: "boolean state in && — skip (prevents always-visible overlay drift)",
+    },
+    {
+      code: "declare const triggered: boolean; const delay = triggered ? '400ms' : '0ms';",
+      name: "boolean in ternary inline style — skip (prevents triggered != null drift)",
+    },
   ],
 });

@@ -24,8 +24,12 @@ export const SiteLogo: React.FC<SiteLogoProps> = (props) => {
       if (el == null) {
         return;
       }
-      el.style.setProperty("--_logo-a", accent ?? "var(--m-accent)");
-      el.style.setProperty("--_logo-bg", cardBg ?? "var(--m-card-bg)");
+      if (accent != null) {
+        el.style.setProperty("--_logo-a", accent);
+      }
+      if (cardBg != null) {
+        el.style.setProperty("--_logo-bg", cardBg);
+      }
     },
     [accent, cardBg],
   );

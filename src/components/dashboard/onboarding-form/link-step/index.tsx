@@ -82,8 +82,8 @@ export const LinkStep: React.FC<LinkStepProps> = (props) => {
         {linkError != null && <p className="text-destructive text-center text-xs">{linkError}</p>}
 
         <div className="flex flex-col gap-2">
-          <Button className="w-full" disabled={(submitting ?? !linkTitle.trim()) || !linkUrl.trim()} type="submit">
-            {submitting != null ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
+          <Button className="w-full" disabled={submitting || !linkTitle.trim() || !linkUrl.trim()} type="submit">
+            {submitting ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
           </Button>
           <Button className="w-full" disabled={submitting} onClick={onSkip} type="button" variant="tertiary">
             {t("skip")}

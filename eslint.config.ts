@@ -8,6 +8,7 @@ import { noJsxWhitespaceLiteral } from "./eslint/no-jsx-whitespace-literal.js";
 import { preferNullishCheck } from "./eslint/prefer-nullish-check.js";
 import { reactStyleGuide } from "./eslint/react-style-guide.js";
 import { singleComponentPerFile } from "./eslint/single-component-per-file.js";
+import { testAaaPattern } from "./eslint/test-aaa-pattern.js";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -30,6 +31,7 @@ const eslintConfig = defineConfig([
           "prefer-nullish-check": preferNullishCheck,
           "react-style-guide": reactStyleGuide,
           "single-component-per-file": singleComponentPerFile,
+          "test-aaa-pattern": testAaaPattern,
         },
       } as unknown as ESLint.Plugin,
       import: pluginImport,
@@ -95,6 +97,14 @@ const eslintConfig = defineConfig([
     ignores: ["src/components/ui/**"],
     rules: {
       "anchr/single-component-per-file": "error",
+    },
+  },
+
+  // Enforce AAA pattern in test files
+  {
+    files: ["**/*.test.{ts,tsx}"],
+    rules: {
+      "anchr/test-aaa-pattern": "error",
     },
   },
 

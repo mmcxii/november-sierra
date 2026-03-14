@@ -22,7 +22,7 @@ export const FadeIn: React.FC<FadeInProps> = (props) => {
     }
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting != null) {
+        if (entry.isIntersecting) {
           setVisible(true);
           observer.disconnect();
         }

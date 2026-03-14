@@ -1,6 +1,5 @@
 "use client";
 
-import { useDashboardTheme } from "@/components/dashboard/theme-provider";
 import { DashboardThemeToggle } from "@/components/dashboard/theme-toggle";
 import { SiteBrandmark } from "@/components/marketing/site-brandmark";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,16 +29,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
 
   //* State
   const { t } = useTranslation();
-  const { theme } = useDashboardTheme();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   //* Variables
   const initials = (user.displayName ?? user.username).slice(0, 2).toUpperCase();
-  const logoAccent = theme === "dark" ? "212 184 150" : "10 23 41";
-  const logoCardBg = theme === "dark" ? "rgba(30, 45, 66, 0.4)" : "rgba(255, 252, 245, 0.7)";
-  const dividerColor = theme === "dark" ? "bg-brand-gold/25" : "bg-brand-deep-navy/18";
-  const wordmarkColor = theme === "dark" ? "text-brand-gold" : "text-brand-deep-navy";
 
   //* Handlers
   const closeMobile = () => setMobileOpen(false);
@@ -50,24 +44,23 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
       <header className="bg-sidebar border-sidebar-border flex items-center justify-between border-b px-4 py-3 lg:hidden">
         <Link href="/dashboard" onClick={closeMobile}>
           <SiteBrandmark
-            dividerClassName={dividerColor}
-            logoProps={{ accent: logoAccent, cardBg: logoCardBg }}
+            dividerClassName="bg-brand-deep-navy/18 dark:bg-brand-gold/25"
             size="xs"
-            wordmarkClassName={wordmarkColor}
+            wordmarkClassName="text-brand-deep-navy dark:text-brand-gold"
           />
         </Link>
         <button
-          aria-label={mobileOpen != null ? t("closeMenu") : t("openMenu")}
+          aria-label={mobileOpen ? t("closeMenu") : t("openMenu")}
           className="text-sidebar-foreground p-1"
           onClick={() => setMobileOpen(!mobileOpen)}
           type="button"
         >
-          {mobileOpen != null ? <X className="size-5" /> : <Menu className="size-5" />}
+          {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
       </header>
 
       {/* Mobile overlay */}
-      {mobileOpen != null && (
+      {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={closeMobile}
@@ -88,10 +81,9 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
         <div className="flex h-14 items-center px-4">
           <Link className="inline-flex items-center" href="/dashboard" onClick={closeMobile}>
             <SiteBrandmark
-              dividerClassName={dividerColor}
-              logoProps={{ accent: logoAccent, cardBg: logoCardBg }}
+              dividerClassName="bg-brand-deep-navy/18 dark:bg-brand-gold/25"
               size="xs"
-              wordmarkClassName={wordmarkColor}
+              wordmarkClassName="text-brand-deep-navy dark:text-brand-gold"
             />
           </Link>
         </div>

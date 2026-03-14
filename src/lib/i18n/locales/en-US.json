@@ -48,6 +48,8 @@
   "frequentlyAskedQuestions": "Frequently Asked Questions",
   "fullThemeCustomization": "Full theme customization",
   "goToDashboard": "Go to dashboard",
+  "hidden": "Hidden",
+  "hideLink": "Hide link",
   "joinTheWaitlist": "Join the Waitlist",
   "joinTodayBuildOnLaunchDayShareForever": "Join today. Build on launch day. Share forever.",
   "joiningWaitlist": "Joining waitlist…",
@@ -77,6 +79,7 @@
   "save$24": "Save $24",
   "seeWhichLinksGetClickedAndWhereVisitorsComeFromCleanDataNoNoise": "See which links get clicked and where visitors come from — clean data, no noise.",
   "settings": "Settings",
+  "showLink": "Show link",
   "signIn": "Sign in",
   "signOut": "Sign out",
   "signUp": "Sign up",
@@ -115,5 +118,7 @@
   "yourPageIsLive": "Your page is live!",
   "youreAllSetStartSharingYourPage": "You're all set. Start sharing your page.",
   "youreAnchored": "You're Anchored.",
-  "youreOnTheListWellSendWordWhenItsTimeToSetSailUntilThenSitTightCaptain": "You're on the list. We'll send word when it's time to set sail — until then, sit tight, captain."
+  "youreOnTheListWellSendWordWhenItsTimeToSetSailUntilThenSitTightCaptain": "You're on the list. We'll send word when it's time to set sail — until then, sit tight, captain.",
+  "{{title}}IsNowHidden": "{{title}} is now hidden.",
+  "{{title}}IsNowVisible": "{{title}} is now visible."
 }

@@ -4,7 +4,7 @@ import { db } from "@/lib/db/client";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkSchema } from "@/lib/schemas/link";
 import { auth } from "@clerk/nextjs/server";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, not, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export type ActionResult = {
@@ -105,6 +105,27 @@ export async function reorderLinks(items: { id: string; position: number }[]): P
     .update(linksTable)
     .set({ position: caseStatement })
     .where(and(inArray(linksTable.id, ids), eq(linksTable.userId, userId)));
+
+  revalidatePath("/dashboard");
+
+  return { success: true };
+}
+
+export async function toggleLinkVisibility(id: string): Promise<ActionResult> {
+  const { userId } = await auth();
+
+  if (userId == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  const result = await db
+    .update(linksTable)
+    .set({ visible: not(linksTable.visible) })
+    .where(and(eq(linksTable.id, id), eq(linksTable.userId, userId)));
+
+  if (result.rowCount === 0) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
 
   revalidatePath("/dashboard");
 

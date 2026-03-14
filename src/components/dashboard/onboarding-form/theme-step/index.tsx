@@ -67,7 +67,7 @@ export const ThemeStep: React.FC<ThemeStepProps> = (props) => {
 
       <div className="flex flex-col gap-2">
         <Button className="w-full" disabled={submitting} onClick={handleSubmit} type="button">
-          {submitting != null ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
+          {submitting ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
         </Button>
         <Button className="w-full" disabled={submitting} onClick={handleSkip} type="button" variant="tertiary">
           {t("skip")}

@@ -590,11 +590,16 @@
 /* ── Site logo ────────────────────────────────────────────────────────── */
 
 .site-logo {
-  --_logo-a: var(--m-accent);
-  --_logo-bg: var(--m-card-bg);
+  --_logo-a: var(--m-accent, 10 23 41);
+  --_logo-bg: var(--m-card-bg, rgba(255, 252, 245, 0.7));
   background: var(--_logo-bg);
   border: 2px solid rgb(var(--_logo-a) / 0.50);
   box-shadow: 0 0 40px rgb(var(--_logo-a) / 0.08);
+}
+
+.dark .site-logo {
+  --_logo-a: var(--m-accent, 212 184 150);
+  --_logo-bg: var(--m-card-bg, rgba(30, 45, 66, 0.4));
 }
 
 .site-logo-inner {

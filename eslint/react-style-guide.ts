@@ -456,7 +456,7 @@ export const reactStyleGuide = createRule({
             const funcDecl = declaration as TSESTree.FunctionDeclaration;
             if (funcDecl.returnType == null) {
               const parserServices = context.sourceCode.parserServices;
-              if (parserServices?.program != null) {
+              if (parserServices?.program != null && parserServices.esTreeNodeToTSNodeMap != null) {
                 const checker = parserServices.program.getTypeChecker();
                 const tsNode = parserServices.esTreeNodeToTSNodeMap.get(funcDecl);
                 const signature = checker.getSignaturesOfType(

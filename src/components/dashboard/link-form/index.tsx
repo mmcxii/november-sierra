@@ -43,8 +43,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
   const onSubmit = async (data: LinkValues) => {
     const url = ensureProtocol(data.url);
 
-    const result =
-      isEditing != null ? await updateLink(defaultValues.id, data.title, url) : await createLink(data.title, url);
+    const result = isEditing ? await updateLink(defaultValues.id, data.title, url) : await createLink(data.title, url);
 
     if (!result.success) {
       setError("root", { message: t(result.error ?? "somethingWentWrongPleaseTryAgain") });
@@ -81,10 +80,10 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
         {errors.url != null && <p className="text-destructive text-xs">{errors.url.message}</p>}
       </div>
       {errors.root != null && <p className="text-destructive text-center text-xs">{errors.root.message}</p>}
-      <div className="flex justify-start">
+      <div className="flex flex-col sm:flex-row sm:justify-start">
         <Button disabled={isSubmitting} type="submit" variant="primary">
-          {isSubmitting != null && <Loader2 className="size-3.5 animate-spin" />}
-          {isEditing != null ? t("save") : t("addLink")}
+          {isSubmitting && <Loader2 className="size-3.5 animate-spin" />}
+          {t("save")}
         </Button>
       </div>
     </form>

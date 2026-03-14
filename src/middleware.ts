@@ -9,6 +9,12 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
 
+  const { userId } = await auth();
+
+  if (req.nextUrl.pathname === "/" && userId != null) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   const response = NextResponse.next();
   response.headers.set("x-next-i18n-router-locale", defaultLocale);
   return response;

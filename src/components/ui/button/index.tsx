@@ -33,7 +33,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
   const { asChild = false, className, size = "md", variant = "primary", ...rest } = props;
 
   //* Variables
-  const Comp = asChild != null ? Slot.Root : "button";
+  const Comp = asChild ? Slot.Root : "button";
 
   return (
     <Comp

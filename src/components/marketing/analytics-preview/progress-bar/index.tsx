@@ -19,8 +19,8 @@ export const ProgressBar: React.FC<ProgressBarProps> = (props) => {
       const opacity = 0.65 - index * 0.18;
       el.style.setProperty("background", `rgb(var(--m-accent) / ${opacity})`);
       el.style.setProperty("transition", "width 0.7s ease");
-      el.style.setProperty("transition-delay", triggered != null ? `${400 + index * 150}ms` : "0ms");
-      el.style.setProperty("width", triggered != null ? `${(clicks / maxClicks) * 100}%` : "0%");
+      el.style.setProperty("transition-delay", triggered ? `${400 + index * 150}ms` : "0ms");
+      el.style.setProperty("width", triggered ? `${(clicks / maxClicks) * 100}%` : "0%");
     },
     [clicks, index, maxClicks, triggered],
   );

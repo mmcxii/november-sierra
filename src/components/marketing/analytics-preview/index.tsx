@@ -17,7 +17,7 @@ export const AnalyticsPreview: React.FC = () => {
     }
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting != null) {
+        if (entry.isIntersecting) {
           setTriggered(true);
           observer.disconnect();
         }

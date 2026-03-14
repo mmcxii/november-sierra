@@ -110,8 +110,8 @@ export const UsernameStep: React.FC<UsernameStepProps> = (props) => {
           <p className="text-destructive text-center text-xs">{form.formState.errors.root.message}</p>
         )}
 
-        <Button className="w-full" disabled={form.formState.isSubmitting ?? availability !== "available"} type="submit">
-          {form.formState.isSubmitting != null ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
+        <Button className="w-full" disabled={form.formState.isSubmitting || availability !== "available"} type="submit">
+          {form.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
         </Button>
       </form>
     </>

@@ -255,11 +255,11 @@ export const LinkPageMockup: React.FC = () => {
           </button>
 
           <button
-            aria-label={playing != null ? "Pause" : "Play"}
+            aria-label={playing ? "Pause" : "Play"}
             className="m-mockup-nav-btn flex size-7 cursor-pointer items-center justify-center rounded-full backdrop-blur-sm transition-colors"
             onClick={handlePlayPause}
           >
-            {playing != null ? (
+            {playing ? (
               <Pause className="size-3" strokeWidth={1.5} />
             ) : (
               <Play className="size-3 translate-x-px" strokeWidth={1.5} />

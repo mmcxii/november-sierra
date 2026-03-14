@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteLink, reorderLinks } from "@/app/(dashboard)/dashboard/actions";
+import { deleteLink, reorderLinks, toggleLinkVisibility } from "@/app/(dashboard)/dashboard/actions";
 import { LinkForm } from "@/components/dashboard/link-form";
 import { SortableLinkCard } from "@/components/dashboard/sortable-link-card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
 import { Link2, Loader2, Plus } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 export type LinkItem = typeof linksTable.$inferSelect;
 
@@ -69,12 +70,10 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
 
   const handleDialogSuccess = () => {
     setDialogMode(null);
-    setEditingLink(null);
   };
 
   const handleDialogCancel = () => {
     setDialogMode(null);
-    setEditingLink(null);
   };
 
   const handleOpenDelete = (link: LinkItem) => {
@@ -90,6 +89,24 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
     await deleteLink(deletingLink.id);
     setIsDeleting(false);
     setDeletingLink(null);
+  };
+
+  const handleToggleVisibility = async (link: LinkItem) => {
+    // Optimistic update
+    setOrderedLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, visible: !l.visible } : l)));
+
+    const result = await toggleLinkVisibility(link.id);
+
+    if (result.success) {
+      toast.success(
+        link.visible
+          ? t("{{title}}IsNowHidden", { title: link.title })
+          : t("{{title}}IsNowVisible", { title: link.title }),
+      );
+    } else {
+      // Revert on error
+      setOrderedLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, visible: link.visible } : l)));
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -140,11 +157,17 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
 
       {/* Link list */}
       {orderedLinks.length > 0 && (
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors}>
+        <DndContext collisionDetection={closestCenter} id="link-list-dnd" onDragEnd={handleDragEnd} sensors={sensors}>
           <SortableContext items={orderedLinks.map((l) => l.id)} strategy={verticalListSortingStrategy}>
             <ul className="flex flex-col gap-2">
               {orderedLinks.map((link) => (
-                <SortableLinkCard key={link.id} link={link} onDelete={handleOpenDelete} onEdit={handleOpenEdit} />
+                <SortableLinkCard
+                  key={link.id}
+                  link={link}
+                  onDelete={handleOpenDelete}
+                  onEdit={handleOpenEdit}
+                  onToggleVisibility={handleToggleVisibility}
+                />
               ))}
             </ul>
           </SortableContext>
@@ -162,9 +185,9 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{dialogMode === "edit" ? t("editLink") : t("addLink")}</DialogTitle>
+            <DialogTitle>{editingLink != null ? t("editLink") : t("addLink")}</DialogTitle>
             <DialogDescription className="sr-only">
-              {dialogMode === "edit" ? t("editLink") : t("addLink")}
+              {editingLink != null ? t("editLink") : t("addLink")}
             </DialogDescription>
           </DialogHeader>
           <LinkForm
@@ -193,7 +216,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
           </DialogHeader>
           <DialogFooter>
             <Button disabled={isDeleting} onClick={handleConfirmDelete} variant="tertiary">
-              {isDeleting != null && <Loader2 className="size-3.5 animate-spin" />}
+              {isDeleting && <Loader2 className="size-3.5 animate-spin" />}
               {t("delete")}
             </Button>
           </DialogFooter>

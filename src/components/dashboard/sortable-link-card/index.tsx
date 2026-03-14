@@ -2,9 +2,10 @@
 
 import type { LinkItem } from "@/components/dashboard/link-list";
 import { IconButton } from "@/components/ui/icon-button";
+import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ExternalLink, GripVertical, Pencil, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, GripVertical, Pencil, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -12,25 +13,28 @@ export type SortableLinkCardProps = {
   link: LinkItem;
   onDelete: (link: LinkItem) => void;
   onEdit: (link: LinkItem) => void;
+  onToggleVisibility: (link: LinkItem) => void;
 };
 
 export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
-  const { link, onDelete, onEdit } = props;
+  const { link, onDelete, onEdit, onToggleVisibility } = props;
 
   //* State
   const { t } = useTranslation();
   const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({ id: link.id });
 
   //* Variables
+  const VisibilityIcon = link.visible ? Eye : EyeOff;
   const style: React.CSSProperties = {
-    opacity: isDragging != null ? 0.5 : undefined,
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
   return (
     <li
-      className="bg-card border-border flex items-center gap-2 rounded-lg border px-2 py-3"
+      className={cn("bg-card border-border flex items-center gap-2 rounded-lg border px-2 py-3", {
+        "opacity-50": isDragging || !link.visible,
+      })}
       ref={setNodeRef}
       // eslint-disable-next-line anchr/no-inline-style -- dnd-kit requires dynamic transform/transition via inline style
       style={style}
@@ -46,7 +50,14 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className="text-card-foreground truncate text-sm font-medium">{link.title}</p>
+        <p className="text-card-foreground flex items-center gap-1.5 truncate text-sm font-medium">
+          <span className="truncate">{link.title}</span>
+          {!link.visible && (
+            <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-[10px] leading-none font-medium">
+              {t("hidden")}
+            </span>
+          )}
+        </p>
         <a
           className="text-muted-foreground flex items-center gap-1 truncate text-xs hover:underline"
           href={link.url}
@@ -59,6 +70,9 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
+        <IconButton aria-label={link.visible ? t("hideLink") : t("showLink")} onClick={() => onToggleVisibility(link)}>
+          <VisibilityIcon className="size-4" />
+        </IconButton>
         <IconButton aria-label={t("editLink")} onClick={() => onEdit(link)}>
           <Pencil className="size-4" />
         </IconButton>

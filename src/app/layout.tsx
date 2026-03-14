@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PosthogProvider } from "@/components/posthog";
+import { Toaster } from "@/components/ui/sonner";
 import { initTranslations } from "@/lib/i18n/server";
 import { TranslationsProvider } from "@/lib/i18n/translations-provider";
 import { cn } from "@/lib/utils";
@@ -48,8 +49,11 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
     <ClerkProvider>
       <TranslationsProvider locale="en" resources={resources}>
         <PosthogProvider>
-          <html lang="en">
-            <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>{children}</body>
+          <html lang="en" suppressHydrationWarning>
+            <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>
+              {children}
+              <Toaster />
+            </body>
             <Analytics />
           </html>
         </PosthogProvider>
