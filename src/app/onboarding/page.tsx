@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const OnboardingPage: React.FC = async () => {
   const user = await requireUser();
 
-  if (user.onboardingComplete != null) {
+  if (user.onboardingComplete) {
     redirect("/dashboard");
   }
 

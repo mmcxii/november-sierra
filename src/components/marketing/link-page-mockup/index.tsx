@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Anchor, ChevronLeft, ChevronRight, GraduationCap, Pause, Play } from "lucide-react";
 import * as React from "react";
 import { CardBack } from "./card-back";
-import { BASE, FLIP_DURATION, LINKS, SOCIAL_ICONS, THEMES } from "./constants";
+import { BASE, FLIP_DURATION, LINKS, SOCIAL_ICONS, THEMES, applyThemeProperties } from "./constants";
 
 export const LinkPageMockup: React.FC = () => {
   const [rotation, setRotation] = React.useState(BASE);
@@ -70,27 +70,7 @@ export const LinkPageMockup: React.FC = () => {
       if (el == null) {
         return;
       }
-      el.style.setProperty("--_mc-card-bg", theme.cardBg);
-      el.style.setProperty("--_mc-border", theme.border);
-      el.style.setProperty("--_mc-hairline", theme.hairline);
-      el.style.setProperty("--_mc-glow-bg", theme.glowBg);
-      el.style.setProperty("--_mc-avatar-outer-ring", theme.avatarOuterRing);
-      el.style.setProperty("--_mc-avatar-bg", theme.avatarBg);
-      el.style.setProperty("--_mc-avatar-inner-border", theme.avatarInnerBorder);
-      el.style.setProperty("--_mc-anchor-color", theme.anchorColor);
-      el.style.setProperty("--_mc-name-color", theme.nameColor);
-      el.style.setProperty("--_mc-link-text", theme.linkText);
-      el.style.setProperty("--_mc-link-icon-bg", theme.linkIconBg);
-      el.style.setProperty("--_mc-link-icon-color", theme.linkIconColor);
-      el.style.setProperty("--_mc-link-border", theme.linkBorder);
-      el.style.setProperty("--_mc-link-bg", theme.linkBg);
-      el.style.setProperty("--_mc-featured-bg", theme.featuredBg);
-      el.style.setProperty("--_mc-featured-border", theme.featuredBorder);
-      el.style.setProperty("--_mc-featured-icon-bg", theme.featuredIconBg);
-      el.style.setProperty("--_mc-featured-icon-color", theme.featuredIconColor);
-      el.style.setProperty("--_mc-featured-text", theme.featuredText);
-      el.style.setProperty("--_mc-divider", theme.divider);
-      el.style.setProperty("--_mc-brand", theme.brand);
+      applyThemeProperties(el, theme);
     },
     [theme],
   );

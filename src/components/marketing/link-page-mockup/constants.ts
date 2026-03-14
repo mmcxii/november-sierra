@@ -21,6 +21,7 @@ export type CardTheme = {
   glowBg: string;
   hairline: string;
   handle: string;
+  id: string;
   linkBg: string;
   linkBorder: string;
   linkIconBg: string;
@@ -50,6 +51,7 @@ export const THEMES: CardTheme[] = [
     glowBg: "radial-gradient(ellipse, #243550 0%, transparent 70%)",
     hairline: "#d4b896",
     handle: "@calvin",
+    id: "minimal",
     linkBg: "rgba(5,11,20,0.60)",
     linkBorder: "rgba(146,176,190,0.09)",
     linkIconBg: "rgba(146,176,190,0.09)",
@@ -77,6 +79,7 @@ export const THEMES: CardTheme[] = [
     glowBg: "radial-gradient(ellipse, rgba(185,158,90,0.12) 0%, transparent 70%)",
     hairline: "#0a1729",
     handle: "@calvin",
+    id: "stateroom",
     linkBg: "rgba(253,250,242,0.80)",
     linkBorder: "rgba(10,23,41,0.08)",
     linkIconBg: "rgba(10,23,41,0.06)",
@@ -104,6 +107,7 @@ export const THEMES: CardTheme[] = [
     glowBg: "radial-gradient(ellipse, rgba(196,148,128,0.08) 0%, transparent 70%)",
     hairline: "#c49480",
     handle: "@calvin",
+    id: "obsidian",
     linkBg: "rgba(8,6,6,0.70)",
     linkBorder: "rgba(196,148,128,0.10)",
     linkIconBg: "rgba(196,148,128,0.08)",
@@ -131,6 +135,7 @@ export const THEMES: CardTheme[] = [
     glowBg: "radial-gradient(ellipse, rgba(40,160,115,0.18) 0%, transparent 70%)",
     hairline: "#28a070",
     handle: "@calvin",
+    id: "seafoam",
     linkBg: "rgba(200,232,216,0.65)",
     linkBorder: "rgba(40,130,95,0.22)",
     linkIconBg: "rgba(40,130,95,0.15)",
@@ -154,3 +159,27 @@ export const LINKS = [
   { icon: BookOpen, label: "Latest Blog Post" },
   { icon: CalendarDays, label: "Book a Call" },
 ] as const;
+
+export function applyThemeProperties(el: HTMLElement, theme: CardTheme) {
+  el.style.setProperty("--_mc-card-bg", theme.cardBg);
+  el.style.setProperty("--_mc-border", theme.border);
+  el.style.setProperty("--_mc-hairline", theme.hairline);
+  el.style.setProperty("--_mc-glow-bg", theme.glowBg);
+  el.style.setProperty("--_mc-avatar-outer-ring", theme.avatarOuterRing);
+  el.style.setProperty("--_mc-avatar-bg", theme.avatarBg);
+  el.style.setProperty("--_mc-avatar-inner-border", theme.avatarInnerBorder);
+  el.style.setProperty("--_mc-anchor-color", theme.anchorColor);
+  el.style.setProperty("--_mc-name-color", theme.nameColor);
+  el.style.setProperty("--_mc-link-text", theme.linkText);
+  el.style.setProperty("--_mc-link-icon-bg", theme.linkIconBg);
+  el.style.setProperty("--_mc-link-icon-color", theme.linkIconColor);
+  el.style.setProperty("--_mc-link-border", theme.linkBorder);
+  el.style.setProperty("--_mc-link-bg", theme.linkBg);
+  el.style.setProperty("--_mc-featured-bg", theme.featuredBg);
+  el.style.setProperty("--_mc-featured-border", theme.featuredBorder);
+  el.style.setProperty("--_mc-featured-icon-bg", theme.featuredIconBg);
+  el.style.setProperty("--_mc-featured-icon-color", theme.featuredIconColor);
+  el.style.setProperty("--_mc-featured-text", theme.featuredText);
+  el.style.setProperty("--_mc-divider", theme.divider);
+  el.style.setProperty("--_mc-brand", theme.brand);
+}
