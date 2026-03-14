@@ -93,7 +93,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="link-url">{t("url")}</Label>
-        <Input disabled={isSubmitting} id="link-url" placeholder="https://" type="url" {...register("url")} />
+        <Input disabled={isSubmitting} id="link-url" placeholder="https://" {...register("url")} />
         {errors.url != null && <p className="text-destructive text-xs">{errors.url.message}</p>}
       </div>
       {errors.root != null && <p className="text-destructive text-center text-xs">{errors.root.message}</p>}
