@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { ensureProtocol } from "./url";
+import { describe, expect, it, vi } from "vitest";
+import { ensureProtocol, isSafeUrl, urlResolves } from "./url";
 
 describe("ensureProtocol", () => {
   it("prepends https:// when no protocol is present", () => {
@@ -78,5 +78,146 @@ describe("ensureProtocol", () => {
     //* Assert
     expect(httpsResult).toBe("HTTPS://example.com");
     expect(httpResult).toBe("HTTP://example.com");
+  });
+});
+
+describe("isSafeUrl", () => {
+  it("allows a normal https URL", () => {
+    //* Act
+    const result = isSafeUrl("https://example.com");
+
+    //* Assert
+    expect(result).toBe(true);
+  });
+
+  it("allows a URL without protocol", () => {
+    //* Act
+    const result = isSafeUrl("example.com");
+
+    //* Assert
+    expect(result).toBe(true);
+  });
+
+  it("blocks javascript: URLs", () => {
+    //* Act
+    const result = isSafeUrl("javascript:alert(1)");
+
+    //* Assert
+    expect(result).toBe(false);
+  });
+
+  it("blocks JavaScript: URLs (case-insensitive)", () => {
+    //* Act
+    const result = isSafeUrl("JavaScript:alert(1)");
+
+    //* Assert
+    expect(result).toBe(false);
+  });
+
+  it("blocks data: URLs", () => {
+    //* Act
+    const result = isSafeUrl("data:text/html,<script>alert(1)</script>");
+
+    //* Assert
+    expect(result).toBe(false);
+  });
+
+  it("blocks vbscript: URLs", () => {
+    //* Act
+    const result = isSafeUrl("vbscript:MsgBox");
+
+    //* Assert
+    expect(result).toBe(false);
+  });
+
+  it("blocks anchr.to URLs", () => {
+    //* Act
+    const result = isSafeUrl("https://anchr.to/someone");
+
+    //* Assert
+    expect(result).toBe(false);
+  });
+
+  it("blocks www.anchr.to URLs", () => {
+    //* Act
+    const result = isSafeUrl("https://www.anchr.to/someone");
+
+    //* Assert
+    expect(result).toBe(false);
+  });
+
+  it("blocks anchr.to without protocol", () => {
+    //* Act
+    const result = isSafeUrl("anchr.to/someone");
+
+    //* Assert
+    expect(result).toBe(false);
+  });
+
+  it("allows anchr.to subdomains", () => {
+    //* Act
+    const result = isSafeUrl("https://blog.anchr.to/post");
+
+    //* Assert
+    expect(result).toBe(true);
+  });
+
+  it("blocks javascript: with leading whitespace", () => {
+    //* Act
+    const result = isSafeUrl("  javascript:alert(1)");
+
+    //* Assert
+    expect(result).toBe(false);
+  });
+});
+
+describe("urlResolves", () => {
+  it("returns true for a URL that responds with 200", async () => {
+    //* Arrange
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
+
+    //* Act
+    const result = await urlResolves("https://example.com");
+
+    //* Assert
+    expect(result).toBe(true);
+    vi.restoreAllMocks();
+  });
+
+  it("returns false for a URL that responds with 404", async () => {
+    //* Arrange
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+
+    //* Act
+    const result = await urlResolves("https://example.com/nonexistent");
+
+    //* Assert
+    expect(result).toBe(false);
+    vi.restoreAllMocks();
+  });
+
+  it("returns false when fetch throws (network error)", async () => {
+    //* Arrange
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network error")));
+
+    //* Act
+    const result = await urlResolves("https://doesnotexist.invalid");
+
+    //* Assert
+    expect(result).toBe(false);
+    vi.restoreAllMocks();
+  });
+
+  it("prepends https:// when no protocol is present", async () => {
+    //* Arrange
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", mockFetch);
+
+    //* Act
+    await urlResolves("example.com");
+
+    //* Assert
+    expect(mockFetch).toHaveBeenCalledWith("https://example.com", expect.objectContaining({ method: "HEAD" }));
+    vi.restoreAllMocks();
   });
 });

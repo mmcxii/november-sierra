@@ -78,4 +78,48 @@ describe("linkSchema", () => {
     //* Assert
     expect(result.success).toBe(false);
   });
+
+  it("rejects a javascript: URL", () => {
+    //* Arrange
+    const input = { title: "Test", url: "javascript:alert(1)" };
+
+    //* Act
+    const result = linkSchema.safeParse(input);
+
+    //* Assert
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a data: URL", () => {
+    //* Arrange
+    const input = { title: "Test", url: "data:text/html,<h1>hi</h1>" };
+
+    //* Act
+    const result = linkSchema.safeParse(input);
+
+    //* Assert
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an anchr.to URL", () => {
+    //* Arrange
+    const input = { title: "Test", url: "https://anchr.to/someone" };
+
+    //* Act
+    const result = linkSchema.safeParse(input);
+
+    //* Assert
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects anchr.to without protocol", () => {
+    //* Arrange
+    const input = { title: "Test", url: "anchr.to/someone" };
+
+    //* Act
+    const result = linkSchema.safeParse(input);
+
+    //* Assert
+    expect(result.success).toBe(false);
+  });
 });

@@ -1,4 +1,4 @@
-import { ensureProtocol } from "@/lib/utils/url";
+import { ensureProtocol, isSafeUrl } from "@/lib/utils/url";
 import { z } from "zod";
 
 const urlValidator = z.string().url();
@@ -8,7 +8,8 @@ export const linkSchema = z.object({
   url: z
     .string()
     .min(1)
-    .refine((val) => urlValidator.safeParse(ensureProtocol(val)).success, { message: "Invalid URL" }),
+    .refine((val) => urlValidator.safeParse(ensureProtocol(val)).success, { message: "pleaseEnterAValidUrl" })
+    .refine((val) => isSafeUrl(val), { message: "thisUrlIsNotAllowed" }),
 });
 
 export type LinkValues = z.infer<typeof linkSchema>;

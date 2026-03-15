@@ -89,12 +89,12 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
           }}
           {...titleRegisterRest}
         />
-        {errors.title != null && <p className="text-destructive text-xs">{errors.title.message}</p>}
+        {errors.title?.message != null && <p className="text-destructive text-xs">{t(errors.title.message)}</p>}
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="link-url">{t("url")}</Label>
         <Input disabled={isSubmitting} id="link-url" placeholder="https://" {...register("url")} />
-        {errors.url != null && <p className="text-destructive text-xs">{errors.url.message}</p>}
+        {errors.url?.message != null && <p className="text-destructive text-xs">{t(errors.url.message)}</p>}
       </div>
       {errors.root != null && <p className="text-destructive text-center text-xs">{errors.root.message}</p>}
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-start">
