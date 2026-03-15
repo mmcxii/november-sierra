@@ -21,15 +21,15 @@ const DashboardPage: React.FC = async () => {
     .where(eq(linksTable.userId, user.id))
     .orderBy(asc(linksTable.position));
 
+  const previewKey = links.map((l) => `${l.id}:${l.position}:${l.visible}:${l.title}:${l.url}`).join();
+
   return (
     <div className="flex gap-8">
       {/* Link management */}
       <div className="min-w-0 flex-1">
         {/* Mobile preview button */}
         <div className="mb-4 flex justify-end xl:hidden">
-          <PreviewToggle>
-            <PagePreview links={links} user={user} />
-          </PreviewToggle>
+          <PreviewToggle previewKey={previewKey} user={user} />
         </div>
 
         <LinkList links={links} />
@@ -38,7 +38,7 @@ const DashboardPage: React.FC = async () => {
       {/* Desktop preview panel */}
       <aside className="hidden w-72 shrink-0 xl:block">
         <div className="sticky top-6">
-          <PagePreview links={links} user={user} />
+          <PagePreview previewKey={previewKey} user={user} />
         </div>
       </aside>
     </div>

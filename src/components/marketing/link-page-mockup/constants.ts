@@ -160,26 +160,33 @@ export const LINKS = [
   { icon: CalendarDays, label: "Book a Call" },
 ] as const;
 
+/** CSS variable name → CardTheme property key mapping. Single source of truth. */
+export const THEME_CSS_VARS: Record<string, keyof CardTheme> = {
+  "--_mc-anchor-color": "anchorColor",
+  "--_mc-avatar-bg": "avatarBg",
+  "--_mc-avatar-inner-border": "avatarInnerBorder",
+  "--_mc-avatar-outer-ring": "avatarOuterRing",
+  "--_mc-border": "border",
+  "--_mc-brand": "brand",
+  "--_mc-card-bg": "cardBg",
+  "--_mc-divider": "divider",
+  "--_mc-featured-bg": "featuredBg",
+  "--_mc-featured-border": "featuredBorder",
+  "--_mc-featured-icon-bg": "featuredIconBg",
+  "--_mc-featured-icon-color": "featuredIconColor",
+  "--_mc-featured-text": "featuredText",
+  "--_mc-glow-bg": "glowBg",
+  "--_mc-hairline": "hairline",
+  "--_mc-link-bg": "linkBg",
+  "--_mc-link-border": "linkBorder",
+  "--_mc-link-icon-bg": "linkIconBg",
+  "--_mc-link-icon-color": "linkIconColor",
+  "--_mc-link-text": "linkText",
+  "--_mc-name-color": "nameColor",
+};
+
 export function applyThemeProperties(el: HTMLElement, theme: CardTheme) {
-  el.style.setProperty("--_mc-card-bg", theme.cardBg);
-  el.style.setProperty("--_mc-border", theme.border);
-  el.style.setProperty("--_mc-hairline", theme.hairline);
-  el.style.setProperty("--_mc-glow-bg", theme.glowBg);
-  el.style.setProperty("--_mc-avatar-outer-ring", theme.avatarOuterRing);
-  el.style.setProperty("--_mc-avatar-bg", theme.avatarBg);
-  el.style.setProperty("--_mc-avatar-inner-border", theme.avatarInnerBorder);
-  el.style.setProperty("--_mc-anchor-color", theme.anchorColor);
-  el.style.setProperty("--_mc-name-color", theme.nameColor);
-  el.style.setProperty("--_mc-link-text", theme.linkText);
-  el.style.setProperty("--_mc-link-icon-bg", theme.linkIconBg);
-  el.style.setProperty("--_mc-link-icon-color", theme.linkIconColor);
-  el.style.setProperty("--_mc-link-border", theme.linkBorder);
-  el.style.setProperty("--_mc-link-bg", theme.linkBg);
-  el.style.setProperty("--_mc-featured-bg", theme.featuredBg);
-  el.style.setProperty("--_mc-featured-border", theme.featuredBorder);
-  el.style.setProperty("--_mc-featured-icon-bg", theme.featuredIconBg);
-  el.style.setProperty("--_mc-featured-icon-color", theme.featuredIconColor);
-  el.style.setProperty("--_mc-featured-text", theme.featuredText);
-  el.style.setProperty("--_mc-divider", theme.divider);
-  el.style.setProperty("--_mc-brand", theme.brand);
+  for (const [cssVar, key] of Object.entries(THEME_CSS_VARS)) {
+    el.style.setProperty(cssVar, theme[key]);
+  }
 }

@@ -1,50 +1,52 @@
-import { THEMES } from "@/components/marketing/link-page-mockup/constants";
+import { THEMES, THEME_CSS_VARS } from "@/components/marketing/link-page-mockup/constants";
 import { describe, expect, it } from "vitest";
-import { getCardTheme } from "./utils";
+import { getCardTheme, getThemeStyle } from "./utils";
 
 describe("getCardTheme", () => {
-  it("returns Dark Depths for 'minimal'", () => {
+  it("returns matching theme for a known ID", () => {
+    //* Arrange
+    const theme = THEMES[2];
+
     //* Act
-    const result = getCardTheme("minimal");
+    const result = getCardTheme(theme.id);
 
     //* Assert
-    expect(result.themeName).toBe("Dark Depths");
+    expect(result).toBe(theme);
+  });
+
+  it("falls back to the first theme for an unknown ID", () => {
+    //* Act
+    const result = getCardTheme("nonexistent");
+
+    //* Assert
     expect(result).toBe(THEMES[0]);
   });
+});
 
-  it("returns Stateroom for 'stateroom'", () => {
+describe("getThemeStyle", () => {
+  it("returns a CSS variable entry for every key in THEME_CSS_VARS", () => {
+    //* Arrange
+    const theme = THEMES[0];
+
     //* Act
-    const result = getCardTheme("stateroom");
+    const style = getThemeStyle(theme);
 
     //* Assert
-    expect(result.themeName).toBe("Stateroom");
-    expect(result).toBe(THEMES[1]);
+    const cssVarNames = Object.keys(THEME_CSS_VARS);
+    expect(Object.keys(style)).toEqual(expect.arrayContaining(cssVarNames));
+    expect(Object.keys(style)).toHaveLength(cssVarNames.length);
   });
 
-  it("returns Obsidian for 'obsidian'", () => {
+  it("maps each CSS variable to the correct theme value", () => {
+    //* Arrange
+    const theme = THEMES[1];
+
     //* Act
-    const result = getCardTheme("obsidian");
+    const style = getThemeStyle(theme);
 
     //* Assert
-    expect(result.themeName).toBe("Obsidian");
-    expect(result).toBe(THEMES[2]);
-  });
-
-  it("returns Seafoam for 'seafoam'", () => {
-    //* Act
-    const result = getCardTheme("seafoam");
-
-    //* Assert
-    expect(result.themeName).toBe("Seafoam");
-    expect(result).toBe(THEMES[3]);
-  });
-
-  it("falls back to Dark Depths for unknown theme ID", () => {
-    //* Act
-    const result = getCardTheme("unknown");
-
-    //* Assert
-    expect(result.themeName).toBe("Dark Depths");
-    expect(result).toBe(THEMES[0]);
+    for (const [cssVar, key] of Object.entries(THEME_CSS_VARS)) {
+      expect(style[cssVar]).toBe(theme[key]);
+    }
   });
 });
