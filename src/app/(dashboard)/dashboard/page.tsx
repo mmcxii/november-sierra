@@ -21,7 +21,7 @@ const DashboardPage: React.FC = async () => {
     .where(eq(linksTable.userId, user.id))
     .orderBy(asc(linksTable.position));
 
-  const previewKey = links.map((l) => `${l.id}:${l.position}:${l.visible}:${l.title}:${l.url}`).join();
+  const previewKey = links.map((l) => `${l.id}:${l.position}:${l.visible}:${l.title}:${l.url}:${l.slug}`).join();
 
   return (
     <div className="flex gap-8">
@@ -32,7 +32,7 @@ const DashboardPage: React.FC = async () => {
           <PreviewToggle previewKey={previewKey} user={user} />
         </div>
 
-        <LinkList links={links} />
+        <LinkList links={links} username={user.username} />
       </div>
 
       {/* Desktop preview panel */}

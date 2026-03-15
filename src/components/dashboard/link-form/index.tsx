@@ -2,10 +2,11 @@
 
 import { createLink, updateLink } from "@/app/(dashboard)/dashboard/actions";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type LinkValues, linkSchema } from "@/lib/schemas/link";
-import { ensureProtocol } from "@/lib/utils/url";
+import { ensureProtocol, generateSlug } from "@/lib/utils/url";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Loader2 } from "lucide-react";
 import * as React from "react";
@@ -13,12 +14,14 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 export type LinkFormProps = {
-  defaultValues?: { id: string; title: string; url: string };
+  defaultValues?: { id: string; slug: string; title: string; url: string };
+  existingSlugs: string[];
+  username: string;
   onSuccess: () => void;
 };
 
 export const LinkForm: React.FC<LinkFormProps> = (props) => {
-  const { defaultValues, onSuccess } = props;
+  const { defaultValues, existingSlugs, onSuccess, username } = props;
 
   //* State
   const { t } = useTranslation();
@@ -28,44 +31,87 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
     register,
     reset,
     setError,
+    watch,
   } = useForm<LinkValues>({
-    defaultValues: defaultValues != null ? { title: defaultValues.title, url: defaultValues.url } : undefined,
+    defaultValues:
+      defaultValues != null
+        ? { slug: defaultValues.slug, title: defaultValues.title, url: defaultValues.url }
+        : undefined,
     resolver: standardSchemaResolver(linkSchema),
   });
+
+  const [skipUrlCheck, setSkipUrlCheck] = React.useState(false);
+  const [showSkipUrlCheck, setShowSkipUrlCheck] = React.useState(false);
 
   //* Refs
   const titleRef = React.useRef<null | HTMLInputElement>(null);
 
   //* Variables
   const isEditing = defaultValues != null;
+  const urlValue = watch("url");
+  const slugPlaceholder = urlValue != null && urlValue.length > 0 ? generateSlug(ensureProtocol(urlValue)) : "";
   const { ref: titleRegisterRef, ...titleRegisterRest } = register("title");
+  const URL_UNREACHABLE_KEY = "thisUrlCouldNotBeReachedPleaseCheckItAndTryAgain";
 
   //* Handlers
-  const onSubmit = async (data: LinkValues) => {
-    const url = ensureProtocol(data.url);
+  const validateSlugUniqueness = (slug: undefined | string): boolean => {
+    if (slug == null || slug.length === 0) {
+      return true; // Empty slug means auto-generate
+    }
+    const otherSlugs = isEditing ? existingSlugs.filter((s) => s !== defaultValues.slug) : existingSlugs;
+    if (otherSlugs.includes(slug)) {
+      setError("slug", { message: t("thisSlugIsAlreadyInUse") });
+      return false;
+    }
+    return true;
+  };
 
-    const result = isEditing ? await updateLink(defaultValues.id, data.title, url) : await createLink(data.title, url);
+  const handleActionError = (error: undefined | string): void => {
+    const key = error ?? "somethingWentWrongPleaseTryAgain";
 
-    if (!result.success) {
-      setError("root", { message: t(result.error ?? "somethingWentWrongPleaseTryAgain") });
+    if (key === URL_UNREACHABLE_KEY) {
+      setError("url", { message: t(key) });
+      setShowSkipUrlCheck(true);
       return;
     }
 
-    onSuccess();
+    setError("root", { message: t(key) });
+  };
+
+  const submitLink = async (data: LinkValues): Promise<boolean> => {
+    if (!validateSlugUniqueness(data.slug)) {
+      return false;
+    }
+
+    const url = ensureProtocol(data.url);
+
+    const result = isEditing
+      ? await updateLink(defaultValues.id, data.title, url, data.slug, skipUrlCheck)
+      : await createLink(data.title, url, data.slug, skipUrlCheck);
+
+    if (!result.success) {
+      handleActionError(result.error);
+      return false;
+    }
+
+    return true;
+  };
+
+  const onSubmit = async (data: LinkValues) => {
+    if (await submitLink(data)) {
+      onSuccess();
+    }
   };
 
   const handleSaveAndAddAnother = () => {
     handleSubmit(async (data: LinkValues) => {
-      const url = ensureProtocol(data.url);
-
-      const result = await createLink(data.title, url);
-
-      if (!result.success) {
-        setError("root", { message: t(result.error ?? "somethingWentWrongPleaseTryAgain") });
+      if (!(await submitLink(data))) {
         return;
       }
 
       reset();
+      setSkipUrlCheck(false);
+      setShowSkipUrlCheck(false);
       titleRef.current?.focus();
     })();
   };
@@ -74,6 +120,12 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
   React.useEffect(() => {
     titleRef.current?.focus();
   }, []);
+
+  // Reset skip URL check when URL changes
+  React.useEffect(() => {
+    setSkipUrlCheck(false);
+    setShowSkipUrlCheck(false);
+  }, [urlValue]);
 
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
@@ -94,7 +146,29 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
       <div className="flex flex-col gap-2">
         <Label htmlFor="link-url">{t("url")}</Label>
         <Input disabled={isSubmitting} id="link-url" placeholder="https://" {...register("url")} />
-        {errors.url?.message != null && <p className="text-destructive text-xs">{t(errors.url.message)}</p>}
+        {errors.url?.message != null && <p className="text-destructive text-xs">{errors.url.message}</p>}
+        {showSkipUrlCheck && (
+          <label className="flex items-center gap-2">
+            <Checkbox checked={skipUrlCheck} onCheckedChange={(checked) => setSkipUrlCheck(checked === true)} />
+            <span className="text-muted-foreground text-xs">{t("saveAnyway")}</span>
+          </label>
+        )}
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="link-slug">{t("redirectUrl")}</Label>
+        <div className="border-input focus-within:border-ring focus-within:ring-ring/50 flex h-9 items-center overflow-hidden rounded-md border shadow-xs focus-within:ring-[3px]">
+          <span className="text-muted-foreground bg-muted flex h-full shrink-0 items-center border-r px-2.5 text-xs">
+            anchr.to/{username}/
+          </span>
+          <input
+            className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent px-2.5 text-sm outline-none disabled:pointer-events-none disabled:opacity-50"
+            disabled={isSubmitting}
+            id="link-slug"
+            placeholder={slugPlaceholder}
+            {...register("slug")}
+          />
+        </div>
+        {errors.slug?.message != null && <p className="text-destructive text-xs">{t(errors.slug.message)}</p>}
       </div>
       {errors.root != null && <p className="text-destructive text-center text-xs">{errors.root.message}</p>}
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-start">

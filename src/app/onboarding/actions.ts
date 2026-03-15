@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db/client";
+import { generateUniqueSlug } from "@/lib/db/queries/link";
 import { linksTable } from "@/lib/db/schema/link";
 import { usersTable } from "@/lib/db/schema/user";
 import { linkSchema } from "@/lib/schemas/link";
@@ -93,6 +94,8 @@ export async function addFirstLink(title: string, url: string): Promise<AddLinkR
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
+  const slug = await generateUniqueSlug(userId, result.data.url);
+
   const maxPosition = await db
     .select({ max: sql<number>`coalesce(max(${linksTable.position}), -1)` })
     .from(linksTable)
@@ -100,6 +103,7 @@ export async function addFirstLink(title: string, url: string): Promise<AddLinkR
 
   await db.insert(linksTable).values({
     position: (maxPosition[0]?.max ?? -1) + 1,
+    slug,
     title: result.data.title,
     url: result.data.url,
     userId,

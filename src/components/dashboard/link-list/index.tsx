@@ -44,10 +44,11 @@ export type LinkItem = typeof linksTable.$inferSelect;
 
 export type LinkListProps = {
   links: LinkItem[];
+  username: string;
 };
 
 export const LinkList: React.FC<LinkListProps> = (props) => {
-  const { links } = props;
+  const { links, username } = props;
 
   //* State
   const { t } = useTranslation();
@@ -301,6 +302,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                   onSelect={handleSelectLink}
                   onToggleVisibility={handleToggleVisibility}
                   selected={selectedIds.has(link.id)}
+                  username={username}
                 />
               ))}
             </ul>
@@ -326,10 +328,14 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
           </DialogHeader>
           <LinkForm
             defaultValues={
-              editingLink != null ? { id: editingLink.id, title: editingLink.title, url: editingLink.url } : undefined
+              editingLink != null
+                ? { id: editingLink.id, slug: editingLink.slug, title: editingLink.title, url: editingLink.url }
+                : undefined
             }
+            existingSlugs={orderedLinks.map((l) => l.slug)}
             key={dialogKey}
             onSuccess={handleDialogSuccess}
+            username={username}
           />
         </DialogContent>
       </Dialog>

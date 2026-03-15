@@ -2,9 +2,10 @@
 
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db/client";
+import { generateUniqueSlug } from "@/lib/db/queries/link";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkSchema } from "@/lib/schemas/link";
-import { ensureProtocol, urlResolves } from "@/lib/utils/url";
+import { ensureProtocol, generateSlug, urlResolves } from "@/lib/utils/url";
 import { and, eq, inArray, not, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -18,7 +19,12 @@ export type ActionResult = {
   success: boolean;
 };
 
-export async function createLink(title: string, url: string): Promise<ActionResult> {
+export async function createLink(
+  title: string,
+  url: string,
+  customSlug?: string,
+  skipUrlCheck?: boolean,
+): Promise<ActionResult> {
   const user = await getCurrentUser();
 
   if (user == null) {
@@ -33,9 +39,11 @@ export async function createLink(title: string, url: string): Promise<ActionResu
 
   const fullUrl = ensureProtocol(result.data.url);
 
-  if (!(await urlResolves(fullUrl))) {
+  if (!skipUrlCheck && !(await urlResolves(fullUrl))) {
     return { error: "thisUrlCouldNotBeReachedPleaseCheckItAndTryAgain", success: false };
   }
+
+  const slug = customSlug != null && customSlug.length > 0 ? customSlug : await generateUniqueSlug(user.id, fullUrl);
 
   const maxPosition = await db
     .select({ max: sql<number>`coalesce(max(${linksTable.position}), -1)` })
@@ -44,6 +52,7 @@ export async function createLink(title: string, url: string): Promise<ActionResu
 
   await db.insert(linksTable).values({
     position: (maxPosition[0]?.max ?? -1) + 1,
+    slug,
     title: result.data.title,
     url: fullUrl,
     userId: user.id,
@@ -54,7 +63,13 @@ export async function createLink(title: string, url: string): Promise<ActionResu
   return { success: true };
 }
 
-export async function updateLink(id: string, title: string, url: string): Promise<ActionResult> {
+export async function updateLink(
+  id: string,
+  title: string,
+  url: string,
+  customSlug?: string,
+  skipUrlCheck?: boolean,
+): Promise<ActionResult> {
   const user = await getCurrentUser();
 
   if (user == null) {
@@ -69,13 +84,35 @@ export async function updateLink(id: string, title: string, url: string): Promis
 
   const fullUrl = ensureProtocol(result.data.url);
 
-  if (!(await urlResolves(fullUrl))) {
+  if (!skipUrlCheck && !(await urlResolves(fullUrl))) {
     return { error: "thisUrlCouldNotBeReachedPleaseCheckItAndTryAgain", success: false };
+  }
+
+  // Check if domain changed — regenerate slug if so
+  const existingLinks = await db
+    .select({ slug: linksTable.slug, url: linksTable.url })
+    .from(linksTable)
+    .where(and(eq(linksTable.id, id), eq(linksTable.userId, user.id)))
+    .limit(1);
+
+  const existingLink = existingLinks[0];
+
+  if (existingLink == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  let slug: string;
+  if (customSlug != null && customSlug.length > 0) {
+    slug = customSlug;
+  } else {
+    const oldSlug = generateSlug(existingLink.url);
+    const newSlug = generateSlug(fullUrl);
+    slug = oldSlug !== newSlug ? await generateUniqueSlug(user.id, fullUrl) : existingLink.slug;
   }
 
   const updated = await db
     .update(linksTable)
-    .set({ title: result.data.title, url: fullUrl })
+    .set({ slug, title: result.data.title, url: fullUrl })
     .where(and(eq(linksTable.id, id), eq(linksTable.userId, user.id)));
 
   if (updated.rowCount === 0) {
