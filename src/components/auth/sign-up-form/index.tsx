@@ -11,7 +11,6 @@ import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
@@ -19,7 +18,6 @@ import { Trans, useTranslation } from "react-i18next";
 export const SignUpForm: React.FC = () => {
   //* State
   const { t } = useTranslation();
-  const router = useRouter();
   const { isLoaded, setActive, signUp } = useSignUp();
   const [verifying, setVerifying] = React.useState(false);
   const signUpForm = useForm<SignUpValues>({ resolver: standardSchemaResolver(signUpSchema) });
@@ -72,7 +70,7 @@ export const SignUpForm: React.FC = () => {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/onboarding");
+        window.location.replace("/onboarding");
       }
     } catch (err) {
       handleClerkError(verifyForm, err);
@@ -93,7 +91,7 @@ export const SignUpForm: React.FC = () => {
 
   if (verifying) {
     return (
-      <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" variant="featured">
+      <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" key="verify" variant="featured">
         <div className="flex flex-col items-center">
           <span className="text-xs tracking-[0.35em] text-[rgb(var(--m-muted))] uppercase">{t("welcomeTo")}</span>
           <SiteWordmark size="xl" />
@@ -145,7 +143,7 @@ export const SignUpForm: React.FC = () => {
   }
 
   return (
-    <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" variant="featured">
+    <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" key="sign-up" variant="featured">
       <div className="flex flex-col items-center">
         <span className="text-xs tracking-[0.35em] text-[rgb(var(--m-muted))] uppercase">{t("welcomeTo")}</span>
         <SiteWordmark size="xl" />

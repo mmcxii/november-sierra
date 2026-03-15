@@ -72,8 +72,7 @@ export const LinkStep: React.FC<LinkStepProps> = (props) => {
               disabled={submitting}
               id="linkUrl"
               onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="https://example.com"
-              type="url"
+              placeholder="https://"
               value={linkUrl}
             />
           </div>
