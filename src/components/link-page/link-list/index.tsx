@@ -2,11 +2,12 @@ import { Link2 } from "lucide-react";
 import * as React from "react";
 
 export type LinkListProps = {
-  links: { id: string; title: string; url: string }[];
+  links: { id: string; slug: string; title: string; url: string }[];
+  username: string;
 };
 
 export const LinkList: React.FC<LinkListProps> = (props) => {
-  const { links } = props;
+  const { links, username } = props;
 
   if (links.length === 0) {
     return null;
@@ -17,7 +18,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
       {links.map((link) => (
         <a
           className="border-anc-theme-link-border bg-anc-theme-link-bg flex min-h-[52px] items-center gap-3 rounded-xl border px-4 py-3 transition-transform hover:scale-[1.02] active:scale-[0.98]"
-          href={link.url}
+          href={`/${username}/${link.slug}`}
           key={link.id}
           rel="noopener noreferrer"
           target="_blank"

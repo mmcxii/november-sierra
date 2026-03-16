@@ -27,7 +27,7 @@ async function getPageData(username: string) {
   }
 
   const links = await db
-    .select({ id: linksTable.id, title: linksTable.title, url: linksTable.url })
+    .select({ id: linksTable.id, slug: linksTable.slug, title: linksTable.title, url: linksTable.url })
     .from(linksTable)
     .where(and(eq(linksTable.userId, user.id), eq(linksTable.visible, true)))
     .orderBy(asc(linksTable.position));
@@ -111,7 +111,7 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
 
       <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col items-center gap-6 px-5 pt-10">
         <ProfileHeader avatarUrl={user.avatarUrl} displayName={user.displayName} username={user.username} />
-        <LinkList links={links} />
+        <LinkList links={links} username={user.username} />
       </div>
       <Container className="relative pb-8">
         <Footer />

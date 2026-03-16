@@ -1,5 +1,4 @@
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
-import { DashboardThemeProvider } from "@/components/dashboard/theme-provider";
 import { Container } from "@/components/ui/container";
 import { requireUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -18,14 +17,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = async (props) => {
   }
 
   return (
-    <DashboardThemeProvider>
-      <div className="bg-background text-foreground flex min-h-dvh flex-col lg:flex-row">
-        <DashboardSidebar user={user} />
-        <Container as="main" className="flex-1 overflow-y-auto py-6">
-          {children}
-        </Container>
-      </div>
-    </DashboardThemeProvider>
+    <div className="bg-background text-foreground flex min-h-dvh flex-col lg:flex-row">
+      <DashboardSidebar user={user} />
+      <Container as="main" className="flex-1 overflow-y-auto py-6">
+        {children}
+      </Container>
+    </div>
   );
 };
 

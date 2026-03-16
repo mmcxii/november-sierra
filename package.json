@@ -20,10 +20,12 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
     "react-i18next": "^16.5.4",
+    "recharts": "^3.8.0",
     "simple-icons": "^16.9.0",
     "sonner": "^2.0.7",
     "svix": "^1.86.0",
-    "tailwind-merge": "^3.4.1"
+    "tailwind-merge": "^3.4.1",
+    "ua-parser-js": "^2.0.9"
   },
   "devDependencies": {
     "@clerk/backend": "^3.0.1",
@@ -33,6 +35,7 @@
     "@types/node": "25.2.3",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@types/ua-parser-js": "^0.7.39",
     "@typescript-eslint/rule-tester": "8.55.0",
     "@typescript-eslint/type-utils": "8.55.0",
     "@typescript-eslint/utils": "8.55.0",

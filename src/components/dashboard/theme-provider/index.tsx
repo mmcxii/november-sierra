@@ -12,7 +12,8 @@ export const DashboardThemeProvider: React.FC<DashboardThemeProviderProps> = (pr
   return (
     <ThemeProvider
       attribute="data-theme"
-      defaultTheme="system"
+      defaultTheme="dark"
+      disableTransitionOnChange
       enableSystem
       storageKey="anchr-ui-theme"
       themes={["light", "dark", ...THEME_IDS]}

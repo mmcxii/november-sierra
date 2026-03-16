@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 
 /* Keep in sync with DARK_THEME_IDS in src/lib/themes.ts */
-@custom-variant dark (&:is([data-theme="dark-depths"] *, [data-theme="obsidian"] *));
+@custom-variant dark (&:is([data-theme="dark"] *, [data-theme="dark-depths"] *, [data-theme="obsidian"] *));
 
 .debug {
   border: 1px solid red;
@@ -94,6 +94,7 @@
 /* ── Theme: Stateroom (default) ─────────────────────────────────────────── */
 
 :root,
+[data-theme="light"],
 [data-theme="stateroom"] {
   /* Page */
   --anc-background: var(--anc-cream);
@@ -163,6 +164,7 @@
 
 /* ── Theme: Dark Depths ─────────────────────────────────────────────────── */
 
+[data-theme="dark"],
 [data-theme="dark-depths"] {
   /* Page */
   --anc-background: var(--anc-deep-navy);

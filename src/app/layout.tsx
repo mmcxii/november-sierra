@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { DashboardThemeProvider } from "@/components/dashboard/theme-provider";
 import { PosthogProvider } from "@/components/posthog";
 import { Toaster } from "@/components/ui/sonner";
 import { initTranslations } from "@/lib/i18n/server";
@@ -49,10 +50,12 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
     <ClerkProvider>
       <TranslationsProvider locale="en" resources={resources}>
         <PosthogProvider>
-          <html lang="en" suppressHydrationWarning>
+          <html className="[color-scheme:dark]" data-theme="dark-depths" lang="en" suppressHydrationWarning>
             <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>
-              {children}
-              <Toaster />
+              <DashboardThemeProvider>
+                {children}
+                <Toaster />
+              </DashboardThemeProvider>
             </body>
             <Analytics />
           </html>
