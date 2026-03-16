@@ -17,8 +17,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = (props) => {
   return (
     <div className="flex flex-col items-center pt-2">
       <div className="relative mb-4">
-        <div className="flex size-20 items-center justify-center rounded-full border border-[var(--_mc-avatar-outer-ring)]">
-          <div className="flex size-16 items-center justify-center rounded-full border border-[var(--_mc-avatar-inner-border)] bg-[var(--_mc-avatar-bg)]">
+        <div className="border-anc-theme-avatar-outer-ring flex size-20 items-center justify-center rounded-full border">
+          <div className="border-anc-theme-avatar-inner-border bg-anc-theme-avatar-bg flex size-16 items-center justify-center rounded-full border">
             {avatarUrl != null ? (
               <Image
                 alt={name}
@@ -29,13 +29,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = (props) => {
                 width={64}
               />
             ) : (
-              <Anchor className="size-7 text-[var(--_mc-anchor-color)]" strokeWidth={1.25} />
+              <Anchor className="text-anc-theme-anchor size-7" strokeWidth={1.25} />
             )}
           </div>
         </div>
       </div>
-      <h1 className="text-lg font-bold tracking-wide text-[var(--_mc-name-color)]">{name}</h1>
-      <p className="mt-0.5 text-xs font-medium tracking-[0.2em] text-[var(--_mc-link-text)] uppercase">@{username}</p>
+      <h1 className="text-anc-theme-name text-lg font-bold tracking-wide">{name}</h1>
+      <p className="tracking-anc-caps text-anc-theme-link-text mt-0.5 text-xs font-medium uppercase">@{username}</p>
     </div>
   );
 };

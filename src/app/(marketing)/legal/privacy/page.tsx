@@ -1,5 +1,6 @@
 import { Footer } from "@/components/marketing/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { Container } from "@/components/ui/container";
 import { initTranslations } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 
@@ -45,14 +46,14 @@ const PrivacyPage: React.FC = async () => {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
+      <Container as="main" className="max-w-2xl flex-1 py-16 xl:max-w-2xl">
         {/* Header */}
         <div className="mb-16">
-          <p className="mb-3 text-xs font-medium tracking-[0.2em] text-[#92b0be]/50 uppercase">
+          <p className="tracking-anc-caps text-anc-steel/50 mb-3 text-xs font-medium uppercase">
             Last updated February 22, 2026
           </p>
-          <h1 className="mb-6 text-4xl font-bold tracking-tight text-white">Privacy Policy</h1>
-          <p className="text-lg leading-relaxed text-[#92b0be]/70">
+          <h1 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Privacy Policy</h1>
+          <p className="text-anc-steel/70 text-lg leading-relaxed">
             We built Anchr to help people own their presence online. That extends to how we handle your data — with
             care, honesty, and respect.
           </p>
@@ -62,12 +63,12 @@ const PrivacyPage: React.FC = async () => {
         <div className="flex flex-col gap-12">
           {sections.map((section) => (
             <div key={section.heading}>
-              <h2 className="mb-3 text-lg font-semibold text-[#d4b896]">{section.heading}</h2>
-              <p className="leading-relaxed text-[#92b0be]/70">{section.body}</p>
+              <h2 className="text-anc-gold mb-3 text-lg font-semibold">{section.heading}</h2>
+              <p className="text-anc-steel/70 leading-relaxed">{section.body}</p>
             </div>
           ))}
         </div>
-      </main>
+      </Container>
 
       <Footer t={t} />
     </div>

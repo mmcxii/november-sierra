@@ -7,7 +7,7 @@ export const usersTable = pgTable("users", {
   displayName: text("display_name"),
   id: text("id").primaryKey(),
   onboardingComplete: boolean("onboarding_complete").default(false).notNull(),
-  theme: text("theme").default("minimal").notNull(),
+  theme: text("theme").default("dark-depths").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   username: text("username").unique().notNull(),
 });

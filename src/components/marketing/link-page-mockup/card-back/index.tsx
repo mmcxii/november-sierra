@@ -4,7 +4,7 @@ import { Anchor } from "lucide-react";
 import * as React from "react";
 
 export const CardBack: React.FC = () => (
-  <div className="m-backface-hidden absolute inset-0 transform-[rotateY(180deg)] overflow-hidden rounded-2xl border border-[#92b0be]/20 bg-[#0a1729]">
+  <div className="m-backface-hidden border-anc-steel/20 bg-anc-deep-navy absolute inset-0 transform-[rotateY(180deg)] overflow-hidden rounded-2xl border">
     {/* Wave pattern */}
     <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -22,11 +22,11 @@ export const CardBack: React.FC = () => (
     </svg>
 
     {/* Inset gold border */}
-    <div className="absolute inset-[10px] rounded-xl border border-[#d4b896]/25" />
+    <div className="border-anc-gold/25 absolute inset-[10px] rounded-xl border" />
 
     {/* Corner anchors */}
     {["top-4 left-4", "top-4 right-4 rotate-180", "bottom-4 left-4 rotate-180", "bottom-4 right-4"].map((pos) => (
-      <div className={cn("absolute text-[#d4b896]/35", pos)} key={pos}>
+      <div className={cn("text-anc-gold/35 absolute", pos)} key={pos}>
         <Anchor className="size-3.5" strokeWidth={1.5} />
       </div>
     ))}

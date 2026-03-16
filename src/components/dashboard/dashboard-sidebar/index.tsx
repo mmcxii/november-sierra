@@ -44,9 +44,9 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
       <header className="bg-sidebar border-sidebar-border flex items-center justify-between border-b px-4 py-3 lg:hidden">
         <Link href="/dashboard" onClick={closeMobile}>
           <SiteBrandmark
-            dividerClassName="bg-brand-deep-navy/18 dark:bg-brand-gold/25"
+            dividerClassName="bg-anc-deep-navy/18 dark:bg-anc-gold/25"
             size="xs"
-            wordmarkClassName="text-brand-deep-navy dark:text-brand-gold"
+            wordmarkClassName="text-anc-deep-navy dark:text-anc-gold"
           />
         </Link>
         <button
@@ -62,7 +62,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="bg-anc-deep-navy/50 fixed inset-0 z-40 lg:hidden"
           onClick={closeMobile}
           onKeyDown={(e) => e.key === "Escape" && closeMobile()}
           role="button"
@@ -81,9 +81,9 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
         <div className="flex h-14 items-center px-4">
           <Link className="inline-flex items-center" href="/dashboard" onClick={closeMobile}>
             <SiteBrandmark
-              dividerClassName="bg-brand-deep-navy/18 dark:bg-brand-gold/25"
+              dividerClassName="bg-anc-deep-navy/18 dark:bg-anc-gold/25"
               size="xs"
-              wordmarkClassName="text-brand-deep-navy dark:text-brand-gold"
+              wordmarkClassName="text-anc-deep-navy dark:text-anc-gold"
             />
           </Link>
         </div>

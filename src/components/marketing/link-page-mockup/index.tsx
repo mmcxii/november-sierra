@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Anchor, ChevronLeft, ChevronRight, GraduationCap, Pause, Play } from "lucide-react";
 import * as React from "react";
 import { CardBack } from "./card-back";
-import { BASE, FLIP_DURATION, LINKS, SOCIAL_ICONS, THEMES, applyThemeProperties } from "./constants";
+import { BASE, FLIP_DURATION, LINKS, MOCKUP_THEMES, SOCIAL_ICONS, applyTheme } from "./constants";
 
 export const LinkPageMockup: React.FC = () => {
   const [rotation, setRotation] = React.useState(BASE);
@@ -27,7 +27,7 @@ export const LinkPageMockup: React.FC = () => {
       setRotation({ rotateX: BASE.rotateX, rotateY: rotateYRef.current, rotateZ: BASE.rotateZ });
 
       setTimeout(() => {
-        setThemeIndex((prev) => (prev + 1) % THEMES.length);
+        setThemeIndex((prev) => (prev + 1) % MOCKUP_THEMES.length);
       }, FLIP_DURATION / 2);
 
       setTimeout(() => {
@@ -39,7 +39,7 @@ export const LinkPageMockup: React.FC = () => {
   }, []);
 
   const navigate = (direction: -1 | 1) => {
-    if (animatingRef.current != null) {
+    if (animatingRef.current) {
       return;
     }
 
@@ -49,7 +49,7 @@ export const LinkPageMockup: React.FC = () => {
     setRotation({ rotateX: BASE.rotateX, rotateY: rotateYRef.current, rotateZ: BASE.rotateZ });
 
     setTimeout(() => {
-      setThemeIndex((prev) => (prev + direction + THEMES.length) % THEMES.length);
+      setThemeIndex((prev) => (prev + direction + MOCKUP_THEMES.length) % MOCKUP_THEMES.length);
     }, FLIP_DURATION / 2);
 
     setTimeout(() => {
@@ -62,15 +62,15 @@ export const LinkPageMockup: React.FC = () => {
     setPlaying(playingRef.current);
   };
 
-  const theme = THEMES[themeIndex];
+  const theme = MOCKUP_THEMES[themeIndex];
 
-  /** Single ref that pushes every theme token into CSS custom properties. */
+  /** Single ref that sets the data-theme attribute for CSS custom properties. */
   const cardRef = React.useCallback(
     (el: null | HTMLDivElement) => {
       if (el == null) {
         return;
       }
-      applyThemeProperties(el, theme);
+      applyTheme(el, theme.id);
     },
     [theme],
   );
@@ -146,8 +146,10 @@ export const LinkPageMockup: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <p className="mc-name-color text-sm font-bold tracking-wide">{theme.name}</p>
-                <p className="mc-link-text mt-0.5 text-[10px] font-medium tracking-[0.2em] uppercase">{theme.handle}</p>
+                <p className="mc-name-color text-sm font-bold tracking-wide">{theme.demoName}</p>
+                <p className="mc-link-text tracking-anc-caps mt-0.5 text-[10px] font-medium uppercase">
+                  {theme.demoHandle}
+                </p>
 
                 {/* Social icons */}
                 <div className="mt-2.5 flex items-center gap-1.5">
@@ -196,7 +198,7 @@ export const LinkPageMockup: React.FC = () => {
               {/* Branding */}
               <div className="mc-branding mt-auto flex items-center justify-center gap-1.5 pt-2">
                 <Anchor className="mc-brand-color size-2.5" strokeWidth={1.5} />
-                <span className="mc-brand-color text-[9px] font-bold tracking-[0.25em] uppercase">Anchr</span>
+                <span className="mc-brand-color tracking-anc-caps-wide text-[9px] font-bold uppercase">Anchr</span>
               </div>
             </div>
           </div>
@@ -209,11 +211,11 @@ export const LinkPageMockup: React.FC = () => {
       {/* Controls */}
       <div className="mt-7 flex flex-col items-center gap-2.5">
         {/* Theme name */}
-        <span className="m-muted-45 text-[10px] font-medium tracking-[0.18em] uppercase">{theme.themeName}</span>
+        <span className="m-muted-45 text-[10px] font-medium tracking-[0.18em] uppercase">{theme.name}</span>
 
         {/* Theme dots */}
         <div className="flex items-center gap-1.5">
-          {THEMES.map((_, i) => (
+          {MOCKUP_THEMES.map((_, i) => (
             <div
               className={cn("rounded-full transition-all duration-300", {
                 "m-dot-active": i === themeIndex,

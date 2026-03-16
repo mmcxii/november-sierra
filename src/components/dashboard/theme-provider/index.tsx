@@ -1,5 +1,6 @@
 "use client";
 
+import { THEME_IDS } from "@/lib/themes";
 import { ThemeProvider } from "next-themes";
 import * as React from "react";
 
@@ -9,7 +10,21 @@ export const DashboardThemeProvider: React.FC<DashboardThemeProviderProps> = (pr
   const { children } = props;
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="anchr-theme">
+    <ThemeProvider
+      attribute="data-theme"
+      defaultTheme="system"
+      enableSystem
+      storageKey="anchr-ui-theme"
+      themes={["light", "dark", ...THEME_IDS]}
+      value={{
+        dark: "dark-depths",
+        "dark-depths": "dark-depths",
+        light: "stateroom",
+        obsidian: "obsidian",
+        seafoam: "seafoam",
+        stateroom: "stateroom",
+      }}
+    >
       {children}
     </ThemeProvider>
   );
