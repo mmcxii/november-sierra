@@ -1,4 +1,5 @@
-import { completeOnboarding, updateTheme } from "@/app/onboarding/actions";
+import { updateTheme } from "@/app/(dashboard)/dashboard/settings/actions";
+import { completeOnboarding } from "@/app/onboarding/actions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Palette } from "lucide-react";

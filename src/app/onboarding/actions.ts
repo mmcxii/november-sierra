@@ -6,7 +6,6 @@ import { linksTable } from "@/lib/db/schema/link";
 import { usersTable } from "@/lib/db/schema/user";
 import { linkSchema } from "@/lib/schemas/link";
 import { usernameSchema } from "@/lib/schemas/username";
-import { isValidThemeId } from "@/lib/themes";
 import { auth } from "@clerk/nextjs/server";
 import { and, eq, ne, sql } from "drizzle-orm";
 
@@ -109,27 +108,6 @@ export async function addFirstLink(title: string, url: string): Promise<AddLinkR
     url: result.data.url,
     userId,
   });
-
-  return { success: true };
-}
-
-export type UpdateThemeResult = {
-  error?: string;
-  success: boolean;
-};
-
-export async function updateTheme(theme: string): Promise<UpdateThemeResult> {
-  const { userId } = await auth();
-
-  if (userId == null) {
-    return { error: "somethingWentWrongPleaseTryAgain", success: false };
-  }
-
-  if (!isValidThemeId(theme)) {
-    return { error: "somethingWentWrongPleaseTryAgain", success: false };
-  }
-
-  await db.update(usersTable).set({ theme, updatedAt: new Date() }).where(eq(usersTable.id, userId));
 
   return { success: true };
 }
