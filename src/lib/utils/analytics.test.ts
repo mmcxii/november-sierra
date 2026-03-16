@@ -1,5 +1,63 @@
 import { describe, expect, it, vi } from "vitest";
-import { fillDateGaps } from "./analytics";
+import { computeTrendPercent, fillDateGaps } from "./analytics";
+
+describe("computeTrendPercent", () => {
+  it("returns 0 when both values are 0", () => {
+    //* Act
+    const result = computeTrendPercent(0, 0);
+
+    //* Assert
+    expect(result).toBe(0);
+  });
+
+  it("returns 100 when previous is 0 and current is positive", () => {
+    //* Act
+    const result = computeTrendPercent(50, 0);
+
+    //* Assert
+    expect(result).toBe(100);
+  });
+
+  it("returns -100 when current is 0 and previous is positive", () => {
+    //* Act
+    const result = computeTrendPercent(0, 50);
+
+    //* Assert
+    expect(result).toBe(-100);
+  });
+
+  it("returns positive percent for growth", () => {
+    //* Act
+    const result = computeTrendPercent(150, 100);
+
+    //* Assert
+    expect(result).toBe(50);
+  });
+
+  it("returns negative percent for decline", () => {
+    //* Act
+    const result = computeTrendPercent(75, 100);
+
+    //* Assert
+    expect(result).toBe(-25);
+  });
+
+  it("returns 0 when values are equal", () => {
+    //* Act
+    const result = computeTrendPercent(100, 100);
+
+    //* Assert
+    expect(result).toBe(0);
+  });
+
+  it("rounds to the nearest integer", () => {
+    //* Act
+    const result = computeTrendPercent(1, 3);
+
+    //* Assert
+    expect(result).toBe(-67);
+  });
+});
 
 describe("fillDateGaps", () => {
   it("fills missing dates with zero clicks", () => {

@@ -1,9 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { DateRangeSelect } from "../date-range-select";
 
 export type ClicksChartProps = {
   data: { clicks: number; date: string }[];
@@ -12,20 +13,24 @@ export type ClicksChartProps = {
 export const ClicksChart: React.FC<ClicksChartProps> = (props) => {
   const { data } = props;
 
+  //* State
   const { t } = useTranslation();
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-sm font-medium">{t("clicksOverTime")}</CardTitle>
+        <CardAction>
+          <DateRangeSelect />
+        </CardAction>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer height={300} width="100%">
           <AreaChart data={data}>
             <defs>
               <linearGradient id="clicksFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-chart-1)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--color-chart-1)" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -56,7 +61,7 @@ export const ClicksChart: React.FC<ClicksChartProps> = (props) => {
               dataKey="clicks"
               fill="url(#clicksFill)"
               fillOpacity={1}
-              stroke="var(--color-chart-1)"
+              stroke="var(--color-primary)"
               strokeWidth={2}
               type="monotone"
             />
