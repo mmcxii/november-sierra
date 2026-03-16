@@ -24,10 +24,10 @@ const DashboardErrorPage: React.FC<DashboardErrorPageProps> = (props) => {
         </div>
 
         {/* Heading */}
-        <h1 className="mb-3 text-xl font-semibold tracking-tight text-white">{t("somethingWentWrong")}</h1>
+        <h1 className="text-anc-cream mb-3 text-xl font-semibold tracking-tight">{t("somethingWentWrong")}</h1>
 
         {/* Description */}
-        <p className="mb-8 text-sm leading-relaxed text-[#92b0be]/80">
+        <p className="text-anc-steel/80 mb-8 text-sm leading-relaxed">
           {t("weHitUnexpectedWatersPleaseTryAgainAndIfTheIssuePersistsWeAreAlreadyOnIt")}
         </p>
 

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Check, Loader2, Palette } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { THEMES } from "../utils";
+import { ONBOARDING_THEMES } from "../utils";
 
 export type ThemeStepProps = {
   onComplete: () => void;
@@ -17,7 +17,7 @@ export const ThemeStep: React.FC<ThemeStepProps> = (props) => {
   //* State
   const { t } = useTranslation();
   const [submitting, setSubmitting] = React.useState(false);
-  const [selectedTheme, setSelectedTheme] = React.useState("minimal");
+  const [selectedTheme, setSelectedTheme] = React.useState("dark-depths");
 
   //* Handlers
   const handleSubmit = async () => {
@@ -44,7 +44,7 @@ export const ThemeStep: React.FC<ThemeStepProps> = (props) => {
       </div>
 
       <div className="flex flex-col gap-3">
-        {THEMES.map((theme) => (
+        {ONBOARDING_THEMES.map((theme) => (
           <button
             className={cn("flex items-center gap-4 rounded-lg border-2 p-4 text-left transition-colors", {
               "border-border hover:border-muted-foreground/40": selectedTheme !== theme.id,

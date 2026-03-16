@@ -23,11 +23,11 @@ const GlobalError: React.FC<GlobalErrorProps> = (props) => {
     <html lang="en">
       <body className="antialiased">
         <div
-          className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0a1729] px-6"
+          className="bg-anc-deep-navy relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6"
           data-marketing-theme="dark"
         >
           {/* Ambient glow — shifted warm to signal error state */}
-          <div className="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#2d1a1a] opacity-30 blur-[120px]" />
+          <div className="bg-anc-error-glow pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-[120px]" />
 
           {/* Content */}
           <div className="relative z-10 flex max-w-md flex-col items-center text-center">
@@ -37,13 +37,13 @@ const GlobalError: React.FC<GlobalErrorProps> = (props) => {
             </div>
 
             {/* Error code */}
-            <p className="mb-3 font-mono text-sm tracking-[0.3em] text-[#92b0be]">500</p>
+            <p className="text-anc-steel tracking-anc-caps mb-3 font-mono text-sm">500</p>
 
             {/* Heading */}
-            <h1 className="mb-4 text-2xl font-semibold tracking-tight text-white">Something Went Wrong</h1>
+            <h1 className="text-anc-cream mb-4 text-2xl font-semibold tracking-tight">Something Went Wrong</h1>
 
             {/* Description */}
-            <p className="mb-10 leading-relaxed text-[#92b0be]/80">
+            <p className="text-anc-steel/80 mb-10 leading-relaxed">
               We hit unexpected waters. Please try again, and if the issue persists, we&apos;re already on it.
             </p>
 

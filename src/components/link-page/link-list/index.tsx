@@ -16,18 +16,16 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
     <div className="flex w-full flex-col gap-2.5">
       {links.map((link) => (
         <a
-          className="flex min-h-[52px] items-center gap-3 rounded-xl border border-[var(--_mc-link-border)] bg-[var(--_mc-link-bg)] px-4 py-3 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className="border-anc-theme-link-border bg-anc-theme-link-bg flex min-h-[52px] items-center gap-3 rounded-xl border px-4 py-3 transition-transform hover:scale-[1.02] active:scale-[0.98]"
           href={link.url}
           key={link.id}
           rel="noopener noreferrer"
           target="_blank"
         >
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--_mc-link-icon-bg)]">
-            <Link2 className="size-4 text-[var(--_mc-link-icon-color)]" strokeWidth={1.75} />
+          <div className="bg-anc-theme-link-icon-bg flex size-7 shrink-0 items-center justify-center rounded-lg">
+            <Link2 className="text-anc-theme-link-icon size-4" strokeWidth={1.75} />
           </div>
-          <span className="flex-1 truncate text-center text-sm font-medium text-[var(--_mc-link-text)]">
-            {link.title}
-          </span>
+          <span className="text-anc-theme-link-text flex-1 truncate text-center text-sm font-medium">{link.title}</span>
           <div className="size-7 shrink-0" />
         </a>
       ))}

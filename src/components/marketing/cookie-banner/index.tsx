@@ -1,5 +1,6 @@
 "use client";
 
+import { Container } from "@/components/ui/container";
 import { posthogClient } from "@/lib/posthog";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -25,8 +26,8 @@ export const CookieBanner: React.FC = () => {
   }
 
   return (
-    <div className="m-page-bg-bg m-border-color-muted-15 fixed inset-x-0 bottom-0 z-50 border-t px-6 py-4">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
+    <div className="m-page-bg-bg m-border-color-muted-15 fixed inset-x-0 bottom-0 z-50 border-t py-4">
+      <Container className="flex flex-col items-center justify-between gap-4 sm:flex-row">
         <p className="m-muted-70 text-sm">{t("cookieBannerMessage")}</p>
         <div className="flex items-center gap-3">
           <button
@@ -44,7 +45,7 @@ export const CookieBanner: React.FC = () => {
             {t("accept")}
           </button>
         </div>
-      </div>
+      </Container>
     </div>
   );
 };

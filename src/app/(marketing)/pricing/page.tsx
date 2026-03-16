@@ -3,6 +3,7 @@ import { Footer } from "@/components/marketing/footer";
 import { PricingCards } from "@/components/marketing/pricing-toggle";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
+import { Container } from "@/components/ui/container";
 import { initTranslations } from "@/lib/i18n/server";
 import { ChevronDown } from "lucide-react";
 import type { Metadata } from "next";
@@ -32,7 +33,7 @@ const PricingPage: React.FC = async () => {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      <main className="flex-1 px-6 py-16">
+      <Container as="main" className="flex-1 py-16">
         {/* Hero */}
         <FadeIn>
           <div className="mx-auto mb-16 max-w-2xl text-center">
@@ -77,7 +78,7 @@ const PricingPage: React.FC = async () => {
             </div>
           </div>
         </FadeIn>
-      </main>
+      </Container>
 
       <Footer t={t} />
     </div>

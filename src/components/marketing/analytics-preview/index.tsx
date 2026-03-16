@@ -59,7 +59,7 @@ export const AnalyticsPreview: React.FC = () => {
           </span>
           <span className="m-accent-color text-[11px] font-semibold">↑ 12%</span>
         </div>
-        <p className="m-muted-40 mt-1 text-[10px] tracking-[0.06em]">clicks this week</p>
+        <p className="m-muted-40 tracking-anc-tight mt-1 text-[10px]">clicks this week</p>
       </div>
 
       <div>

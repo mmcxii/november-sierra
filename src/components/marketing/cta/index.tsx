@@ -1,5 +1,6 @@
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
+import { Container } from "@/components/ui/container";
 import type { TFunction } from "i18next";
 
 export type CtaProps = {
@@ -10,7 +11,7 @@ export const Cta: React.FC<CtaProps> = (props) => {
   const { t } = props;
 
   return (
-    <section className="relative px-6 py-24">
+    <section className="relative py-24">
       {/* Ambient glow */}
       <div className="m-glow-bg pointer-events-none absolute inset-0 m-auto h-[500px] w-[500px] max-w-full rounded-full opacity-40 blur-[120px]" />
 
@@ -19,12 +20,12 @@ export const Cta: React.FC<CtaProps> = (props) => {
         <SiteLogo size="lg" />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center text-center">
+      <Container className="relative z-10 flex flex-col items-center text-center">
         <h2 className="mb-10 text-2xl font-bold tracking-tight sm:text-3xl">
           {t("joinTodayBuildOnLaunchDayShareForever")}
         </h2>
         <WaitlistForm />
-      </div>
+      </Container>
     </section>
   );
 };

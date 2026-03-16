@@ -81,7 +81,7 @@ export const SignInForm: React.FC = () => {
   return (
     <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" variant="featured">
       <div className="flex flex-col items-center">
-        <span className="text-xs tracking-[0.35em] text-[rgb(var(--m-muted))] uppercase">{t("welcomeTo")}</span>
+        <span className="tracking-anc-caps-extra text-xs text-[rgb(var(--m-muted))] uppercase">{t("welcomeTo")}</span>
         <SiteWordmark size="xl" />
       </div>
       <CardHeader className="mt-[8vh] w-full max-w-sm items-center text-center">

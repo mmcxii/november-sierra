@@ -2,27 +2,407 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Keep in sync with DARK_THEME_IDS in src/lib/themes.ts */
+@custom-variant dark (&:is([data-theme="dark-depths"] *, [data-theme="obsidian"] *));
 
 .debug {
   border: 1px solid red;
 }
 
-/* ── Brand palette ──────────────────────────────────────────────────────── */
-/* Dark Depths (dark) & Stateroom (light) — single source of truth         */
+/* ── Design tokens ──────────────────────────────────────────────────────── */
 
 :root {
-  --brand-deep-navy: #0a1729;
-  --brand-navy: #1e2d42;
-  --brand-slate: #2d3e56;
-  --brand-steel: #92b0be;
-  --brand-gold: #d4b896;
-  --brand-brass: #a88e58;
-  --brand-cream: #fdfaf2;
-  --brand-linen: #f5edda;
-  --brand-sand: #ece0c0;
-  --brand-espresso: #18120a;
-  --brand-umber: #785f32;
+  /* Brand colors */
+  --anc-deep-navy: #0a1729;
+  --anc-navy: #1e2d42;
+  --anc-slate: #2d3e56;
+  --anc-steel: #92b0be;
+  --anc-gold: #d4b896;
+  --anc-brass: #a88e58;
+  --anc-cream: #fdfaf2;
+  --anc-linen: #f5edda;
+  --anc-sand: #ece0c0;
+  --anc-espresso: #18120a;
+  --anc-umber: #785f32;
+  --anc-error-glow: #2d1a1a;
+
+  /* Per-theme static palette */
+  --anc-obsidian-accent: #c49480;
+  --anc-obsidian-surface: #080606;
+  --anc-seafoam-accent: #1a7050;
+  --anc-seafoam-surface: #dff5ec;
+
+  /* Size scale (4px base) */
+  --anc-size-px: 1px;
+  --anc-size-0: 0px;
+  --anc-size-0-5: calc(var(--anc-size-1) / 2);
+  --anc-size-1: 0.25rem;
+  --anc-size-1-5: calc(var(--anc-size-1) * 1.5);
+  --anc-size-2: calc(var(--anc-size-1) * 2);
+  --anc-size-2-5: calc(var(--anc-size-1) * 2.5);
+  --anc-size-3: calc(var(--anc-size-1) * 3);
+  --anc-size-3-5: calc(var(--anc-size-1) * 3.5);
+  --anc-size-4: calc(var(--anc-size-1) * 4);
+  --anc-size-5: calc(var(--anc-size-1) * 5);
+  --anc-size-6: calc(var(--anc-size-1) * 6);
+  --anc-size-7: calc(var(--anc-size-1) * 7);
+  --anc-size-8: calc(var(--anc-size-1) * 8);
+  --anc-size-9: calc(var(--anc-size-1) * 9);
+  --anc-size-10: calc(var(--anc-size-1) * 10);
+  --anc-size-11: calc(var(--anc-size-1) * 11);
+  --anc-size-12: calc(var(--anc-size-1) * 12);
+  --anc-size-14: calc(var(--anc-size-1) * 14);
+  --anc-size-16: calc(var(--anc-size-1) * 16);
+  --anc-size-20: calc(var(--anc-size-1) * 20);
+  --anc-size-24: calc(var(--anc-size-1) * 24);
+  --anc-size-28: calc(var(--anc-size-1) * 28);
+  --anc-size-32: calc(var(--anc-size-1) * 32);
+  --anc-size-36: calc(var(--anc-size-1) * 36);
+  --anc-size-40: calc(var(--anc-size-1) * 40);
+  --anc-size-44: calc(var(--anc-size-1) * 44);
+  --anc-size-48: calc(var(--anc-size-1) * 48);
+  --anc-size-52: calc(var(--anc-size-1) * 52);
+  --anc-size-56: calc(var(--anc-size-1) * 56);
+  --anc-size-60: calc(var(--anc-size-1) * 60);
+  --anc-size-64: calc(var(--anc-size-1) * 64);
+  --anc-size-72: calc(var(--anc-size-1) * 72);
+  --anc-size-80: calc(var(--anc-size-1) * 80);
+  --anc-size-96: calc(var(--anc-size-1) * 96);
+
+  /* Radius scale */
+  --anc-radius: 0.625rem;
+  --anc-radius-none: 0;
+  --anc-radius-sm: 0.25rem;
+  --anc-radius-md: 0.375rem;
+  --anc-radius-lg: 0.5rem;
+  --anc-radius-xl: 0.75rem;
+  --anc-radius-2xl: 1rem;
+  --anc-radius-3xl: 1.5rem;
+  --anc-radius-full: 9999px;
+
+  /* Typography */
+  --anc-font-sans: var(--font-geist-sans);
+  --anc-font-mono: var(--font-geist-mono);
+  --anc-tracking-tight: 0.06em;
+  --anc-tracking-caps: 0.2em;
+  --anc-tracking-caps-wide: 0.25em;
+  --anc-tracking-caps-extra: 0.35em;
+  --anc-tracking-wordmark: 0.55em;
+  --anc-tracking-wordmark-sm: 0.45em;
+}
+
+/* ── Theme: Stateroom (default) ─────────────────────────────────────────── */
+
+:root,
+[data-theme="stateroom"] {
+  /* Page */
+  --anc-background: var(--anc-cream);
+  --anc-foreground: var(--anc-espresso);
+  /* Card */
+  --anc-card-background: var(--anc-cream);
+  --anc-card-foreground: var(--anc-espresso);
+  /* Popover */
+  --anc-popover-background: var(--anc-cream);
+  --anc-popover-foreground: var(--anc-espresso);
+  /* Primary */
+  --anc-primary: var(--anc-deep-navy);
+  --anc-primary-foreground: var(--anc-cream);
+  /* Secondary */
+  --anc-secondary: var(--anc-linen);
+  --anc-secondary-foreground: var(--anc-deep-navy);
+  /* Muted */
+  --anc-muted: var(--anc-linen);
+  --anc-muted-foreground: var(--anc-umber);
+  /* Accent */
+  --anc-accent: var(--anc-linen);
+  --anc-accent-foreground: var(--anc-deep-navy);
+  /* Destructive */
+  --anc-destructive: oklch(0.577 0.245 27.325);
+  /* Border / Input / Ring */
+  --anc-border: var(--anc-sand);
+  --anc-input: var(--anc-sand);
+  --anc-ring: var(--anc-brass);
+  /* Sidebar */
+  --anc-sidebar-background: var(--anc-linen);
+  --anc-sidebar-foreground: var(--anc-espresso);
+  --anc-sidebar-primary: var(--anc-deep-navy);
+  --anc-sidebar-primary-foreground: var(--anc-cream);
+  --anc-sidebar-accent: var(--anc-sand);
+  --anc-sidebar-accent-foreground: var(--anc-deep-navy);
+  --anc-sidebar-border: var(--anc-sand);
+  --anc-sidebar-ring: var(--anc-brass);
+  /* Chart */
+  --anc-chart-1: oklch(0.646 0.222 41.116);
+  --anc-chart-2: oklch(0.6 0.118 184.704);
+  --anc-chart-3: oklch(0.398 0.07 227.392);
+  --anc-chart-4: oklch(0.828 0.189 84.429);
+  --anc-chart-5: oklch(0.769 0.188 70.08);
+  /* Link page */
+  --anc-theme-anchor-color: #0a1729;
+  --anc-theme-avatar-bg: #fdfaf2;
+  --anc-theme-avatar-inner-border: rgba(10, 23, 41, 0.10);
+  --anc-theme-avatar-outer-ring: rgba(10, 23, 41, 0.25);
+  --anc-theme-border: rgba(10, 23, 41, 0.10);
+  --anc-theme-brand: rgba(10, 23, 41, 0.30);
+  --anc-theme-card-bg: linear-gradient(160deg, #fdfaf2 0%, #f5edda 55%, #ece0c0 100%);
+  --anc-theme-divider: rgba(10, 23, 41, 0.08);
+  --anc-theme-featured-bg: rgba(10, 23, 41, 0.06);
+  --anc-theme-featured-border: rgba(10, 23, 41, 0.22);
+  --anc-theme-featured-icon-bg: rgba(10, 23, 41, 0.10);
+  --anc-theme-featured-icon-color: #0a1729;
+  --anc-theme-featured-text: #0a1729;
+  --anc-theme-glow-bg: radial-gradient(ellipse, rgba(185, 158, 90, 0.12) 0%, transparent 70%);
+  --anc-theme-hairline: #0a1729;
+  --anc-theme-link-bg: rgba(253, 250, 242, 0.80);
+  --anc-theme-link-border: rgba(10, 23, 41, 0.08);
+  --anc-theme-link-icon-bg: rgba(10, 23, 41, 0.06);
+  --anc-theme-link-icon-color: rgba(10, 23, 41, 0.40);
+  --anc-theme-link-text: rgba(10, 23, 41, 0.55);
+  --anc-theme-name-color: #18120a;
+}
+
+/* ── Theme: Dark Depths ─────────────────────────────────────────────────── */
+
+[data-theme="dark-depths"] {
+  /* Page */
+  --anc-background: var(--anc-deep-navy);
+  --anc-foreground: var(--anc-cream);
+  /* Card */
+  --anc-card-background: var(--anc-navy);
+  --anc-card-foreground: var(--anc-cream);
+  /* Popover */
+  --anc-popover-background: var(--anc-navy);
+  --anc-popover-foreground: var(--anc-cream);
+  /* Primary */
+  --anc-primary: var(--anc-gold);
+  --anc-primary-foreground: var(--anc-deep-navy);
+  /* Secondary */
+  --anc-secondary: var(--anc-slate);
+  --anc-secondary-foreground: var(--anc-cream);
+  /* Muted */
+  --anc-muted: var(--anc-slate);
+  --anc-muted-foreground: var(--anc-steel);
+  /* Accent */
+  --anc-accent: var(--anc-slate);
+  --anc-accent-foreground: var(--anc-cream);
+  /* Destructive */
+  --anc-destructive: oklch(0.704 0.191 22.216);
+  /* Border / Input / Ring */
+  --anc-border: var(--anc-navy);
+  --anc-input: var(--anc-slate);
+  --anc-ring: var(--anc-steel);
+  /* Sidebar */
+  --anc-sidebar-background: var(--anc-navy);
+  --anc-sidebar-foreground: var(--anc-cream);
+  --anc-sidebar-primary: var(--anc-gold);
+  --anc-sidebar-primary-foreground: var(--anc-deep-navy);
+  --anc-sidebar-accent: var(--anc-slate);
+  --anc-sidebar-accent-foreground: var(--anc-cream);
+  --anc-sidebar-border: var(--anc-navy);
+  --anc-sidebar-ring: var(--anc-steel);
+  /* Chart */
+  --anc-chart-1: oklch(0.488 0.243 264.376);
+  --anc-chart-2: oklch(0.696 0.17 162.48);
+  --anc-chart-3: oklch(0.769 0.188 70.08);
+  --anc-chart-4: oklch(0.627 0.265 303.9);
+  --anc-chart-5: oklch(0.645 0.246 16.439);
+  /* Link page */
+  --anc-theme-anchor-color: #d4b896;
+  --anc-theme-avatar-bg: #050b14;
+  --anc-theme-avatar-inner-border: rgba(146, 176, 190, 0.13);
+  --anc-theme-avatar-outer-ring: rgba(212, 184, 150, 0.30);
+  --anc-theme-border: rgba(146, 176, 190, 0.16);
+  --anc-theme-brand: rgba(212, 184, 150, 0.38);
+  --anc-theme-card-bg: linear-gradient(160deg, #111e2e 0%, #080f1c 55%, #050b14 100%);
+  --anc-theme-divider: rgba(146, 176, 190, 0.09);
+  --anc-theme-featured-bg: rgba(212, 184, 150, 0.10);
+  --anc-theme-featured-border: rgba(212, 184, 150, 0.35);
+  --anc-theme-featured-icon-bg: rgba(212, 184, 150, 0.20);
+  --anc-theme-featured-icon-color: #d4b896;
+  --anc-theme-featured-text: #d4b896;
+  --anc-theme-glow-bg: radial-gradient(ellipse, #243550 0%, transparent 70%);
+  --anc-theme-hairline: #d4b896;
+  --anc-theme-link-bg: rgba(5, 11, 20, 0.60);
+  --anc-theme-link-border: rgba(146, 176, 190, 0.09);
+  --anc-theme-link-icon-bg: rgba(146, 176, 190, 0.09);
+  --anc-theme-link-icon-color: rgba(146, 176, 190, 0.55);
+  --anc-theme-link-text: rgba(146, 176, 190, 0.70);
+  --anc-theme-name-color: #ffffff;
+}
+
+/* ── Theme: Obsidian ────────────────────────────────────────────────────── */
+
+[data-theme="obsidian"] {
+  /* Page */
+  --anc-background: #080606;
+  --anc-foreground: #e8d5cb;
+  /* Card */
+  --anc-card-background: #18120e;
+  --anc-card-foreground: #e8d5cb;
+  /* Popover */
+  --anc-popover-background: #18120e;
+  --anc-popover-foreground: #e8d5cb;
+  /* Primary */
+  --anc-primary: #c49480;
+  --anc-primary-foreground: #080606;
+  /* Secondary */
+  --anc-secondary: #2e2825;
+  --anc-secondary-foreground: #e8d5cb;
+  /* Muted */
+  --anc-muted: #2e2825;
+  --anc-muted-foreground: #a08878;
+  /* Accent */
+  --anc-accent: #2e2825;
+  --anc-accent-foreground: #e8d5cb;
+  /* Destructive */
+  --anc-destructive: oklch(0.704 0.191 22.216);
+  /* Border / Input / Ring */
+  --anc-border: #2e2825;
+  --anc-input: #2e2825;
+  --anc-ring: #c49480;
+  /* Sidebar */
+  --anc-sidebar-background: #18120e;
+  --anc-sidebar-foreground: #e8d5cb;
+  --anc-sidebar-primary: #c49480;
+  --anc-sidebar-primary-foreground: #080606;
+  --anc-sidebar-accent: #2e2825;
+  --anc-sidebar-accent-foreground: #e8d5cb;
+  --anc-sidebar-border: #2e2825;
+  --anc-sidebar-ring: #c49480;
+  /* Chart — dark variants */
+  --anc-chart-1: oklch(0.488 0.243 264.376);
+  --anc-chart-2: oklch(0.696 0.17 162.48);
+  --anc-chart-3: oklch(0.769 0.188 70.08);
+  --anc-chart-4: oklch(0.627 0.265 303.9);
+  --anc-chart-5: oklch(0.645 0.246 16.439);
+  /* Link page */
+  --anc-theme-anchor-color: #c49480;
+  --anc-theme-avatar-bg: #080606;
+  --anc-theme-avatar-inner-border: rgba(196, 148, 128, 0.16);
+  --anc-theme-avatar-outer-ring: rgba(196, 148, 128, 0.38);
+  --anc-theme-border: rgba(196, 148, 128, 0.18);
+  --anc-theme-brand: rgba(196, 148, 128, 0.40);
+  --anc-theme-card-bg: linear-gradient(160deg, #141010 0%, #0c0909 55%, #080606 100%);
+  --anc-theme-divider: rgba(196, 148, 128, 0.10);
+  --anc-theme-featured-bg: rgba(196, 148, 128, 0.08);
+  --anc-theme-featured-border: rgba(196, 148, 128, 0.32);
+  --anc-theme-featured-icon-bg: rgba(196, 148, 128, 0.16);
+  --anc-theme-featured-icon-color: #c49480;
+  --anc-theme-featured-text: #c49480;
+  --anc-theme-glow-bg: radial-gradient(ellipse, rgba(196, 148, 128, 0.08) 0%, transparent 70%);
+  --anc-theme-hairline: #c49480;
+  --anc-theme-link-bg: rgba(8, 6, 6, 0.70);
+  --anc-theme-link-border: rgba(196, 148, 128, 0.10);
+  --anc-theme-link-icon-bg: rgba(196, 148, 128, 0.08);
+  --anc-theme-link-icon-color: rgba(196, 148, 128, 0.50);
+  --anc-theme-link-text: rgba(196, 148, 128, 0.60);
+  --anc-theme-name-color: #ffffff;
+}
+
+/* ── Theme: Seafoam ─────────────────────────────────────────────────────── */
+
+[data-theme="seafoam"] {
+  /* Page */
+  --anc-background: #dff5ec;
+  --anc-foreground: #061a10;
+  /* Card */
+  --anc-card-background: #dff5ec;
+  --anc-card-foreground: #061a10;
+  /* Popover */
+  --anc-popover-background: #dff5ec;
+  --anc-popover-foreground: #061a10;
+  /* Primary */
+  --anc-primary: #1a7050;
+  --anc-primary-foreground: #dff5ec;
+  /* Secondary */
+  --anc-secondary: #b5e2cd;
+  --anc-secondary-foreground: #061a10;
+  /* Muted */
+  --anc-muted: #b5e2cd;
+  --anc-muted-foreground: #2d7a5a;
+  /* Accent */
+  --anc-accent: #b5e2cd;
+  --anc-accent-foreground: #061a10;
+  /* Destructive */
+  --anc-destructive: oklch(0.577 0.245 27.325);
+  /* Border / Input / Ring */
+  --anc-border: #93c5ad;
+  --anc-input: #93c5ad;
+  --anc-ring: #1a7050;
+  /* Sidebar */
+  --anc-sidebar-background: #b5e2cd;
+  --anc-sidebar-foreground: #061a10;
+  --anc-sidebar-primary: #1a7050;
+  --anc-sidebar-primary-foreground: #dff5ec;
+  --anc-sidebar-accent: #93c5ad;
+  --anc-sidebar-accent-foreground: #061a10;
+  --anc-sidebar-border: #93c5ad;
+  --anc-sidebar-ring: #1a7050;
+  /* Chart — light variants */
+  --anc-chart-1: oklch(0.646 0.222 41.116);
+  --anc-chart-2: oklch(0.6 0.118 184.704);
+  --anc-chart-3: oklch(0.398 0.07 227.392);
+  --anc-chart-4: oklch(0.828 0.189 84.429);
+  --anc-chart-5: oklch(0.769 0.188 70.08);
+  /* Link page */
+  --anc-theme-anchor-color: #1a7050;
+  --anc-theme-avatar-bg: #dff5ec;
+  --anc-theme-avatar-inner-border: rgba(40, 130, 95, 0.28);
+  --anc-theme-avatar-outer-ring: rgba(40, 130, 95, 0.50);
+  --anc-theme-border: rgba(40, 130, 95, 0.30);
+  --anc-theme-brand: rgba(30, 120, 80, 0.60);
+  --anc-theme-card-bg: linear-gradient(160deg, #dff5ec 0%, #c2e8d8 55%, #a4d9c3 100%);
+  --anc-theme-divider: rgba(40, 130, 95, 0.22);
+  --anc-theme-featured-bg: rgba(210, 90, 70, 0.09);
+  --anc-theme-featured-border: rgba(210, 90, 70, 0.30);
+  --anc-theme-featured-icon-bg: rgba(210, 90, 70, 0.18);
+  --anc-theme-featured-icon-color: #b8503c;
+  --anc-theme-featured-text: #a84030;
+  --anc-theme-glow-bg: radial-gradient(ellipse, rgba(40, 160, 115, 0.18) 0%, transparent 70%);
+  --anc-theme-hairline: #28a070;
+  --anc-theme-link-bg: rgba(200, 232, 216, 0.65);
+  --anc-theme-link-border: rgba(40, 130, 95, 0.22);
+  --anc-theme-link-icon-bg: rgba(40, 130, 95, 0.15);
+  --anc-theme-link-icon-color: rgba(25, 110, 75, 0.75);
+  --anc-theme-link-text: rgba(15, 70, 45, 0.80);
+  --anc-theme-name-color: #061a10;
+}
+
+/* ── shadcn bridge ──────────────────────────────────────────────────────── */
+
+:root {
+  --background: var(--anc-background);
+  --foreground: var(--anc-foreground);
+  --card: var(--anc-card-background);
+  --card-foreground: var(--anc-card-foreground);
+  --popover: var(--anc-popover-background);
+  --popover-foreground: var(--anc-popover-foreground);
+  --primary: var(--anc-primary);
+  --primary-foreground: var(--anc-primary-foreground);
+  --secondary: var(--anc-secondary);
+  --secondary-foreground: var(--anc-secondary-foreground);
+  --muted: var(--anc-muted);
+  --muted-foreground: var(--anc-muted-foreground);
+  --accent: var(--anc-accent);
+  --accent-foreground: var(--anc-accent-foreground);
+  --destructive: var(--anc-destructive);
+  --border: var(--anc-border);
+  --input: var(--anc-input);
+  --ring: var(--anc-ring);
+  --sidebar: var(--anc-sidebar-background);
+  --sidebar-foreground: var(--anc-sidebar-foreground);
+  --sidebar-primary: var(--anc-sidebar-primary);
+  --sidebar-primary-foreground: var(--anc-sidebar-primary-foreground);
+  --sidebar-accent: var(--anc-sidebar-accent);
+  --sidebar-accent-foreground: var(--anc-sidebar-accent-foreground);
+  --sidebar-border: var(--anc-sidebar-border);
+  --sidebar-ring: var(--anc-sidebar-ring);
+  --chart-1: var(--anc-chart-1);
+  --chart-2: var(--anc-chart-2);
+  --chart-3: var(--anc-chart-3);
+  --chart-4: var(--anc-chart-4);
+  --chart-5: var(--anc-chart-5);
+  --radius: var(--anc-radius);
 }
 
 @theme inline {
@@ -66,91 +446,51 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
-  /* Brand color utilities (e.g. bg-brand-gold, text-brand-steel) */
-  --color-brand-deep-navy: var(--brand-deep-navy);
-  --color-brand-navy: var(--brand-navy);
-  --color-brand-slate: var(--brand-slate);
-  --color-brand-steel: var(--brand-steel);
-  --color-brand-gold: var(--brand-gold);
-  --color-brand-brass: var(--brand-brass);
-  --color-brand-cream: var(--brand-cream);
-  --color-brand-linen: var(--brand-linen);
-  --color-brand-sand: var(--brand-sand);
-  --color-brand-espresso: var(--brand-espresso);
-  --color-brand-umber: var(--brand-umber);
-}
-
-/* ── Light theme (Stateroom) ────────────────────────────────────────────── */
-
-:root {
-  --radius: 0.625rem;
-  --background: var(--brand-cream);
-  --foreground: var(--brand-espresso);
-  --card: var(--brand-cream);
-  --card-foreground: var(--brand-espresso);
-  --popover: var(--brand-cream);
-  --popover-foreground: var(--brand-espresso);
-  --primary: var(--brand-deep-navy);
-  --primary-foreground: var(--brand-cream);
-  --secondary: var(--brand-linen);
-  --secondary-foreground: var(--brand-deep-navy);
-  --muted: var(--brand-linen);
-  --muted-foreground: var(--brand-umber);
-  --accent: var(--brand-linen);
-  --accent-foreground: var(--brand-deep-navy);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: var(--brand-sand);
-  --input: var(--brand-sand);
-  --ring: var(--brand-brass);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: var(--brand-linen);
-  --sidebar-foreground: var(--brand-espresso);
-  --sidebar-primary: var(--brand-deep-navy);
-  --sidebar-primary-foreground: var(--brand-cream);
-  --sidebar-accent: var(--brand-sand);
-  --sidebar-accent-foreground: var(--brand-deep-navy);
-  --sidebar-border: var(--brand-sand);
-  --sidebar-ring: var(--brand-brass);
-}
-
-/* ── Dark theme (Dark Depths) ───────────────────────────────────────────── */
-
-.dark {
-  --background: var(--brand-deep-navy);
-  --foreground: var(--brand-cream);
-  --card: var(--brand-navy);
-  --card-foreground: var(--brand-cream);
-  --popover: var(--brand-navy);
-  --popover-foreground: var(--brand-cream);
-  --primary: var(--brand-gold);
-  --primary-foreground: var(--brand-deep-navy);
-  --secondary: var(--brand-slate);
-  --secondary-foreground: var(--brand-cream);
-  --muted: var(--brand-slate);
-  --muted-foreground: var(--brand-steel);
-  --accent: var(--brand-slate);
-  --accent-foreground: var(--brand-cream);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: var(--brand-navy);
-  --input: var(--brand-slate);
-  --ring: var(--brand-steel);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: var(--brand-navy);
-  --sidebar-foreground: var(--brand-cream);
-  --sidebar-primary: var(--brand-gold);
-  --sidebar-primary-foreground: var(--brand-deep-navy);
-  --sidebar-accent: var(--brand-slate);
-  --sidebar-accent-foreground: var(--brand-cream);
-  --sidebar-border: var(--brand-navy);
-  --sidebar-ring: var(--brand-steel);
+  /* Brand color utilities (e.g. bg-anc-gold, text-anc-steel) */
+  --color-anc-deep-navy: var(--anc-deep-navy);
+  --color-anc-navy: var(--anc-navy);
+  --color-anc-slate: var(--anc-slate);
+  --color-anc-steel: var(--anc-steel);
+  --color-anc-gold: var(--anc-gold);
+  --color-anc-brass: var(--anc-brass);
+  --color-anc-cream: var(--anc-cream);
+  --color-anc-linen: var(--anc-linen);
+  --color-anc-sand: var(--anc-sand);
+  --color-anc-espresso: var(--anc-espresso);
+  --color-anc-umber: var(--anc-umber);
+  --color-anc-error-glow: var(--anc-error-glow);
+  /* Per-theme palette utilities */
+  --color-anc-obsidian-accent: var(--anc-obsidian-accent);
+  --color-anc-obsidian-surface: var(--anc-obsidian-surface);
+  --color-anc-seafoam-accent: var(--anc-seafoam-accent);
+  --color-anc-seafoam-surface: var(--anc-seafoam-surface);
+  /* Theme color tokens (e.g. bg-anc-theme-link-bg, text-anc-theme-name, border-anc-theme-divider) */
+  --color-anc-theme-anchor: var(--anc-theme-anchor-color);
+  --color-anc-theme-avatar-bg: var(--anc-theme-avatar-bg);
+  --color-anc-theme-avatar-inner-border: var(--anc-theme-avatar-inner-border);
+  --color-anc-theme-avatar-outer-ring: var(--anc-theme-avatar-outer-ring);
+  --color-anc-theme-border: var(--anc-theme-border);
+  --color-anc-theme-brand: var(--anc-theme-brand);
+  --color-anc-theme-divider: var(--anc-theme-divider);
+  --color-anc-theme-featured-bg: var(--anc-theme-featured-bg);
+  --color-anc-theme-featured-border: var(--anc-theme-featured-border);
+  --color-anc-theme-featured-icon-bg: var(--anc-theme-featured-icon-bg);
+  --color-anc-theme-featured-icon: var(--anc-theme-featured-icon-color);
+  --color-anc-theme-featured-text: var(--anc-theme-featured-text);
+  --color-anc-theme-hairline: var(--anc-theme-hairline);
+  --color-anc-theme-link-bg: var(--anc-theme-link-bg);
+  --color-anc-theme-link-border: var(--anc-theme-link-border);
+  --color-anc-theme-link-icon-bg: var(--anc-theme-link-icon-bg);
+  --color-anc-theme-link-icon: var(--anc-theme-link-icon-color);
+  --color-anc-theme-link-text: var(--anc-theme-link-text);
+  --color-anc-theme-name: var(--anc-theme-name-color);
+  /* Tracking utilities */
+  --tracking-anc-tight: var(--anc-tracking-tight);
+  --tracking-anc-caps: var(--anc-tracking-caps);
+  --tracking-anc-caps-wide: var(--anc-tracking-caps-wide);
+  --tracking-anc-caps-extra: var(--anc-tracking-caps-extra);
+  --tracking-anc-wordmark: var(--anc-tracking-wordmark);
+  --tracking-anc-wordmark-sm: var(--anc-tracking-wordmark-sm);
 }
 
 /* ── Marketing page theme tokens ────────────────────────────────────────── */
@@ -162,7 +502,7 @@
   --m-muted: 146 176 190;
   --m-accent: 212 184 150;
   --m-glow: 30 45 66;
-  --m-page-bg: var(--brand-deep-navy);
+  --m-page-bg: var(--anc-deep-navy);
   --m-card-bg: rgba(30, 45, 66, 0.4);
   --m-embed-bg: rgba(10, 23, 41, 0.8);
   --m-embed-bg-subtle: rgba(10, 23, 41, 0.5);
@@ -171,10 +511,10 @@
   --m-grain-opacity: 0.022;
   --m-shadow: 0 0 0;
   /* Semantic overrides so shared UI components (Button, etc.) match the marketing theme */
-  --primary: var(--brand-gold);
-  --primary-foreground: var(--brand-deep-navy);
-  --muted-foreground: var(--brand-steel);
-  --ring: var(--brand-steel);
+  --primary: var(--anc-gold);
+  --primary-foreground: var(--anc-deep-navy);
+  --muted-foreground: var(--anc-steel);
+  --ring: var(--anc-steel);
 }
 
 [data-marketing-theme="light"] {
@@ -182,15 +522,15 @@
   --m-muted: 120 95 50;
   --m-accent: 10 23 41;
   --m-glow: 185 158 90;
-  --m-page-bg: var(--brand-cream);
+  --m-page-bg: var(--anc-cream);
   --m-card-bg: rgba(255, 252, 245, 0.7);
   --m-embed-bg: rgba(236, 224, 192, 0.4);
   --m-embed-bg-subtle: rgba(236, 224, 192, 0.25);
   /* Semantic overrides so shared UI components (Button, etc.) match the marketing theme */
-  --primary: var(--brand-deep-navy);
-  --primary-foreground: var(--brand-cream);
-  --muted-foreground: var(--brand-umber);
-  --ring: var(--brand-brass);
+  --primary: var(--anc-deep-navy);
+  --primary-foreground: var(--anc-cream);
+  --muted-foreground: var(--anc-umber);
+  --ring: var(--anc-brass);
   --m-accent-gradient: linear-gradient(to right, transparent, rgba(10, 23, 41, 0.18), transparent);
   --m-wave-stroke: rgba(168, 142, 88, 0.12);
   --m-grain-opacity: 0.018;
@@ -441,109 +781,109 @@
 }
 
 /* ── LinkPageMockup theme-driven styles ───────────────────────────────── */
-/* All styles reference --_mc-* CSS custom properties set on .m-mockup-card */
+/* All styles reference --anc-theme-* CSS custom properties set via data-theme */
 
-.m-mockup-card {
-  /* defaults — overridden per theme via JS ref callback */
-  --_mc-card-bg: transparent;
-  --_mc-border: transparent;
-  --_mc-hairline: transparent;
-  --_mc-glow-bg: transparent;
-  --_mc-avatar-outer-ring: transparent;
-  --_mc-avatar-bg: transparent;
-  --_mc-avatar-inner-border: transparent;
-  --_mc-anchor-color: currentColor;
-  --_mc-name-color: currentColor;
-  --_mc-link-text: currentColor;
-  --_mc-link-icon-bg: transparent;
-  --_mc-link-icon-color: currentColor;
-  --_mc-link-border: transparent;
-  --_mc-link-bg: transparent;
-  --_mc-featured-bg: transparent;
-  --_mc-featured-border: transparent;
-  --_mc-featured-icon-bg: transparent;
-  --_mc-featured-icon-color: currentColor;
-  --_mc-featured-text: currentColor;
-  --_mc-divider: transparent;
-  --_mc-brand: currentColor;
+.m-mockup-card:not([data-theme]) {
+  /* defaults — overridden when data-theme attribute is set */
+  --anc-theme-card-bg: transparent;
+  --anc-theme-border: transparent;
+  --anc-theme-hairline: transparent;
+  --anc-theme-glow-bg: transparent;
+  --anc-theme-avatar-outer-ring: transparent;
+  --anc-theme-avatar-bg: transparent;
+  --anc-theme-avatar-inner-border: transparent;
+  --anc-theme-anchor-color: currentColor;
+  --anc-theme-name-color: currentColor;
+  --anc-theme-link-text: currentColor;
+  --anc-theme-link-icon-bg: transparent;
+  --anc-theme-link-icon-color: currentColor;
+  --anc-theme-link-border: transparent;
+  --anc-theme-link-bg: transparent;
+  --anc-theme-featured-bg: transparent;
+  --anc-theme-featured-border: transparent;
+  --anc-theme-featured-icon-bg: transparent;
+  --anc-theme-featured-icon-color: currentColor;
+  --anc-theme-featured-text: currentColor;
+  --anc-theme-divider: transparent;
+  --anc-theme-brand: currentColor;
 }
 
 .mc-front {
   backface-visibility: hidden;
-  background: var(--_mc-card-bg);
-  border: 1px solid var(--_mc-border);
+  background: var(--anc-theme-card-bg);
+  border: 1px solid var(--anc-theme-border);
 }
 
 .mc-hairline {
-  background: linear-gradient(to right, transparent, color-mix(in srgb, var(--_mc-hairline) 60%, transparent), transparent);
+  background: linear-gradient(to right, transparent, color-mix(in srgb, var(--anc-theme-hairline) 60%, transparent), transparent);
 }
 
 .mc-glow {
-  background: var(--_mc-glow-bg);
+  background: var(--anc-theme-glow-bg);
 }
 
 .mc-avatar-outer {
-  border: 1px solid var(--_mc-avatar-outer-ring);
+  border: 1px solid var(--anc-theme-avatar-outer-ring);
 }
 
 .mc-avatar-inner {
-  background: var(--_mc-avatar-bg);
-  border: 1px solid var(--_mc-avatar-inner-border);
+  background: var(--anc-theme-avatar-bg);
+  border: 1px solid var(--anc-theme-avatar-inner-border);
 }
 
 .mc-anchor-color {
-  color: var(--_mc-anchor-color);
+  color: var(--anc-theme-anchor-color);
 }
 
 .mc-name-color {
-  color: var(--_mc-name-color);
+  color: var(--anc-theme-name-color);
 }
 
 .mc-link-text {
-  color: var(--_mc-link-text);
+  color: var(--anc-theme-link-text);
 }
 
 .mc-social-icon {
-  background: var(--_mc-link-icon-bg);
-  border: 1px solid var(--_mc-link-border);
+  background: var(--anc-theme-link-icon-bg);
+  border: 1px solid var(--anc-theme-link-border);
 }
 
 .mc-link-icon-color {
-  color: var(--_mc-link-icon-color);
+  color: var(--anc-theme-link-icon-color);
 }
 
 .mc-featured {
-  background: var(--_mc-featured-bg);
-  border: 1px solid var(--_mc-featured-border);
+  background: var(--anc-theme-featured-bg);
+  border: 1px solid var(--anc-theme-featured-border);
 }
 
 .mc-featured-icon-bg {
-  background: var(--_mc-featured-icon-bg);
+  background: var(--anc-theme-featured-icon-bg);
 }
 
 .mc-featured-icon-color {
-  color: var(--_mc-featured-icon-color);
+  color: var(--anc-theme-featured-icon-color);
 }
 
 .mc-featured-text {
-  color: var(--_mc-featured-text);
+  color: var(--anc-theme-featured-text);
 }
 
 .mc-link {
-  background: var(--_mc-link-bg);
-  border: 1px solid var(--_mc-link-border);
+  background: var(--anc-theme-link-bg);
+  border: 1px solid var(--anc-theme-link-border);
 }
 
 .mc-link-icon-bg {
-  background: var(--_mc-link-icon-bg);
+  background: var(--anc-theme-link-icon-bg);
 }
 
 .mc-branding {
-  border-top: 1px solid var(--_mc-divider);
+  border-top: 1px solid var(--anc-theme-divider);
 }
 
 .mc-brand-color {
-  color: var(--_mc-brand);
+  color: var(--anc-theme-brand);
 }
 
 /* ── Mockup theme dots ────────────────────────────────────────────────── */
@@ -597,7 +937,8 @@
   box-shadow: 0 0 40px rgb(var(--_logo-a) / 0.08);
 }
 
-.dark .site-logo {
+[data-theme="dark-depths"] .site-logo,
+[data-theme="obsidian"] .site-logo {
   --_logo-a: var(--m-accent, 212 184 150);
   --_logo-bg: var(--m-card-bg, rgba(30, 45, 66, 0.4));
 }
@@ -608,6 +949,16 @@
 
 .site-logo-icon {
   color: rgb(var(--_logo-a));
+}
+
+/* ── Link page background ─────────────────────────────────────────────── */
+
+.lp-page-bg {
+  background: var(--anc-theme-card-bg);
+}
+
+.lp-wave-mask {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 3%, black 20%, transparent 35%);
 }
 
 /* ── Speed animation (features blazing-fast) ──────────────────────────── */
@@ -653,9 +1004,9 @@
     @apply bg-background text-foreground;
   }
   body:has([data-marketing-theme="dark"]) {
-    background: var(--brand-deep-navy);
+    background: var(--anc-deep-navy);
   }
   body:has([data-marketing-theme="light"]) {
-    background: var(--brand-cream);
+    background: var(--anc-cream);
   }
 }

@@ -1,20 +1,15 @@
-import type { CardTheme } from "@/components/dashboard/page-preview/utils";
-import { getThemeStyle } from "@/components/dashboard/page-preview/utils";
+import { type ThemeId } from "@/lib/themes";
 import * as React from "react";
 
 export type ThemeProviderProps = React.PropsWithChildren<{
-  theme: CardTheme;
+  themeId: ThemeId;
 }>;
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = (props) => {
-  const { children, theme } = props;
-
-  //* Variables
-  const style = { ...getThemeStyle(theme), background: theme.cardBg } as React.CSSProperties;
+  const { children, themeId } = props;
 
   return (
-    // eslint-disable-next-line anchr/no-inline-style -- server-rendered theme CSS variables
-    <div className="flex min-h-dvh flex-col" style={style}>
+    <div className="lp-page-bg flex min-h-dvh flex-col" data-theme={themeId}>
       {children}
     </div>
   );

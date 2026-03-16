@@ -1,11 +1,12 @@
-import { getCardTheme } from "@/components/dashboard/page-preview/utils";
 import { Footer } from "@/components/link-page/footer";
 import { LinkList } from "@/components/link-page/link-list";
 import { ProfileHeader } from "@/components/link-page/profile-header";
 import { ThemeProvider } from "@/components/link-page/theme-provider";
+import { Container } from "@/components/ui/container";
 import { db } from "@/lib/db/client";
 import { linksTable } from "@/lib/db/schema/link";
 import { usersTable } from "@/lib/db/schema/user";
+import { type ThemeId, DEFAULT_THEME_ID, isValidThemeId } from "@/lib/themes";
 import { and, asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -78,21 +79,43 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
   }
 
   const { links, user } = data;
-  const theme = getCardTheme(user.theme);
+  const themeId: ThemeId = isValidThemeId(user.theme) ? user.theme : DEFAULT_THEME_ID;
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider themeId={themeId}>
       {/* Hairline accent */}
-      <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(to_right,transparent,color-mix(in_srgb,var(--_mc-hairline)_60%,transparent),transparent)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(to_right,transparent,color-mix(in_srgb,var(--anc-theme-hairline)_60%,transparent),transparent)]" />
 
       {/* Radial glow */}
-      <div className="pointer-events-none absolute top-0 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-[var(--_mc-glow-bg)] opacity-25 blur-3xl" />
+      <div className="pointer-events-none absolute top-0 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-[var(--anc-theme-glow-bg)] opacity-25 blur-3xl" />
 
-      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col items-center gap-6 px-5 pt-10 pb-8">
+      {/* Wave texture */}
+      <svg
+        className="lp-wave-mask pointer-events-none absolute inset-0 h-full w-full"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern height="22" id="lpWaves" patternUnits="userSpaceOnUse" width="280" x="0" y="0">
+            <path
+              d="M-70,11 C-52.5,4 -17.5,18 0,11 C17.5,4 52.5,18 70,11 C87.5,4 122.5,18 140,11 C157.5,4 192.5,18 210,11 C227.5,4 262.5,18 280,11 C297.5,4 332.5,18 350,11"
+              fill="none"
+              opacity="0.18"
+              stroke="var(--anc-theme-anchor-color)"
+              strokeWidth="0.75"
+            />
+          </pattern>
+        </defs>
+        <rect fill="url(#lpWaves)" height="100%" width="100%" />
+      </svg>
+
+      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col items-center gap-6 px-5 pt-10">
         <ProfileHeader avatarUrl={user.avatarUrl} displayName={user.displayName} username={user.username} />
         <LinkList links={links} />
-        <Footer />
       </div>
+      <Container className="relative pb-8">
+        <Footer />
+      </Container>
     </ThemeProvider>
   );
 };

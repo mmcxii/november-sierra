@@ -2,6 +2,7 @@ import { LinkPageMockup } from "@/components/marketing/link-page-mockup";
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { SiteWordmark } from "@/components/marketing/site-wordmark";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
+import { Container } from "@/components/ui/container";
 import type { TFunction } from "i18next";
 
 export type HeroProps = {
@@ -12,11 +13,11 @@ export const Hero: React.FC<HeroProps> = (props) => {
   const { t } = props;
 
   return (
-    <section className="relative px-6 pt-16 pb-16 lg:pt-20 lg:pb-24">
+    <section className="relative pt-16 pb-16 lg:pt-20 lg:pb-24">
       {/* Ambient glow */}
       <div className="m-glow-bg pointer-events-none absolute inset-0 m-auto h-[600px] w-[600px] max-w-full rounded-full opacity-40 blur-[120px]" />
 
-      <div className="relative z-10 mx-auto max-w-6xl">
+      <Container className="relative z-10">
         {/* Site logo */}
         <div className="mb-10 flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:gap-5">
@@ -51,7 +52,7 @@ export const Hero: React.FC<HeroProps> = (props) => {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

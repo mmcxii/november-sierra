@@ -3,6 +3,7 @@
 import { AnalyticsPreview } from "@/components/marketing/analytics-preview";
 import { FadeIn } from "@/components/marketing/fade-in";
 import { RedirectHubUrlPreview } from "@/components/marketing/redirect-hub-url-preview";
+import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/utils";
 import { Anchor, ArrowUpRight, BarChart3, ChevronRight, Globe, Palette, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +16,7 @@ export const Features: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="px-6 py-24">
+    <Container as="section" className="py-24">
       <div className="mx-auto max-w-4xl">
         <h2 className="mb-12 text-center text-2xl font-bold tracking-tight sm:text-3xl">
           {t("everythingYourLinkPageShouldBe")}
@@ -93,6 +94,6 @@ export const Features: React.FC = () => {
           </FadeIn>
         </div>
       </div>
-    </section>
+    </Container>
   );
 };

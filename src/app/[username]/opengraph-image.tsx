@@ -1,7 +1,7 @@
 /* eslint-disable anchr/no-inline-style */
-import { getCardTheme } from "@/components/dashboard/page-preview/utils";
 import { db } from "@/lib/db/client";
 import { usersTable } from "@/lib/db/schema/user";
+import { getTheme } from "@/lib/themes";
 import { eq } from "drizzle-orm";
 import { ImageResponse } from "next/og";
 
@@ -11,14 +11,6 @@ export const size = { height: 630, width: 1200 };
 
 const GEIST_BOLD_URL = "https://cdn.jsdelivr.net/fontsource/fonts/geist-sans@latest/latin-700-normal.woff";
 const GEIST_REGULAR_URL = "https://cdn.jsdelivr.net/fontsource/fonts/geist-sans@latest/latin-400-normal.woff";
-
-/** Solid background color per theme (extracted from cardBg gradient midpoints). */
-const THEME_BACKGROUNDS: Record<string, string> = {
-  minimal: "#0a1729",
-  obsidian: "#0c0909",
-  seafoam: "#c2e8d8",
-  stateroom: "#f5edda",
-};
 
 type Params = { username: string };
 
@@ -32,8 +24,8 @@ export default async function UserOpenGraphImage(props: { params: Promise<Params
     return new Response(null, { status: 404 });
   }
 
-  const theme = getCardTheme(user.theme);
-  const bg = THEME_BACKGROUNDS[theme.id] ?? THEME_BACKGROUNDS.minimal;
+  const theme = getTheme(user.theme);
+  const bg = theme.ogBackground;
   const displayName = user.displayName ?? user.username;
 
   const [geistBold, geistRegular] = await Promise.all([
