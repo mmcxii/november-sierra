@@ -4,6 +4,7 @@ import { db } from "@/lib/db/client";
 import { generateUniqueSlug } from "@/lib/db/queries/link";
 import { linksTable } from "@/lib/db/schema/link";
 import { usersTable } from "@/lib/db/schema/user";
+import { detectPlatform } from "@/lib/platforms";
 import { linkSchema } from "@/lib/schemas/link";
 import { usernameSchema } from "@/lib/schemas/username";
 import { auth } from "@clerk/nextjs/server";
@@ -101,7 +102,10 @@ export async function addFirstLink(title: string, url: string): Promise<AddLinkR
     .from(linksTable)
     .where(eq(linksTable.userId, userId));
 
+  const platform = detectPlatform(result.data.url);
+
   await db.insert(linksTable).values({
+    platform,
     position: (maxPosition[0]?.max ?? -1) + 1,
     slug,
     title: result.data.title,

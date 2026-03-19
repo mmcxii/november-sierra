@@ -1,10 +1,12 @@
 "use client";
 
 import { createLink, updateLink } from "@/app/(dashboard)/dashboard/actions";
+import { PlatformBadge } from "@/components/dashboard/platform-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { detectPlatform } from "@/lib/platforms";
 import { type LinkValues, linkSchema } from "@/lib/schemas/link";
 import { ensureProtocol, generateSlug } from "@/lib/utils/url";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -49,6 +51,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
   //* Variables
   const isEditing = defaultValues != null;
   const urlValue = watch("url");
+  const detectedPlatform = urlValue != null && urlValue.length > 0 ? detectPlatform(urlValue) : null;
   const slugPlaceholder = urlValue != null && urlValue.length > 0 ? generateSlug(ensureProtocol(urlValue)) : "";
   const { ref: titleRegisterRef, ...titleRegisterRest } = register("title");
   const URL_UNREACHABLE_KEY = "thisUrlCouldNotBeReachedPleaseCheckItAndTryAgain";
@@ -146,6 +149,11 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
       <div className="flex flex-col gap-2">
         <Label htmlFor="link-url">{t("url")}</Label>
         <Input disabled={isSubmitting} id="link-url" placeholder="https://" {...register("url")} />
+        {detectedPlatform != null && (
+          <div className="flex">
+            <PlatformBadge platform={detectedPlatform} />
+          </div>
+        )}
         {errors.url?.message != null && <p className="text-destructive text-xs">{errors.url.message}</p>}
         {showSkipUrlCheck && (
           <label className="flex items-center gap-2">

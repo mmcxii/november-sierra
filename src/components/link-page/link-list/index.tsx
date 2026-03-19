@@ -1,8 +1,9 @@
+import { PlatformIcon } from "@/components/link-page/platform-icon";
 import { Link2 } from "lucide-react";
 import * as React from "react";
 
 export type LinkListProps = {
-  links: { id: string; slug: string; title: string; url: string }[];
+  links: { id: string; platform: null | string; slug: string; title: string; url: string }[];
   username: string;
 };
 
@@ -24,7 +25,11 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
           target="_blank"
         >
           <div className="bg-anc-theme-link-icon-bg flex size-7 shrink-0 items-center justify-center rounded-lg">
-            <Link2 className="text-anc-theme-link-icon size-4" strokeWidth={1.75} />
+            {link.platform != null ? (
+              <PlatformIcon className="text-anc-theme-link-icon size-4" platform={link.platform} />
+            ) : (
+              <Link2 className="text-anc-theme-link-icon size-4" strokeWidth={1.75} />
+            )}
           </div>
           <span className="text-anc-theme-link-text flex-1 truncate text-center text-sm font-medium">{link.title}</span>
           <div className="size-7 shrink-0" />

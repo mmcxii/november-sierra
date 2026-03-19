@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { generateUniqueSlug } from "@/lib/db/queries/link";
 import { linksTable } from "@/lib/db/schema/link";
+import { detectPlatform } from "@/lib/platforms";
 import { linkSchema } from "@/lib/schemas/link";
 import { FREE_LINK_LIMIT } from "@/lib/tier";
 import { ensureProtocol, generateSlug, urlResolves } from "@/lib/utils/url";
@@ -62,7 +63,10 @@ export async function createLink(
     .from(linksTable)
     .where(eq(linksTable.userId, user.id));
 
+  const platform = detectPlatform(fullUrl);
+
   await db.insert(linksTable).values({
+    platform,
     position: (maxPosition[0]?.max ?? -1) + 1,
     slug,
     title: result.data.title,
@@ -122,9 +126,11 @@ export async function updateLink(
     slug = oldSlug !== newSlug ? await generateUniqueSlug(user.id, fullUrl) : existingLink.slug;
   }
 
+  const platform = detectPlatform(fullUrl);
+
   const updated = await db
     .update(linksTable)
-    .set({ slug, title: result.data.title, url: fullUrl })
+    .set({ platform, slug, title: result.data.title, url: fullUrl })
     .where(and(eq(linksTable.id, id), eq(linksTable.userId, user.id)));
 
   if (updated.rowCount === 0) {

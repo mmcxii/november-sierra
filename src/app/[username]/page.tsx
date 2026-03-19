@@ -28,7 +28,13 @@ async function getPageData(username: string) {
   }
 
   const links = await db
-    .select({ id: linksTable.id, slug: linksTable.slug, title: linksTable.title, url: linksTable.url })
+    .select({
+      id: linksTable.id,
+      platform: linksTable.platform,
+      slug: linksTable.slug,
+      title: linksTable.title,
+      url: linksTable.url,
+    })
     .from(linksTable)
     .where(and(eq(linksTable.userId, user.id), eq(linksTable.visible, true)))
     .orderBy(asc(linksTable.position));

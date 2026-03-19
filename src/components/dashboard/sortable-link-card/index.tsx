@@ -1,6 +1,7 @@
 "use client";
 
 import type { LinkItem } from "@/components/dashboard/link-list";
+import { PlatformBadge } from "@/components/dashboard/platform-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
@@ -89,6 +90,7 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
       <div className="min-w-0 flex-1">
         <p className="text-card-foreground flex items-center gap-1.5 truncate text-sm font-medium">
           <span className="truncate">{link.title}</span>
+          {link.platform != null && <PlatformBadge platform={link.platform} />}
           {!link.visible && (
             <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-[10px] leading-none font-medium">
               {t("hidden")}

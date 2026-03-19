@@ -8,6 +8,7 @@ export const linksTable = pgTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
+    platform: text("platform"),
     position: integer("position").notNull(),
     slug: text("slug").notNull(),
     title: text("title").notNull(),
