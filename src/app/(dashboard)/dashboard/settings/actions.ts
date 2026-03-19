@@ -51,6 +51,28 @@ export async function updatePageLightTheme(theme: string): Promise<ActionResult>
   return updatePageTheme("pageLightTheme", theme);
 }
 
+export async function updateHideBranding(hide: boolean): Promise<ActionResult> {
+  const { userId } = await auth();
+
+  if (userId == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+
+  if (user == null || user.tier !== "pro") {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  await db.update(usersTable).set({ hideBranding: hide, updatedAt: new Date() }).where(eq(usersTable.id, userId));
+
+  if (user.username) {
+    revalidatePath(`/${user.username}`);
+  }
+
+  return { success: true };
+}
+
 export async function createCheckoutSession(): Promise<ActionResult> {
   const { userId } = await auth();
 

@@ -3,6 +3,7 @@
 import {
   createCheckoutSession,
   createPortalSession,
+  updateHideBranding,
   updatePageDarkTheme,
   updatePageLightTheme,
 } from "@/app/(dashboard)/dashboard/settings/actions";
@@ -17,28 +18,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import type { SessionUser } from "@/lib/auth";
 import { DARK_THEME_ID_LIST, LIGHT_THEME_ID_LIST, THEMES, isDarkTheme, type ThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 export type SettingsContentProps = {
   checkoutSuccess?: boolean;
+  hideBranding: boolean;
   pageDarkThemeId: ThemeId;
   pageLightThemeId: ThemeId;
   user: SessionUser;
 };
 
 export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
-  const { checkoutSuccess, pageDarkThemeId, pageLightThemeId, user } = props;
+  const { checkoutSuccess, hideBranding, pageDarkThemeId, pageLightThemeId, user } = props;
 
   const { t } = useTranslation();
   const { preferredDark, preferredLight, setPreferredDark, setPreferredLight } = useDashboardTheme();
   const [previewThemes, setPreviewThemes] = React.useState({ dark: pageDarkThemeId, light: pageLightThemeId });
+  const [brandingHidden, setBrandingHidden] = React.useState(hideBranding);
+  const [brandingPending, startBrandingTransition] = React.useTransition();
   const [billingLoading, setBillingLoading] = React.useState(false);
   const [celebrationOpen, setCelebrationOpen] = React.useState(checkoutSuccess === true);
   const isPro = isProUser(user);
-  const previewKey = `${previewThemes.dark}|${previewThemes.light}`;
+  const previewKey = `${previewThemes.dark}|${previewThemes.light}|${brandingHidden}`;
 
   React.useEffect(() => {
     if (checkoutSuccess) {
@@ -49,6 +53,20 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const handlePageThemeChange = React.useCallback((themeId: ThemeId) => {
     setPreviewThemes((prev) => (isDarkTheme(themeId) ? { ...prev, dark: themeId } : { ...prev, light: themeId }));
   }, []);
+
+  const handleBrandingToggle = () => {
+    const newValue = !brandingHidden;
+    setBrandingHidden(newValue);
+
+    startBrandingTransition(async () => {
+      const result = await updateHideBranding(newValue);
+
+      if (!result.success) {
+        setBrandingHidden(!newValue);
+        toast.error(t(result.error));
+      }
+    });
+  };
 
   const handleUpgrade = async () => {
     setBillingLoading(true);
@@ -184,6 +202,25 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                 <Button disabled={billingLoading} onClick={handleUpgrade}>
                   {t("upgradeToPro")}
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("branding")}</CardTitle>
+            <CardDescription>{t("removeTheAnchrBrandingFromYourPublicPage")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isPro ? (
+              <Button disabled={brandingPending} onClick={handleBrandingToggle} variant="tertiary">
+                {brandingHidden ? t("showBranding") : t("hideBranding")}
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Lock className="text-muted-foreground size-4" />
+                <p className="text-muted-foreground text-sm">{t("upgradeToProToHideBranding")}</p>
               </div>
             )}
           </CardContent>

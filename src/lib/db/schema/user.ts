@@ -5,6 +5,7 @@ export const usersTable = pgTable("users", {
   bio: text("bio"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   displayName: text("display_name"),
+  hideBranding: boolean("hide_branding").default(false).notNull(),
   id: text("id").primaryKey(),
   onboardingComplete: boolean("onboarding_complete").default(false).notNull(),
   pageDarkTheme: text("page_dark_theme").default("dark-depths").notNull(),

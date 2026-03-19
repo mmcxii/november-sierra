@@ -13,6 +13,7 @@ import {
   getTopLinks,
 } from "@/lib/db/queries/analytics";
 import { initTranslations } from "@/lib/i18n/server";
+import { isProUser } from "@/lib/tier";
 import { computeTrendPercent, fillDateGaps } from "@/lib/utils/analytics";
 import type { Metadata } from "next";
 import * as React from "react";
@@ -26,13 +27,16 @@ type AnalyticsPageProps = {
 };
 
 const VALID_RANGES = new Set<DateRange>(["7d", "30d", "all"]);
+const FREE_RANGES = new Set<DateRange>(["7d"]);
 
 const AnalyticsPage: React.FC<AnalyticsPageProps> = async (props) => {
   const { searchParams } = props;
   const user = await requireUser();
   const { t } = await initTranslations();
   const params = await searchParams;
-  const range: DateRange = VALID_RANGES.has(params.range as DateRange) ? (params.range as DateRange) : "7d";
+  const isPro = isProUser(user);
+  const allowedRanges = isPro ? VALID_RANGES : FREE_RANGES;
+  const range: DateRange = allowedRanges.has(params.range as DateRange) ? (params.range as DateRange) : "7d";
   const isAllTime = range === "all";
 
   const [summary, clickHistory, topLinks, previousPeriod, sparklineRows, perLinkTrends] = await Promise.all([
@@ -91,7 +95,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = async (props) => {
           trendPercent={overallTrend}
         />
 
-        <ClicksChart data={clickHistory} />
+        <ClicksChart data={clickHistory} isPro={isPro} />
 
         {linkPerformance.length > 0 && <LinkPerformanceTable links={linkPerformance} />}
       </div>

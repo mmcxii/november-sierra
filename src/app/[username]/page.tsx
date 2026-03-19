@@ -116,7 +116,7 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
         <LinkList links={links} username={user.username} />
       </div>
       <Container className="relative pb-8">
-        <Footer themeToggle={<LinkPageThemeToggle />} />
+        <Footer hideBranding={user.tier === "pro" && user.hideBranding} themeToggle={<LinkPageThemeToggle />} />
       </Container>
     </ThemeProvider>
   );

@@ -8,10 +8,11 @@ import { DateRangeSelect } from "../date-range-select";
 
 export type ClicksChartProps = {
   data: { clicks: number; date: string }[];
+  isPro: boolean;
 };
 
 export const ClicksChart: React.FC<ClicksChartProps> = (props) => {
-  const { data } = props;
+  const { data, isPro } = props;
 
   //* State
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ export const ClicksChart: React.FC<ClicksChartProps> = (props) => {
       <CardHeader>
         <CardTitle className="text-sm font-medium">{t("clicksOverTime")}</CardTitle>
         <CardAction>
-          <DateRangeSelect />
+          <DateRangeSelect isPro={isPro} />
         </CardAction>
       </CardHeader>
       <CardContent>

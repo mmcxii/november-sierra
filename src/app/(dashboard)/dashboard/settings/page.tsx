@@ -28,6 +28,7 @@ const SettingsPage: React.FC<SettingsPageProps> = async (props) => {
       <h1 className="mb-6 text-2xl font-bold">{t("settings")}</h1>
       <SettingsContent
         checkoutSuccess={checkoutSuccess}
+        hideBranding={user.hideBranding}
         pageDarkThemeId={pageDarkThemeId}
         pageLightThemeId={pageLightThemeId}
         user={user}
