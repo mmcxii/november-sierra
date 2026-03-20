@@ -45,10 +45,11 @@ export type LinkItem = typeof linksTable.$inferSelect;
 export type LinkListProps = {
   links: LinkItem[];
   username: string;
+  onQrCode?: (link: LinkItem) => void;
 };
 
 export const LinkList: React.FC<LinkListProps> = (props) => {
-  const { links, username } = props;
+  const { links, onQrCode, username } = props;
 
   //* State
   const { t } = useTranslation();
@@ -299,6 +300,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                   link={link}
                   onDelete={handleOpenDelete}
                   onEdit={handleOpenEdit}
+                  onQrCode={onQrCode}
                   onSelect={handleSelectLink}
                   onToggleVisibility={handleToggleVisibility}
                   selected={selectedIds.has(link.id)}

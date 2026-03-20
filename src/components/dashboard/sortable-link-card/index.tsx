@@ -3,11 +3,28 @@
 import type { LinkItem } from "@/components/dashboard/link-list";
 import { PlatformBadge } from "@/components/dashboard/platform-badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Copy, ExternalLink, Eye, EyeOff, GripVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  EllipsisVertical,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Pencil,
+  QrCode,
+  Trash2,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -18,12 +35,13 @@ export type SortableLinkCardProps = {
   username: string;
   onDelete: (link: LinkItem) => void;
   onEdit: (link: LinkItem) => void;
+  onQrCode?: (link: LinkItem) => void;
   onSelect: (linkId: string) => void;
   onToggleVisibility: (link: LinkItem) => void;
 };
 
 export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
-  const { link, onDelete, onEdit, onSelect, onToggleVisibility, selected, username } = props;
+  const { link, onDelete, onEdit, onQrCode, onSelect, onToggleVisibility, selected, username } = props;
 
   //* State
   const { t } = useTranslation();
@@ -119,17 +137,33 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        <IconButton aria-label={link.visible ? t("hideLink") : t("showLink")} onClick={() => onToggleVisibility(link)}>
-          <VisibilityIcon className="size-4" />
-        </IconButton>
-        <IconButton aria-label={t("editLink")} onClick={() => onEdit(link)}>
-          <Pencil className="size-4" />
-        </IconButton>
-        <IconButton aria-label={t("deleteLink")} onClick={() => onDelete(link)} variant="destructive">
-          <Trash2 className="size-4" />
-        </IconButton>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <IconButton aria-label={t("actions")}>
+            <EllipsisVertical className="size-4" />
+          </IconButton>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {onQrCode != null && (
+            <DropdownMenuItem onClick={() => onQrCode(link)}>
+              <QrCode />
+              {t("qrCode")}
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={() => onToggleVisibility(link)}>
+            <VisibilityIcon />
+            {link.visible ? t("hideLink") : t("showLink")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onEdit(link)}>
+            <Pencil />
+            {t("editLink")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onDelete(link)} variant="destructive">
+            <Trash2 />
+            {t("deleteLink")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </li>
   );
 };

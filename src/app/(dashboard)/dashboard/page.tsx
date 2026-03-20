@@ -1,6 +1,5 @@
-import { LinkList } from "@/components/dashboard/link-list";
+import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { PagePreview } from "@/components/dashboard/page-preview";
-import { PreviewToggle } from "@/components/dashboard/preview-toggle";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { linksTable } from "@/lib/db/schema/link";
@@ -27,12 +26,7 @@ const DashboardPage: React.FC = async () => {
     <div className="flex gap-8">
       {/* Link management */}
       <div className="min-w-0 flex-1">
-        {/* Mobile preview button */}
-        <div className="mb-4 flex justify-end xl:hidden">
-          <PreviewToggle previewKey={previewKey} user={user} />
-        </div>
-
-        <LinkList links={links} username={user.username} />
+        <DashboardContent links={links} previewKey={previewKey} user={user} />
       </div>
 
       {/* Desktop preview panel */}

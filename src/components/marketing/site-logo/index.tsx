@@ -11,11 +11,13 @@ export type SiteLogoProps = {
   /** CSS color override for the background. Falls back to --m-card-bg. */
   cardBg?: string;
   className?: string;
+  /** Use an opaque background instead of the default translucent one. */
+  opaque?: boolean;
   size?: "4xl" | "lg" | "md" | "sm" | "xl" | "xs";
 };
 
 export const SiteLogo: React.FC<SiteLogoProps> = (props) => {
-  const { accent, cardBg, className, size = "md" } = props;
+  const { accent, cardBg, className, opaque, size = "md" } = props;
 
   const s = SIZE_MAP[size];
 
@@ -36,7 +38,12 @@ export const SiteLogo: React.FC<SiteLogoProps> = (props) => {
 
   return (
     <div
-      className={cn("site-logo relative flex items-center justify-center rounded-full", s.outer, className)}
+      className={cn(
+        "site-logo relative flex items-center justify-center rounded-full",
+        s.outer,
+        { "site-logo-opaque": opaque },
+        className,
+      )}
       ref={outerRef}
     >
       <div className={cn("site-logo-inner absolute rounded-full", s.inner)} />

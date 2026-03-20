@@ -946,6 +946,16 @@
   --_logo-bg: var(--m-card-bg, rgba(30, 45, 66, 0.4));
 }
 
+.site-logo.site-logo-opaque {
+  --_logo-bg: rgb(255 252 245);
+}
+
+[data-theme="dark"] .site-logo.site-logo-opaque,
+[data-theme="dark-depths"] .site-logo.site-logo-opaque,
+[data-theme="obsidian"] .site-logo.site-logo-opaque {
+  --_logo-bg: rgb(30 45 66);
+}
+
 .site-logo-inner {
   border: 1px solid rgb(var(--_logo-a) / 0.20);
 }
