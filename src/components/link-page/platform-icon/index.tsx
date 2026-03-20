@@ -1,4 +1,4 @@
-import { PLATFORM_CUSTOM_PATHS, PLATFORM_ICON_MAP } from "@/lib/platform-icons";
+import { PLATFORM_CUSTOM_ICONS, PLATFORM_ICON_MAP } from "@/lib/platform-icons";
 import { type PlatformId, PLATFORMS, isValidPlatformId } from "@/lib/platforms";
 import * as React from "react";
 
@@ -25,18 +25,18 @@ export const PlatformIcon: React.FC<PlatformIconProps> = (props) => {
     );
   }
 
-  const path = PLATFORM_CUSTOM_PATHS[id];
+  const custom = PLATFORM_CUSTOM_ICONS[id];
 
-  return path != null ? (
+  return custom != null ? (
     <svg
       aria-label={PLATFORMS[id].name}
       className={className}
       fill="currentColor"
       role="img"
-      viewBox="0 0 24 24"
+      viewBox={custom.viewBox ?? "0 0 24 24"}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d={path} />
+      <path d={custom.d} />
     </svg>
   ) : null;
 };

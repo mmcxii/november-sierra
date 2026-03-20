@@ -960,6 +960,30 @@
   background: var(--anc-theme-card-bg);
 }
 
+.lp-link-icon-bg {
+  background: color-mix(
+    in srgb,
+    var(--anc-platform-accent-light, transparent) 14%,
+    var(--anc-theme-link-icon-bg)
+  );
+}
+
+.lp-page-bg:is([data-theme="dark"], [data-theme="dark-depths"], [data-theme="obsidian"]) .lp-link-icon-bg {
+  background: color-mix(
+    in srgb,
+    var(--anc-platform-accent-dark, transparent) 14%,
+    var(--anc-theme-link-icon-bg)
+  );
+}
+
+.lp-link-icon-color {
+  color: var(--anc-platform-accent-light, var(--anc-theme-link-icon-color));
+}
+
+.lp-page-bg:is([data-theme="dark"], [data-theme="dark-depths"], [data-theme="obsidian"]) .lp-link-icon-color {
+  color: var(--anc-platform-accent-dark, var(--anc-theme-link-icon-color));
+}
+
 .lp-wave-mask {
   mask-image: linear-gradient(to bottom, transparent 0%, black 3%, black 20%, transparent 35%);
 }

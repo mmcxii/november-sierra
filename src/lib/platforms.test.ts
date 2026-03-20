@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PLATFORMS, PLATFORM_IDS, detectPlatform, isValidPlatformId } from "./platforms";
+import { PLATFORMS, PLATFORM_IDS, detectPlatform, getPlatformBrandColor, isValidPlatformId } from "./platforms";
 
 describe("detectPlatform", () => {
   it("detects social platforms from URLs", () => {
@@ -150,6 +150,67 @@ describe("isValidPlatformId", () => {
     //* Assert
     expect(nonexistent).toBe(false);
     expect(empty).toBe(false);
+  });
+});
+
+describe("getPlatformBrandColor", () => {
+  it("returns light/dark pair for branded platforms", () => {
+    //* Act
+    const youtube = getPlatformBrandColor("youtube");
+    const venmo = getPlatformBrandColor("venmo");
+    const cashapp = getPlatformBrandColor("cashapp");
+    const instagram = getPlatformBrandColor("instagram");
+    const patreon = getPlatformBrandColor("patreon");
+
+    //* Assert
+    expect(youtube).toEqual({ dark: "#FF0000", light: "#FF0000" });
+    expect(venmo).toEqual({ dark: "#008CFF", light: "#008CFF" });
+    expect(cashapp).toEqual({ dark: "#00D54B", light: "#00D54B" });
+    expect(instagram).toEqual({ dark: "#E4405F", light: "#E4405F" });
+    expect(patreon).toEqual({ dark: "#FF424D", light: "#FF424D" });
+  });
+
+  it("returns distinct light/dark values for monochrome brands", () => {
+    //* Act
+    const github = getPlatformBrandColor("github");
+    const x = getPlatformBrandColor("x");
+
+    //* Assert
+    expect(github).toBeDefined();
+    expect(github!.light).not.toBe(github!.dark);
+    expect(x).toBeDefined();
+    expect(x!.light).not.toBe(x!.dark);
+  });
+
+  it("returns undefined for invalid platform IDs", () => {
+    //* Act
+    const nonexistent = getPlatformBrandColor("nonexistent");
+    const empty = getPlatformBrandColor("");
+
+    //* Assert
+    expect(nonexistent).toBeUndefined();
+    expect(empty).toBeUndefined();
+  });
+
+  it("every platform has a brandColor", () => {
+    //* Act
+    const colors = PLATFORM_IDS.map((id) => PLATFORMS[id].brandColor);
+
+    //* Assert
+    for (const color of colors) {
+      expect(color).toBeDefined();
+    }
+  });
+
+  it("all brandColor values match hex format", () => {
+    //* Act
+    const colors = PLATFORM_IDS.map((id) => PLATFORMS[id].brandColor);
+
+    //* Assert
+    for (const bc of colors) {
+      expect(bc.light).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      expect(bc.dark).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    }
   });
 });
 

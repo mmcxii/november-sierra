@@ -13,10 +13,15 @@ export type ThemeProviderProps = React.PropsWithChildren<{
 export const ThemeProvider: React.FC<ThemeProviderProps> = (props) => {
   const { children, darkThemeId, lightThemeId } = props;
 
-  const [mode, setModeState] = React.useState<PageMode>(readMode);
+  const [mode, setModeState] = React.useState<PageMode>("system");
   const [systemDark, setSystemDark] = React.useState(() =>
     typeof window !== "undefined" ? window.matchMedia(MEDIA).matches : true,
   );
+
+  // Read stored preference before first browser paint
+  React.useLayoutEffect(() => {
+    setModeState(readMode());
+  }, []);
 
   React.useEffect(() => {
     const mql = window.matchMedia(MEDIA);
@@ -35,6 +40,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = (props) => {
 
   const value = React.useMemo(() => ({ isDark, mode, setMode }), [isDark, mode, setMode]);
 
+  // Blocking script that runs during HTML parsing, before React hydrates.
+  // Sets data-theme on this div immediately so the browser never paints the wrong theme.
+  const themeScript = `(function(){try{var el=document.currentScript.parentElement;var m=localStorage.getItem("${LS_KEY}")||"system";var isDark=m==="dark"||(m==="system"&&matchMedia("${MEDIA}").matches);el.setAttribute("data-theme",isDark?"${darkThemeId}":"${lightThemeId}");el.style.colorScheme=isDark?"dark":"light"}catch(e){}})()`;
+
   return (
     <LinkPageThemeContext.Provider value={value}>
       <div
@@ -44,6 +53,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = (props) => {
         style={{ colorScheme: DARK_THEME_IDS.has(resolvedTheme) ? "dark" : "light" }}
         suppressHydrationWarning
       >
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} suppressHydrationWarning />
         {children}
       </div>
     </LinkPageThemeContext.Provider>
