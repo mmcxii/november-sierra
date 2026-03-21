@@ -7,6 +7,7 @@ export const linksTable = pgTable(
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
     groupId: text("group_id").references(() => linkGroupsTable.id, { onDelete: "set null" }),
+    icon: text("icon"),
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),

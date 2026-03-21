@@ -34,7 +34,7 @@ const DashboardPage: React.FC = async () => {
     .orderBy(asc(linkGroupsTable.position));
 
   const previewKey = [
-    ...links.map((l) => `${l.id}:${l.position}:${l.visible}:${l.title}:${l.url}:${l.slug}:${l.groupId}`),
+    ...links.map((l) => `${l.id}:${l.position}:${l.visible}:${l.title}:${l.url}:${l.slug}:${l.groupId}:${l.icon}`),
     ...groups.map((g) => `${g.id}:${g.position}:${g.visible}:${g.title}`),
   ].join();
 

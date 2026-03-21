@@ -1,6 +1,7 @@
 "use client";
 
 import { createLink, updateLink } from "@/app/(dashboard)/dashboard/actions";
+import { IconPicker } from "@/components/dashboard/icon-picker";
 import type { GroupItem } from "@/components/dashboard/link-list";
 import { PlatformBadge } from "@/components/dashboard/platform-badge";
 import { Button } from "@/components/ui/button";
@@ -17,15 +18,16 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 export type LinkFormProps = {
-  defaultValues?: { groupId?: string; id: string; slug: string; title: string; url: string };
+  defaultValues?: { groupId?: string; icon?: null | string; id: string; slug: string; title: string; url: string };
   existingSlugs: string[];
   groups?: GroupItem[];
+  isPro?: boolean;
   username: string;
   onSuccess: () => void;
 };
 
 export const LinkForm: React.FC<LinkFormProps> = (props) => {
-  const { defaultValues, existingSlugs, groups = [], onSuccess, username } = props;
+  const { defaultValues, existingSlugs, groups = [], isPro = false, onSuccess, username } = props;
 
   //* State
   const { t } = useTranslation();
@@ -49,6 +51,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
     resolver: standardSchemaResolver(linkSchema),
   });
 
+  const [selectedIcon, setSelectedIcon] = React.useState<null | string>(defaultValues?.icon ?? null);
   const [skipUrlCheck, setSkipUrlCheck] = React.useState(false);
   const [showSkipUrlCheck, setShowSkipUrlCheck] = React.useState(false);
 
@@ -96,9 +99,11 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
     const url = ensureProtocol(data.url);
     const groupId = data.groupId != null && data.groupId.length > 0 ? data.groupId : undefined;
 
+    const icon = isPro ? selectedIcon : undefined;
+
     const result = isEditing
-      ? await updateLink(defaultValues.id, data.title, url, data.slug, skipUrlCheck, groupId ?? null)
-      : await createLink(data.title, url, data.slug, skipUrlCheck, groupId);
+      ? await updateLink(defaultValues.id, data.title, url, data.slug, skipUrlCheck, groupId ?? null, icon)
+      : await createLink(data.title, url, data.slug, skipUrlCheck, groupId, icon);
 
     if (!result.success) {
       handleActionError(result.error);
@@ -121,6 +126,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
       }
 
       reset();
+      setSelectedIcon(null);
       setSkipUrlCheck(false);
       setShowSkipUrlCheck(false);
       titleRef.current?.focus();
@@ -202,6 +208,12 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
               </option>
             ))}
           </select>
+        </div>
+      )}
+      {isPro && (
+        <div className="flex flex-col gap-2">
+          <Label>{t("icon")}</Label>
+          <IconPicker detectedPlatform={detectedPlatform} onChange={setSelectedIcon} value={selectedIcon} />
         </div>
       )}
       {errors.root != null && <p className="text-destructive text-center text-xs">{errors.root.message}</p>}

@@ -575,6 +575,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
               editingLink != null
                 ? {
                     groupId: editingLink.groupId ?? "",
+                    icon: editingLink.icon,
                     id: editingLink.id,
                     slug: editingLink.slug,
                     title: editingLink.title,
@@ -584,6 +585,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
             }
             existingSlugs={orderedLinks.map((l) => l.slug)}
             groups={isPro ? orderedGroups : []}
+            isPro={isPro}
             key={linkDialogKey}
             onSuccess={handleLinkDialogSuccess}
             username={username}

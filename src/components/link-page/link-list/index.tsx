@@ -1,9 +1,10 @@
 import { PlatformIcon } from "@/components/link-page/platform-icon";
+import { RenderedIcon } from "@/components/ui/rendered-icon";
 import { getPlatformBrandColor } from "@/lib/platforms";
 import { Link2 } from "lucide-react";
 import * as React from "react";
 
-type LinkData = { id: string; platform: null | string; slug: string; title: string; url: string };
+type LinkData = { icon: null | string; id: string; platform: null | string; slug: string; title: string; url: string };
 
 export type LinkGroup = {
   id: string;
@@ -25,7 +26,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
 
   //* Handlers
   const renderLink = (link: LinkData) => {
-    const brandColor = link.platform != null ? getPlatformBrandColor(link.platform) : undefined;
+    const brandColor = link.icon == null && link.platform != null ? getPlatformBrandColor(link.platform) : undefined;
 
     return (
       <a
@@ -45,7 +46,9 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
         target="_blank"
       >
         <div className="lp-link-icon-bg flex size-7 shrink-0 items-center justify-center rounded-lg">
-          {link.platform != null ? (
+          {link.icon != null ? (
+            <RenderedIcon className="lp-link-icon-color size-4" iconId={link.icon} />
+          ) : link.platform != null ? (
             <PlatformIcon className="lp-link-icon-color size-4" platform={link.platform} />
           ) : (
             <Link2 className="text-anc-theme-link-icon size-4" strokeWidth={1.75} />

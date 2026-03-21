@@ -31,6 +31,7 @@ export async function createLink(
   customSlug?: string,
   skipUrlCheck?: boolean,
   groupId?: string,
+  icon?: null | string,
 ): Promise<ActionResult> {
   const user = await getCurrentUser();
 
@@ -87,6 +88,7 @@ export async function createLink(
 
   await db.insert(linksTable).values({
     groupId: resolvedGroupId,
+    icon: user.tier === "pro" ? (icon ?? null) : null,
     platform,
     position: (maxPosition[0]?.max ?? -1) + 1,
     slug,
@@ -107,6 +109,7 @@ export async function updateLink(
   customSlug?: string,
   skipUrlCheck?: boolean,
   groupId?: null | string,
+  icon?: null | string,
 ): Promise<ActionResult> {
   const user = await getCurrentUser();
 
@@ -175,6 +178,11 @@ export async function updateLink(
   // Only update groupId if explicitly passed (undefined = don't change, null = ungroup, string = set group)
   if (groupId !== undefined) {
     updateFields.groupId = resolvedGroupId;
+  }
+
+  // Only update icon if explicitly passed (undefined = don't change)
+  if (icon !== undefined) {
+    updateFields.icon = user.tier === "pro" ? (icon ?? null) : null;
   }
 
   const updated = await db

@@ -29,7 +29,14 @@ async function getPageData(username: string) {
   }
 
   // Fetch Quick Links group (Pro only)
-  let quickLinks: { id: string; platform: null | string; slug: string; title: string; url: string }[] = [];
+  let quickLinks: {
+    icon: null | string;
+    id: string;
+    platform: null | string;
+    slug: string;
+    title: string;
+    url: string;
+  }[] = [];
 
   if (user.tier === "pro") {
     const [quickLinksGroup] = await db
@@ -47,6 +54,7 @@ async function getPageData(username: string) {
     if (quickLinksGroup != null) {
       quickLinks = await db
         .select({
+          icon: linksTable.icon,
           id: linksTable.id,
           platform: linksTable.platform,
           slug: linksTable.slug,
@@ -64,6 +72,7 @@ async function getPageData(username: string) {
   // Fetch ungrouped visible links
   const ungroupedLinks = await db
     .select({
+      icon: linksTable.icon,
       id: linksTable.id,
       platform: linksTable.platform,
       slug: linksTable.slug,
@@ -93,6 +102,7 @@ async function getPageData(username: string) {
       ? await db
           .select({
             groupId: linksTable.groupId,
+            icon: linksTable.icon,
             id: linksTable.id,
             platform: linksTable.platform,
             slug: linksTable.slug,

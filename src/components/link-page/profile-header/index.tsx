@@ -1,9 +1,11 @@
 import { PlatformIcon } from "@/components/link-page/platform-icon";
+import { RenderedIcon } from "@/components/ui/rendered-icon";
 import { Anchor, Link2 } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
 
 type QuickLinkData = {
+  icon: null | string;
   id: string;
   platform: null | string;
   slug: string;
@@ -58,7 +60,9 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = (props) => {
               target="_blank"
               title={link.title}
             >
-              {link.platform != null ? (
+              {link.icon != null ? (
+                <RenderedIcon className="text-anc-theme-link-icon size-4" iconId={link.icon} />
+              ) : link.platform != null ? (
                 <PlatformIcon className="text-anc-theme-link-icon size-4" platform={link.platform} />
               ) : (
                 <Link2 className="text-anc-theme-link-icon size-4" strokeWidth={1.75} />
