@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RenderedIcon } from "@/components/ui/rendered-icon";
 import { type IconEntry, getSuggestedIconId, searchIcons } from "@/lib/icon-registry";
@@ -56,11 +57,11 @@ export const IconPicker: React.FC<IconPickerProps> = (props) => {
           type="text"
           value={query}
         />
-        {value != null && (
+        {query.length > 0 && (
           <button
             className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 p-0.5"
-            onClick={() => onChange(null)}
-            title={t("clearIcon")}
+            onClick={() => setQuery("")}
+            title={t("clearSearch")}
             type="button"
           >
             <X className="size-3.5" />
@@ -71,7 +72,7 @@ export const IconPicker: React.FC<IconPickerProps> = (props) => {
       <div className="grid max-h-48 grid-cols-8 gap-1 overflow-y-auto rounded-lg border p-1.5">
         {sortedResults.map((icon) => (
           <button
-            className={cn("flex size-8 items-center justify-center rounded-md transition-colors", {
+            className={cn("flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors", {
               "bg-primary text-primary-foreground": value === icon.id,
               "text-muted-foreground hover:bg-muted hover:text-foreground": value !== icon.id,
             })}
@@ -87,6 +88,11 @@ export const IconPicker: React.FC<IconPickerProps> = (props) => {
           <p className="text-muted-foreground col-span-8 py-4 text-center text-sm">{t("noIconsFound")}</p>
         )}
       </div>
+      {value != null && (
+        <Button className="self-start" onClick={() => onChange(null)} type="button" variant="tertiary">
+          {t("removeCustomIcon")}
+        </Button>
+      )}
     </div>
   );
 };
