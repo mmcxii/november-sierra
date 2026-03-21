@@ -28,6 +28,39 @@ async function getPageData(username: string) {
     return null;
   }
 
+  // Fetch Quick Links group (Pro only)
+  let quickLinks: { id: string; platform: null | string; slug: string; title: string; url: string }[] = [];
+
+  if (user.tier === "pro") {
+    const [quickLinksGroup] = await db
+      .select({ id: linkGroupsTable.id })
+      .from(linkGroupsTable)
+      .where(
+        and(
+          eq(linkGroupsTable.userId, user.id),
+          eq(linkGroupsTable.isQuickLinks, true),
+          eq(linkGroupsTable.visible, true),
+        ),
+      )
+      .limit(1);
+
+    if (quickLinksGroup != null) {
+      quickLinks = await db
+        .select({
+          id: linksTable.id,
+          platform: linksTable.platform,
+          slug: linksTable.slug,
+          title: linksTable.title,
+          url: linksTable.url,
+        })
+        .from(linksTable)
+        .where(
+          and(eq(linksTable.userId, user.id), eq(linksTable.visible, true), eq(linksTable.groupId, quickLinksGroup.id)),
+        )
+        .orderBy(asc(linksTable.position));
+    }
+  }
+
   // Fetch ungrouped visible links
   const ungroupedLinks = await db
     .select({
@@ -41,11 +74,17 @@ async function getPageData(username: string) {
     .where(and(eq(linksTable.userId, user.id), eq(linksTable.visible, true), isNull(linksTable.groupId)))
     .orderBy(asc(linksTable.position));
 
-  // Fetch visible groups
+  // Fetch visible groups (excluding Quick Links)
   const visibleGroups = await db
     .select()
     .from(linkGroupsTable)
-    .where(and(eq(linkGroupsTable.userId, user.id), eq(linkGroupsTable.visible, true)))
+    .where(
+      and(
+        eq(linkGroupsTable.userId, user.id),
+        eq(linkGroupsTable.visible, true),
+        eq(linkGroupsTable.isQuickLinks, false),
+      ),
+    )
     .orderBy(asc(linkGroupsTable.position));
 
   // Fetch grouped visible links
@@ -71,7 +110,7 @@ async function getPageData(username: string) {
     title: group.title,
   }));
 
-  return { groups, links: ungroupedLinks, user };
+  return { groups, links: ungroupedLinks, quickLinks, user };
 }
 
 export async function generateMetadata(props: { params: Promise<Params> }): Promise<Metadata> {
@@ -117,7 +156,7 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
     notFound();
   }
 
-  const { groups, links, user } = data;
+  const { groups, links, quickLinks, user } = data;
   const darkThemeId: ThemeId = isValidThemeId(user.pageDarkTheme) ? user.pageDarkTheme : "dark-depths";
   const lightThemeId: ThemeId = isValidThemeId(user.pageLightTheme) ? user.pageLightTheme : "stateroom";
 
@@ -150,7 +189,12 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
       </svg>
 
       <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col items-center gap-6 px-5 pt-10">
-        <ProfileHeader avatarUrl={user.avatarUrl} displayName={user.displayName} username={user.username} />
+        <ProfileHeader
+          avatarUrl={user.avatarUrl}
+          displayName={user.displayName}
+          quickLinks={quickLinks}
+          username={user.username}
+        />
         <LinkList groups={groups} links={links} username={user.username} />
       </div>
       <Container className="relative pb-8">

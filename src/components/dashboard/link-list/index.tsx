@@ -13,6 +13,7 @@ import {
 import { DeleteGroupDialog } from "@/components/dashboard/delete-group-dialog";
 import { GroupForm } from "@/components/dashboard/group-form";
 import { LinkForm } from "@/components/dashboard/link-form";
+import { QuickLinksSection } from "@/components/dashboard/quick-links-section";
 import { SortableGroup } from "@/components/dashboard/sortable-group";
 import { SortableLinkCard } from "@/components/dashboard/sortable-link-card";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,8 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
   const [activeDragId, setActiveDragId] = React.useState<null | UniqueIdentifier>(null);
 
   //* Variables
+  const quickLinksGroup = orderedGroups.find((g) => g.isQuickLinks) ?? null;
+  const regularGroups = orderedGroups.filter((g) => !g.isQuickLinks);
   const ungroupedLinks = orderedLinks.filter((l) => l.groupId == null);
   const allSelected = orderedLinks.length > 0 && selectedIds.size === orderedLinks.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < orderedLinks.length;
@@ -274,7 +277,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    // ─── Group reordering ────────────────────────────────────────────
+    // ─── Group reordering (regular groups only, Quick Links excluded) ─
     if (activeId.startsWith("group:") && overId.startsWith("group:")) {
       const activeGroupId = activeId.replace("group:", "");
       const overGroupId = overId.replace("group:", "");
@@ -283,11 +286,14 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
         return;
       }
 
-      const oldIndex = orderedGroups.findIndex((g) => g.id === activeGroupId);
-      const newIndex = orderedGroups.findIndex((g) => g.id === overGroupId);
-      const reordered = arrayMove(orderedGroups, oldIndex, newIndex);
+      const oldIndex = regularGroups.findIndex((g) => g.id === activeGroupId);
+      const newIndex = regularGroups.findIndex((g) => g.id === overGroupId);
+      const reordered = arrayMove(regularGroups, oldIndex, newIndex);
 
-      setOrderedGroups(reordered);
+      setOrderedGroups((prev) => {
+        const ql = prev.filter((g) => g.isQuickLinks);
+        return [...ql, ...reordered];
+      });
 
       const items = reordered.map((g, i) => ({ id: g.id, position: i }));
       await reorderGroups(items);
@@ -455,6 +461,24 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
           sensors={sensors}
         >
           <div className="flex flex-col gap-4">
+            {/* Quick Links section */}
+            {quickLinksGroup != null && (
+              <QuickLinksSection
+                group={quickLinksGroup}
+                links={orderedLinks
+                  .filter((l) => l.groupId === quickLinksGroup.id)
+                  .sort((a, b) => a.position - b.position)}
+                onDeleteLink={handleOpenDeleteLink}
+                onEditLink={handleOpenEditLink}
+                onQrCode={onQrCode}
+                onSelectLink={handleSelectLink}
+                onToggleGroupVisibility={handleToggleGroupVisibility}
+                onToggleLinkVisibility={handleToggleLinkVisibility}
+                selectedIds={selectedIds}
+                username={username}
+              />
+            )}
+
             {/* Ungrouped links */}
             <div ref={setUngroupedDropRef}>
               <SortableContext items={ungroupedLinks.map((l) => l.id)} strategy={verticalListSortingStrategy}>
@@ -479,8 +503,8 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
             </div>
 
             {/* Groups */}
-            <SortableContext items={orderedGroups.map((g) => `group:${g.id}`)} strategy={verticalListSortingStrategy}>
-              {orderedGroups.map((group) => {
+            <SortableContext items={regularGroups.map((g) => `group:${g.id}`)} strategy={verticalListSortingStrategy}>
+              {regularGroups.map((group) => {
                 const groupLinks = orderedLinks
                   .filter((l) => l.groupId === group.id)
                   .sort((a, b) => a.position - b.position);

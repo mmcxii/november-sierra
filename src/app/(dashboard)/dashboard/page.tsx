@@ -2,6 +2,7 @@ import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { PagePreview } from "@/components/dashboard/page-preview";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db/client";
+import { ensureQuickLinksGroup } from "@/lib/db/queries/quick-links";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { asc, eq } from "drizzle-orm";
@@ -15,6 +16,11 @@ export const metadata: Metadata = {
 const DashboardPage: React.FC = async () => {
   //* Variables
   const user = await requireUser();
+
+  if (user.tier === "pro") {
+    await ensureQuickLinksGroup(user.id);
+  }
+
   const links = await db
     .select()
     .from(linksTable)

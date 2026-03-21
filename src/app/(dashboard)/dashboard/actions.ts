@@ -399,6 +399,21 @@ export async function updateGroupTitle(id: string, title: string): Promise<Actio
     return { error: "upgradeToPro", success: false };
   }
 
+  // Prevent renaming the Quick Links group
+  const [group] = await db
+    .select({ isQuickLinks: linkGroupsTable.isQuickLinks })
+    .from(linkGroupsTable)
+    .where(and(eq(linkGroupsTable.id, id), eq(linkGroupsTable.userId, user.id)))
+    .limit(1);
+
+  if (group == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  if (group.isQuickLinks) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
   const result = groupSchema.safeParse({ title });
 
   if (!result.success) {
@@ -430,14 +445,18 @@ export async function deleteGroup(id: string, deleteLinks: boolean): Promise<Act
     return { error: "upgradeToPro", success: false };
   }
 
-  // Verify ownership
+  // Verify ownership and check Quick Links
   const groups = await db
-    .select({ id: linkGroupsTable.id })
+    .select({ id: linkGroupsTable.id, isQuickLinks: linkGroupsTable.isQuickLinks })
     .from(linkGroupsTable)
     .where(and(eq(linkGroupsTable.id, id), eq(linkGroupsTable.userId, user.id)))
     .limit(1);
 
   if (groups.length === 0) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  if (groups[0].isQuickLinks) {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 

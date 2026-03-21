@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";
+import { ensureQuickLinksGroup } from "@/lib/db/queries/quick-links";
 import { usersTable } from "@/lib/db/schema/user";
 import { stripe } from "@/lib/stripe";
 import { eq } from "drizzle-orm";
@@ -40,6 +41,8 @@ export async function POST(req: Request) {
         })
         .where(eq(usersTable.id, userId));
 
+      await ensureQuickLinksGroup(userId);
+
       break;
     }
 
@@ -48,10 +51,15 @@ export async function POST(req: Request) {
       const customerId = subscription.customer as string;
 
       if (subscription.status === "active") {
-        await db
+        const [updatedUser] = await db
           .update(usersTable)
           .set({ tier: "pro", updatedAt: new Date() })
-          .where(eq(usersTable.stripeCustomerId, customerId));
+          .where(eq(usersTable.stripeCustomerId, customerId))
+          .returning({ id: usersTable.id });
+
+        if (updatedUser != null) {
+          await ensureQuickLinksGroup(updatedUser.id);
+        }
       } else if (["canceled", "past_due", "unpaid"].includes(subscription.status)) {
         await db
           .update(usersTable)

@@ -6,6 +6,7 @@ export const linkGroupsTable = pgTable("link_groups", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  isQuickLinks: boolean("is_quick_links").default(false).notNull(),
   position: integer("position").notNull(),
   title: text("title").notNull(),
   userId: text("user_id")
