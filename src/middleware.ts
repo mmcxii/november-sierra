@@ -97,7 +97,12 @@ export default clerkMiddleware(async (auth, req) => {
 
   const { userId } = await auth();
 
-  if (req.nextUrl.pathname === "/" && userId != null) {
+  const isAuthRoute =
+    req.nextUrl.pathname === "/" ||
+    req.nextUrl.pathname.startsWith("/sign-in") ||
+    req.nextUrl.pathname.startsWith("/sign-up");
+
+  if (isAuthRoute && userId != null) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
