@@ -6,6 +6,7 @@ import {
   deleteLink,
   reorderGroups,
   reorderLinks,
+  toggleFeaturedLink,
   toggleGroupVisibility,
   toggleLinkVisibility,
   updateLinkGroup,
@@ -94,7 +95,8 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
   //* Variables
   const quickLinksGroup = orderedGroups.find((g) => g.isQuickLinks) ?? null;
   const regularGroups = orderedGroups.filter((g) => !g.isQuickLinks);
-  const ungroupedLinks = orderedLinks.filter((l) => l.groupId == null);
+  const featuredLink = isPro ? (orderedLinks.find((l) => l.isFeatured) ?? null) : null;
+  const ungroupedLinks = orderedLinks.filter((l) => l.groupId == null && !l.isFeatured);
   const allSelected = orderedLinks.length > 0 && selectedIds.size === orderedLinks.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < orderedLinks.length;
   const allSelectedVisible =
@@ -159,6 +161,36 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
       );
     } else {
       setOrderedLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, visible: link.visible } : l)));
+    }
+  };
+
+  const handleToggleFeatured = async (link: LinkItem) => {
+    const wasFeatured = link.isFeatured;
+
+    setOrderedLinks((prev) =>
+      prev.map((l) => {
+        if (l.id === link.id) {
+          return { ...l, isFeatured: !wasFeatured };
+        }
+        return wasFeatured ? l : { ...l, isFeatured: false };
+      }),
+    );
+
+    const result = await toggleFeaturedLink(link.id);
+
+    if (result.success) {
+      toast.success(
+        wasFeatured
+          ? t("{{title}}IsNoLongerFeatured", { title: link.title })
+          : t("{{title}}IsNowFeatured", { title: link.title }),
+      );
+    } else {
+      setOrderedLinks((prev) =>
+        prev.map((l) => {
+          const original = links.find((ol) => ol.id === l.id);
+          return original != null ? { ...l, isFeatured: original.isFeatured } : l;
+        }),
+      );
     }
   };
 
@@ -504,17 +536,37 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                 customDomain={customDomain}
                 group={quickLinksGroup}
                 links={orderedLinks
-                  .filter((l) => l.groupId === quickLinksGroup.id)
+                  .filter((l) => l.groupId === quickLinksGroup.id && !l.isFeatured)
                   .sort((a, b) => a.position - b.position)}
                 onDeleteLink={handleOpenDeleteLink}
                 onEditLink={handleOpenEditLink}
                 onQrCode={onQrCode}
                 onSelectLink={handleSelectLink}
+                onToggleFeatured={isPro ? handleToggleFeatured : undefined}
                 onToggleGroupVisibility={handleToggleGroupVisibility}
                 onToggleLinkVisibility={handleToggleLinkVisibility}
                 selectedIds={selectedIds}
                 username={username}
               />
+            )}
+
+            {/* Featured link (hoisted) */}
+            {featuredLink != null && (
+              <ul className="flex flex-col gap-2">
+                <SortableLinkCard
+                  customDomain={customDomain}
+                  key={featuredLink.id}
+                  link={featuredLink}
+                  onDelete={handleOpenDeleteLink}
+                  onEdit={handleOpenEditLink}
+                  onQrCode={onQrCode}
+                  onSelect={handleSelectLink}
+                  onToggleFeatured={handleToggleFeatured}
+                  onToggleVisibility={handleToggleLinkVisibility}
+                  selected={selectedIds.has(featuredLink.id)}
+                  username={username}
+                />
+              </ul>
             )}
 
             {/* Ungrouped links */}
@@ -531,6 +583,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                         onEdit={handleOpenEditLink}
                         onQrCode={onQrCode}
                         onSelect={handleSelectLink}
+                        onToggleFeatured={isPro ? handleToggleFeatured : undefined}
                         onToggleVisibility={handleToggleLinkVisibility}
                         selected={selectedIds.has(link.id)}
                         username={username}
@@ -545,7 +598,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
             <SortableContext items={regularGroups.map((g) => `group:${g.id}`)} strategy={verticalListSortingStrategy}>
               {regularGroups.map((group) => {
                 const groupLinks = orderedLinks
-                  .filter((l) => l.groupId === group.id)
+                  .filter((l) => l.groupId === group.id && !l.isFeatured)
                   .sort((a, b) => a.position - b.position);
 
                 return (
@@ -560,6 +613,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                     onEditLink={handleOpenEditLink}
                     onQrCode={onQrCode}
                     onSelectLink={handleSelectLink}
+                    onToggleFeatured={isPro ? handleToggleFeatured : undefined}
                     onToggleGroupVisibility={handleToggleGroupVisibility}
                     onToggleLinkVisibility={handleToggleLinkVisibility}
                     selectedIds={selectedIds}
@@ -585,6 +639,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                     onEdit={handleOpenEditLink}
                     onQrCode={onQrCode}
                     onSelect={handleSelectLink}
+                    onToggleFeatured={isPro ? handleToggleFeatured : undefined}
                     onToggleVisibility={handleToggleLinkVisibility}
                     selected={selectedIds.has(draggedLink.id)}
                     username={username}

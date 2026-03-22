@@ -14,18 +14,19 @@ export type LinkGroup = {
 
 export type LinkListProps = {
   basePath?: string;
+  featuredLink?: null | LinkData;
   groups?: LinkGroup[];
   links: LinkData[];
   username: string;
 };
 
 export const LinkList: React.FC<LinkListProps> = (props) => {
-  const { basePath, groups = [], links, username } = props;
+  const { basePath, featuredLink, groups = [], links, username } = props;
 
   const linkBasePath = basePath ?? `/${username}`;
 
   //* Variables
-  const hasContent = links.length > 0 || groups.some((g) => g.links.length > 0);
+  const hasContent = featuredLink != null || links.length > 0 || groups.some((g) => g.links.length > 0);
 
   //* Handlers
   const renderLink = (link: LinkData) => {
@@ -69,6 +70,30 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
 
   return (
     <div className="flex w-full flex-col gap-2.5">
+      {/* Featured link */}
+      {featuredLink != null && (
+        <a
+          className="border-anc-theme-featured-border bg-anc-theme-featured-bg flex min-h-[52px] items-center gap-3 rounded-xl border px-4 py-3 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          href={`${linkBasePath}/${featuredLink.slug}`}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <div className="bg-anc-theme-featured-icon-bg flex size-7 shrink-0 items-center justify-center rounded-lg">
+            {featuredLink.icon != null ? (
+              <RenderedIcon className="text-anc-theme-featured-icon size-4" iconId={featuredLink.icon} />
+            ) : featuredLink.platform != null ? (
+              <PlatformIcon className="text-anc-theme-featured-icon size-4" platform={featuredLink.platform} />
+            ) : (
+              <Link2 className="text-anc-theme-featured-icon size-4" strokeWidth={1.75} />
+            )}
+          </div>
+          <span className="text-anc-theme-featured-text flex-1 truncate text-center text-sm font-semibold">
+            {featuredLink.title}
+          </span>
+          <div className="size-7 shrink-0" />
+        </a>
+      )}
+
       {/* Ungrouped links (top) */}
       {links.map(renderLink)}
 

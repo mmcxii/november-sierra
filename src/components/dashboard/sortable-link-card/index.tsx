@@ -23,6 +23,7 @@ import {
   GripVertical,
   Pencil,
   QrCode,
+  Star,
   Trash2,
 } from "lucide-react";
 import * as React from "react";
@@ -38,11 +39,23 @@ export type SortableLinkCardProps = {
   onEdit: (link: LinkItem) => void;
   onQrCode?: (link: LinkItem) => void;
   onSelect: (linkId: string) => void;
+  onToggleFeatured?: (link: LinkItem) => void;
   onToggleVisibility: (link: LinkItem) => void;
 };
 
 export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
-  const { customDomain, link, onDelete, onEdit, onQrCode, onSelect, onToggleVisibility, selected, username } = props;
+  const {
+    customDomain,
+    link,
+    onDelete,
+    onEdit,
+    onQrCode,
+    onSelect,
+    onToggleFeatured,
+    onToggleVisibility,
+    selected,
+    username,
+  } = props;
 
   //* State
   const { t } = useTranslation();
@@ -72,6 +85,8 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
     }
     copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleFeaturedDropdownMenuItemOnClick = () => onToggleFeatured?.(link);
 
   const handleDeleteDropdownMenuItemOnClick = () => onDelete(link);
 
@@ -120,6 +135,11 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
         <p className="text-card-foreground flex items-center gap-1.5 truncate text-sm font-medium">
           <span className="truncate">{link.title}</span>
           {link.platform != null && <PlatformBadge platform={link.platform} />}
+          {link.isFeatured && (
+            <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-[10px] leading-none font-medium">
+              {t("featured")}
+            </span>
+          )}
           {!link.visible && (
             <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-[10px] leading-none font-medium">
               {t("hidden")}
@@ -159,6 +179,12 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
             <DropdownMenuItem onClick={handleQrCodeDropdownMenuItemOnClick}>
               <QrCode />
               {t("qrCode")}
+            </DropdownMenuItem>
+          )}
+          {onToggleFeatured != null && (
+            <DropdownMenuItem onClick={handleFeaturedDropdownMenuItemOnClick}>
+              <Star />
+              {link.isFeatured ? t("unfeatureLink") : t("featureLink")}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={handleVisibilityDropdownMenuItemOnClick}>

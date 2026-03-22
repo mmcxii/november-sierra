@@ -23,6 +23,7 @@ export type SortableGroupProps = {
   onEditLink: (link: LinkItem) => void;
   onQrCode?: (link: LinkItem) => void;
   onSelectLink: (linkId: string) => void;
+  onToggleFeatured?: (link: LinkItem) => void;
   onToggleGroupVisibility: (group: GroupItem) => void;
   onToggleLinkVisibility: (link: LinkItem) => void;
 };
@@ -38,6 +39,7 @@ export const SortableGroup: React.FC<SortableGroupProps> = (props) => {
     onEditLink,
     onQrCode,
     onSelectLink,
+    onToggleFeatured,
     onToggleGroupVisibility,
     onToggleLinkVisibility,
     selectedIds,
@@ -134,6 +136,7 @@ export const SortableGroup: React.FC<SortableGroupProps> = (props) => {
                     onEdit={onEditLink}
                     onQrCode={onQrCode}
                     onSelect={onSelectLink}
+                    onToggleFeatured={onToggleFeatured}
                     onToggleVisibility={onToggleLinkVisibility}
                     selected={selectedIds.has(link.id)}
                     username={username}

@@ -11,6 +11,7 @@ export const linksTable = pgTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
+    isFeatured: boolean("is_featured").default(false).notNull(),
     platform: text("platform"),
     position: integer("position").notNull(),
     slug: text("slug").notNull(),

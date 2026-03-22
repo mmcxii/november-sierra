@@ -70,7 +70,34 @@ async function getPageData(username: string) {
     }
   }
 
-  // Fetch ungrouped visible links
+  // Fetch featured link (Pro only)
+  let featuredLink: null | {
+    icon: null | string;
+    id: string;
+    platform: null | string;
+    slug: string;
+    title: string;
+    url: string;
+  } = null;
+
+  if (user.tier === "pro") {
+    const [found] = await db
+      .select({
+        icon: linksTable.icon,
+        id: linksTable.id,
+        platform: linksTable.platform,
+        slug: linksTable.slug,
+        title: linksTable.title,
+        url: linksTable.url,
+      })
+      .from(linksTable)
+      .where(and(eq(linksTable.userId, user.id), eq(linksTable.visible, true), eq(linksTable.isFeatured, true)))
+      .limit(1);
+
+    featuredLink = found ?? null;
+  }
+
+  // Fetch ungrouped visible links (excluding featured)
   const ungroupedLinks = await db
     .select({
       icon: linksTable.icon,
@@ -81,7 +108,14 @@ async function getPageData(username: string) {
       url: linksTable.url,
     })
     .from(linksTable)
-    .where(and(eq(linksTable.userId, user.id), eq(linksTable.visible, true), isNull(linksTable.groupId)))
+    .where(
+      and(
+        eq(linksTable.userId, user.id),
+        eq(linksTable.visible, true),
+        isNull(linksTable.groupId),
+        eq(linksTable.isFeatured, false),
+      ),
+    )
     .orderBy(asc(linksTable.position));
 
   // Fetch visible groups (excluding Quick Links)
@@ -97,7 +131,7 @@ async function getPageData(username: string) {
     )
     .orderBy(asc(linkGroupsTable.position));
 
-  // Fetch grouped visible links
+  // Fetch grouped visible links (excluding featured)
   const groupedLinks =
     visibleGroups.length > 0
       ? await db
@@ -111,7 +145,7 @@ async function getPageData(username: string) {
             url: linksTable.url,
           })
           .from(linksTable)
-          .where(and(eq(linksTable.userId, user.id), eq(linksTable.visible, true)))
+          .where(and(eq(linksTable.userId, user.id), eq(linksTable.visible, true), eq(linksTable.isFeatured, false)))
           .orderBy(asc(linksTable.position))
       : [];
 
@@ -121,7 +155,7 @@ async function getPageData(username: string) {
     title: group.title,
   }));
 
-  return { groups, links: ungroupedLinks, quickLinks, user };
+  return { featuredLink, groups, links: ungroupedLinks, quickLinks, user };
 }
 
 export async function generateMetadata(props: { params: Promise<Params> }): Promise<Metadata> {
@@ -171,7 +205,7 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
     notFound();
   }
 
-  const { groups, links, quickLinks, user } = data;
+  const { featuredLink, groups, links, quickLinks, user } = data;
   const darkThemeId: ThemeId = isValidThemeId(user.pageDarkTheme) ? user.pageDarkTheme : "dark-depths";
   const lightThemeId: ThemeId = isValidThemeId(user.pageLightTheme) ? user.pageLightTheme : "stateroom";
 
@@ -215,7 +249,13 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
           quickLinks={quickLinks}
           username={user.username}
         />
-        <LinkList basePath={basePath} groups={groups} links={links} username={user.username} />
+        <LinkList
+          basePath={basePath}
+          featuredLink={featuredLink}
+          groups={groups}
+          links={links}
+          username={user.username}
+        />
       </div>
       <Container className="relative pb-8">
         <Footer hideBranding={user.tier === "pro" && user.hideBranding} themeToggle={<LinkPageThemeToggle />} />

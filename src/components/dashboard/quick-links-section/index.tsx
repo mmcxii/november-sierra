@@ -20,6 +20,7 @@ export type QuickLinksSectionProps = {
   onEditLink: (link: LinkItem) => void;
   onQrCode?: (link: LinkItem) => void;
   onSelectLink: (linkId: string) => void;
+  onToggleFeatured?: (link: LinkItem) => void;
   onToggleGroupVisibility: (group: GroupItem) => void;
   onToggleLinkVisibility: (link: LinkItem) => void;
 };
@@ -33,6 +34,7 @@ export const QuickLinksSection: React.FC<QuickLinksSectionProps> = (props) => {
     onEditLink,
     onQrCode,
     onSelectLink,
+    onToggleFeatured,
     onToggleGroupVisibility,
     onToggleLinkVisibility,
     selectedIds,
@@ -97,6 +99,7 @@ export const QuickLinksSection: React.FC<QuickLinksSectionProps> = (props) => {
                     onEdit={onEditLink}
                     onQrCode={onQrCode}
                     onSelect={onSelectLink}
+                    onToggleFeatured={onToggleFeatured}
                     onToggleVisibility={onToggleLinkVisibility}
                     selected={selectedIds.has(link.id)}
                     username={username}

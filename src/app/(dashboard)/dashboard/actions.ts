@@ -295,6 +295,49 @@ export async function reorderLinks(items: { id: string; position: number }[]): P
   return { success: true };
 }
 
+export async function toggleFeaturedLink(id: string): Promise<ActionResult> {
+  const user = await getCurrentUser();
+
+  if (user == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  if (user.tier !== "pro") {
+    return { error: "upgradeToPro", success: false };
+  }
+
+  const [link] = await db
+    .select({ isFeatured: linksTable.isFeatured })
+    .from(linksTable)
+    .where(and(eq(linksTable.id, id), eq(linksTable.userId, user.id)))
+    .limit(1);
+
+  if (link == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  if (link.isFeatured) {
+    await db
+      .update(linksTable)
+      .set({ isFeatured: false })
+      .where(and(eq(linksTable.id, id), eq(linksTable.userId, user.id)));
+  } else {
+    await db
+      .update(linksTable)
+      .set({ isFeatured: false })
+      .where(and(eq(linksTable.userId, user.id), eq(linksTable.isFeatured, true)));
+
+    await db
+      .update(linksTable)
+      .set({ isFeatured: true })
+      .where(and(eq(linksTable.id, id), eq(linksTable.userId, user.id)));
+  }
+
+  revalidatePages(user.username);
+
+  return { success: true };
+}
+
 export async function toggleLinkVisibility(id: string): Promise<ActionResult> {
   const user = await getCurrentUser();
 
