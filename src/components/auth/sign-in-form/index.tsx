@@ -127,6 +127,7 @@ export const SignInForm: React.FC = () => {
           <Button className="w-full" disabled={!isLoaded || isSubmitting} type="submit">
             {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
           </Button>
+          <div className="-mt-4" id="clerk-captcha" />
         </form>
       </CardContent>
       <CardFooter className="w-full max-w-sm justify-center pt-6">
