@@ -3,16 +3,22 @@
 import {
   createAdminCode,
   deactivateAdminCode,
-  deleteAdminCodesExcept,
+  deleteAdminCode,
   reactivateAdminCode,
 } from "@/app/(dashboard)/dashboard/admin/actions";
 import { StatusBadge } from "@/components/dashboard/admin-content/status-badge";
 import { getCodeStatus } from "@/components/dashboard/admin-content/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronRight, Copy, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, EllipsisVertical, Loader2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -51,31 +57,8 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
   const [createPending, startCreateTransition] = React.useTransition();
   const [actionPendingId, setActionPendingId] = React.useState<null | string>(null);
   const [expandedId, setExpandedId] = React.useState<null | string>(null);
-  const [deleteExcludeInput, setDeleteExcludeInput] = React.useState("");
-  const [deletePending, startDeleteTransition] = React.useTransition();
 
   //* Handlers
-  const handleDeleteAllExcept = () => {
-    if (deleteExcludeInput.trim() === "") {
-      return;
-    }
-
-    startDeleteTransition(async () => {
-      const result = await deleteAdminCodesExcept(deleteExcludeInput.trim());
-
-      if (!result.success) {
-        toast.error(t(result.error));
-        return;
-      }
-
-      setDeleteExcludeInput("");
-      toast.success(t("referralCodesDeleted"));
-    });
-  };
-
-  const handleDeleteExcludeInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setDeleteExcludeInput(e.target.value);
-
   const handleCreate = () => {
     startCreateTransition(async () => {
       const result = await createAdminCode({
@@ -99,8 +82,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
     });
   };
 
-  const handleToggleActive = (code: ReferralCode, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleActive = (code: ReferralCode) => {
     setActionPendingId(code.id);
 
     const action = code.active ? deactivateAdminCode : reactivateAdminCode;
@@ -113,6 +95,20 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
           return;
         }
         toast.success(t(toastKey));
+      })
+      .finally(() => setActionPendingId(null));
+  };
+
+  const handleDelete = (code: ReferralCode) => {
+    setActionPendingId(code.id);
+
+    deleteAdminCode(code.id)
+      .then((result) => {
+        if (!result.success) {
+          toast.error(t(result.error));
+          return;
+        }
+        toast.success(t("referralCodesDeleted"));
       })
       .finally(() => setActionPendingId(null));
   };
@@ -193,29 +189,6 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
         </CardContent>
       </Card>
 
-      {/* Bulk Delete */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("deleteAllExcept")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            disabled={deletePending}
-            onChange={handleDeleteExcludeInputOnChange}
-            placeholder="ANCHR-XXXXXX"
-            value={deleteExcludeInput}
-          />
-          <Button
-            disabled={deletePending || deleteExcludeInput.trim() === ""}
-            onClick={handleDeleteAllExcept}
-            variant="primary"
-          >
-            {deletePending && <Loader2 className="size-3.5 animate-spin" />}
-            {t("delete")}
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Codes Table */}
       <Card>
         <CardHeader>
@@ -240,7 +213,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
                     <th className="pr-4 pb-2 text-left font-medium">{t("expires")}</th>
                     {/* eslint-disable-next-line anchr/no-raw-string-jsx -- table column header matching data field */}
                     <th className="pr-4 pb-2 text-left font-medium">Created</th>
-                    <th className="pb-2 text-left font-medium">{t("actions")}</th>
+                    <th className="pb-2 text-left font-medium" />
                   </tr>
                 </thead>
                 <tbody>
@@ -249,7 +222,10 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
                     const isExpanded = expandedId === code.id;
                     const handleRowClick = () => handleToggleExpand(code.id);
                     const handleCopyClick = (e: React.MouseEvent) => handleCopyCode(code.code, e);
-                    const handleToggleClick = (e: React.MouseEvent) => handleToggleActive(code, e);
+                    const handleToggleClick = () => handleToggleActive(code);
+                    const handleDeleteClick = () => handleDelete(code);
+                    const handleIconButtonOnClick = (e: React.MouseEvent) => e.stopPropagation();
+                    const handleDropdownMenuContentOnClick = (e: React.MouseEvent) => e.stopPropagation();
 
                     return (
                       <React.Fragment key={code.id}>
@@ -289,14 +265,25 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
                           </td>
                           <td className="py-3 pr-4">{code.createdAt.toLocaleDateString()}</td>
                           <td className="py-3">
-                            <Button
-                              disabled={actionPendingId === code.id}
-                              onClick={handleToggleClick}
-                              variant="tertiary"
-                            >
-                              {actionPendingId === code.id && <Loader2 className="size-3 animate-spin" />}
-                              {code.active ? t("deactivate") : t("reactivate")}
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <IconButton onClick={handleIconButtonOnClick}>
+                                  {actionPendingId === code.id ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <EllipsisVertical className="size-4" />
+                                  )}
+                                </IconButton>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" onClick={handleDropdownMenuContentOnClick}>
+                                <DropdownMenuItem onClick={handleToggleClick}>
+                                  {code.active ? t("deactivate") : t("reactivate")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleDeleteClick} variant="destructive">
+                                  {t("delete")}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </td>
                         </tr>
                         {isExpanded && (

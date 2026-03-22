@@ -5,7 +5,7 @@ import { db } from "@/lib/db/client";
 import { referralCodesTable } from "@/lib/db/schema/referral-code";
 import { generateReferralCode } from "@/lib/utils/referral-code";
 import { auth } from "@clerk/nextjs/server";
-import { and, eq, ne } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export type AdminActionResult = { error: string; success: false } | { success: true };
@@ -65,12 +65,10 @@ export async function reactivateAdminCode(codeId: string): Promise<AdminActionRe
   return { success: true };
 }
 
-export async function deleteAdminCodesExcept(excludeCode: string): Promise<AdminActionResult> {
+export async function deleteAdminCode(codeId: string): Promise<AdminActionResult> {
   await requireAdmin();
 
-  await db
-    .delete(referralCodesTable)
-    .where(and(eq(referralCodesTable.type, "admin"), ne(referralCodesTable.code, excludeCode)));
+  await db.delete(referralCodesTable).where(eq(referralCodesTable.id, codeId));
 
   revalidatePath("/dashboard/admin");
 
