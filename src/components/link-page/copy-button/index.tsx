@@ -2,6 +2,8 @@
 
 import { Check, Copy } from "lucide-react";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 export type CopyButtonProps = {
   value: string;
@@ -10,6 +12,7 @@ export type CopyButtonProps = {
 export const CopyButton: React.FC<CopyButtonProps> = (props) => {
   const { value } = props;
 
+  const { t } = useTranslation();
   const [copied, setCopied] = React.useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
@@ -17,6 +20,7 @@ export const CopyButton: React.FC<CopyButtonProps> = (props) => {
     e.stopPropagation();
     navigator.clipboard.writeText(value);
     setCopied(true);
+    toast.success(t("npubCopied"));
   };
 
   React.useEffect(() => {
