@@ -23,7 +23,7 @@ export const ClicksChart: React.FC<ClicksChartProps> = (props) => {
     return d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
   };
 
-  const handleTooltipLabelFormatter = (v) => {
+  const handleTooltipLabelFormatter = (v: number | string) => {
     const d = new Date(String(v) + "T00:00:00");
     return d.toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" });
   };
