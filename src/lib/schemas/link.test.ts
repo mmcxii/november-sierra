@@ -101,6 +101,28 @@ describe("linkSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts a valid npub as URL value", () => {
+    //* Arrange
+    const input = { title: "Nostr", url: "npub1c8fl8yycevasawjw7xcx924xlqjkkwev9pyxwx9mh3temajzyglqcyhtuy" };
+
+    //* Act
+    const result = linkSchema.safeParse(input);
+
+    //* Assert
+    expect(result.success).toBe(true);
+  });
+
+  it("treats an invalid npub-like string as a regular URL", () => {
+    //* Arrange
+    const input = { title: "Nostr", url: "npub1tooshort" };
+
+    //* Act
+    const result = linkSchema.safeParse(input);
+
+    //* Assert
+    expect(result.success).toBe(true);
+  });
+
   it("accepts an anchr.to URL (internal host check is server-side)", () => {
     //* Arrange
     const input = { title: "Test", url: "https://anchr.to/someone" };

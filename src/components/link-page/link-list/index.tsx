@@ -1,10 +1,19 @@
+import { CopyButton } from "@/components/link-page/copy-button";
 import { PlatformIcon } from "@/components/link-page/platform-icon";
 import { RenderedIcon } from "@/components/ui/rendered-icon";
 import { getPlatformBrandColor } from "@/lib/platforms";
 import { Link2 } from "lucide-react";
 import * as React from "react";
 
-type LinkData = { icon: null | string; id: string; platform: null | string; slug: string; title: string; url: string };
+type LinkData = {
+  copyValue?: null | string;
+  icon: null | string;
+  id: string;
+  platform: null | string;
+  slug: string;
+  title: string;
+  url: string;
+};
 
 export type LinkGroup = {
   id: string;
@@ -59,7 +68,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
           )}
         </div>
         <span className="text-anc-theme-link-text flex-1 truncate text-center text-sm font-medium">{link.title}</span>
-        <div className="size-7 shrink-0" />
+        {link.copyValue != null ? <CopyButton value={link.copyValue} /> : <div className="size-7 shrink-0" />}
       </a>
     );
   };
@@ -90,7 +99,11 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
           <span className="text-anc-theme-featured-text flex-1 truncate text-center text-sm font-semibold">
             {featuredLink.title}
           </span>
-          <div className="size-7 shrink-0" />
+          {featuredLink.copyValue != null ? (
+            <CopyButton value={featuredLink.copyValue} />
+          ) : (
+            <div className="size-7 shrink-0" />
+          )}
         </a>
       )}
 

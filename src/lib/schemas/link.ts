@@ -1,3 +1,4 @@
+import { isNpub } from "@/lib/nostr";
 import { ensureProtocol } from "@/lib/utils/url";
 import { z } from "zod";
 
@@ -16,8 +17,10 @@ export const linkSchema = z.object({
   url: z
     .string()
     .min(1)
-    .refine((val) => urlValidator.safeParse(ensureProtocol(val)).success, { message: "pleaseEnterAValidUrl" })
-    .refine((val) => !BLOCKED_PROTOCOLS.test(val.trim()), { message: "thisUrlIsNotAllowed" }),
+    .refine((val) => isNpub(val) || urlValidator.safeParse(ensureProtocol(val)).success, {
+      message: "pleaseEnterAValidUrl",
+    })
+    .refine((val) => isNpub(val) || !BLOCKED_PROTOCOLS.test(val.trim()), { message: "thisUrlIsNotAllowed" }),
 });
 
 export type LinkValues = z.infer<typeof linkSchema>;

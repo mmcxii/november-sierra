@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { type NostrClientId, NOSTR_CLIENTS, buildNostrProfileUrl, detectNostrClient, isNpub } from "@/lib/nostr";
 import { detectPlatform } from "@/lib/platforms";
 import { type LinkValues, linkSchema } from "@/lib/schemas/link";
 import { ensureProtocol, generateSlug } from "@/lib/utils/url";
@@ -19,7 +20,15 @@ import { useTranslation } from "react-i18next";
 
 export type LinkFormProps = {
   customDomain?: null | string;
-  defaultValues?: { groupId?: string; icon?: null | string; id: string; slug: string; title: string; url: string };
+  defaultValues?: {
+    copyValue?: null | string;
+    groupId?: string;
+    icon?: null | string;
+    id: string;
+    slug: string;
+    title: string;
+    url: string;
+  };
   existingSlugs: string[];
   groups?: GroupItem[];
   isPro?: boolean;
@@ -29,6 +38,14 @@ export type LinkFormProps = {
 
 export const LinkForm: React.FC<LinkFormProps> = (props) => {
   const { customDomain, defaultValues, existingSlugs, groups = [], isPro = false, onSuccess, username } = props;
+
+  //* Nostr defaults (when editing a nostr link)
+  const initialNostrClient = React.useMemo<{ clientId: NostrClientId; customTemplate?: string }>(() => {
+    if (defaultValues?.copyValue != null) {
+      return detectNostrClient(defaultValues.url);
+    }
+    return { clientId: "primal" };
+  }, [defaultValues?.copyValue, defaultValues?.url]);
 
   //* State
   const { t } = useTranslation();
@@ -46,7 +63,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
             groupId: defaultValues.groupId ?? "",
             slug: defaultValues.slug,
             title: defaultValues.title,
-            url: defaultValues.url,
+            url: defaultValues.copyValue ?? defaultValues.url,
           }
         : undefined,
     resolver: standardSchemaResolver(linkSchema),
@@ -55,6 +72,9 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
   const [selectedIcon, setSelectedIcon] = React.useState<null | string>(defaultValues?.icon ?? null);
   const [skipUrlCheck, setSkipUrlCheck] = React.useState(false);
   const [showSkipUrlCheck, setShowSkipUrlCheck] = React.useState(false);
+  const [nostrClientId, setNostrClientId] = React.useState<NostrClientId>(initialNostrClient.clientId);
+  const [customTemplate, setCustomTemplate] = React.useState(initialNostrClient.customTemplate ?? "");
+  const [customTemplateError, setCustomTemplateError] = React.useState<null | string>(null);
 
   //* Refs
   const titleRef = React.useRef<null | HTMLInputElement>(null);
@@ -62,8 +82,17 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
   //* Variables
   const isEditing = defaultValues != null;
   const urlValue = watch("url");
-  const detectedPlatform = urlValue != null && urlValue.length > 0 ? detectPlatform(urlValue) : null;
-  const slugPlaceholder = urlValue != null && urlValue.length > 0 ? generateSlug(ensureProtocol(urlValue)) : "";
+  const isNostrMode = urlValue != null && isNpub(urlValue);
+  const detectedPlatform = isNostrMode
+    ? "nostr"
+    : urlValue != null && urlValue.length > 0
+      ? detectPlatform(urlValue)
+      : null;
+  const slugPlaceholder = isNostrMode
+    ? "nostr"
+    : urlValue != null && urlValue.length > 0
+      ? generateSlug(ensureProtocol(urlValue))
+      : "";
   const { ref: titleRegisterRef, ...titleRegisterRest } = register("title");
   const slugPrefix = customDomain != null ? `${customDomain}/` : `anchr.to/${username}/`;
   const URL_UNREACHABLE_KEY = "thisUrlCouldNotBeReachedPleaseCheckItAndTryAgain";
@@ -98,14 +127,41 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
       return false;
     }
 
-    const url = ensureProtocol(data.url);
-    const groupId = data.groupId != null && data.groupId.length > 0 ? data.groupId : undefined;
+    let url: string;
+    let copyValue: undefined | null | string;
 
+    if (isNpub(data.url)) {
+      const npub = data.url.trim();
+
+      if (nostrClientId === "custom" && !customTemplate.includes("{npub}")) {
+        setCustomTemplateError(t("useNpubWhereThePublicKeyGoes"));
+        return false;
+      }
+
+      url = buildNostrProfileUrl(npub, nostrClientId, nostrClientId === "custom" ? customTemplate : undefined);
+      copyValue = npub;
+    } else {
+      url = ensureProtocol(data.url);
+      // Clear copyValue if editing a link that was previously nostr
+      copyValue = isEditing && defaultValues.copyValue != null ? null : undefined;
+    }
+
+    const groupId = data.groupId != null && data.groupId.length > 0 ? data.groupId : undefined;
     const icon = isPro ? selectedIcon : undefined;
+    const shouldSkipUrlCheck = isNpub(data.url) || skipUrlCheck;
 
     const result = isEditing
-      ? await updateLink(defaultValues.id, data.title, url, data.slug, skipUrlCheck, groupId ?? null, icon)
-      : await createLink(data.title, url, data.slug, skipUrlCheck, groupId, icon);
+      ? await updateLink(
+          defaultValues.id,
+          data.title,
+          url,
+          data.slug,
+          shouldSkipUrlCheck,
+          groupId ?? null,
+          icon,
+          copyValue,
+        )
+      : await createLink(data.title, url, data.slug, shouldSkipUrlCheck, groupId, icon, copyValue ?? undefined);
 
     if (!result.success) {
       handleActionError(result.error);
@@ -131,11 +187,22 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
       setSelectedIcon(null);
       setSkipUrlCheck(false);
       setShowSkipUrlCheck(false);
+      setNostrClientId("primal");
+      setCustomTemplate("");
       titleRef.current?.focus();
     })();
   };
 
   const handleCheckboxOnCheckedChange = (checked: boolean | "indeterminate") => setSkipUrlCheck(checked === true);
+
+  const handleNostrClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setNostrClientId(e.target.value as NostrClientId);
+  };
+
+  const handleCustomTemplateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomTemplate(e.target.value);
+    setCustomTemplateError(null);
+  };
 
   //* Effects
   React.useEffect(() => {
@@ -167,7 +234,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
       <div className="flex flex-col gap-2">
         <Label htmlFor="link-url">{t("url")}</Label>
         <Input disabled={isSubmitting} id="link-url" placeholder="https://" {...register("url")} />
-        {detectedPlatform != null && (
+        {!isNostrMode && detectedPlatform != null && (
           <div className="flex">
             <PlatformBadge platform={detectedPlatform} />
           </div>
@@ -180,6 +247,43 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
           </label>
         )}
       </div>
+      {isNostrMode && (
+        <>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="nostr-client">{t("nostrClient")}</Label>
+            <select
+              className="border-input focus:border-ring focus:ring-ring/50 h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+              disabled={isSubmitting}
+              id="nostr-client"
+              onChange={handleNostrClientChange}
+              value={nostrClientId}
+            >
+              {NOSTR_CLIENTS.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.id === "custom" ? t("custom") : client.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {nostrClientId === "custom" && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="custom-template">{t("clientUrlTemplate")}</Label>
+              <Input
+                disabled={isSubmitting}
+                id="custom-template"
+                onChange={handleCustomTemplateChange}
+                placeholder="https://example.com/profile/{npub}"
+                value={customTemplate}
+              />
+              {customTemplateError != null ? (
+                <p className="text-destructive text-xs">{customTemplateError}</p>
+              ) : (
+                <p className="text-muted-foreground text-xs">{t("useNpubWhereThePublicKeyGoes")}</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
       <div className="flex flex-col gap-2">
         <Label htmlFor="link-slug">{t("redirectUrl")}</Label>
         <div className="border-input focus-within:border-ring focus-within:ring-ring/50 flex h-9 items-center overflow-hidden rounded-md border shadow-xs focus-within:ring-[3px]">

@@ -664,6 +664,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
             defaultValues={
               editingLink != null
                 ? {
+                    copyValue: editingLink.copyValue,
                     groupId: editingLink.groupId ?? "",
                     icon: editingLink.icon,
                     id: editingLink.id,
