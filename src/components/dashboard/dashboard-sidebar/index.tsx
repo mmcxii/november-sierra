@@ -14,7 +14,7 @@ import { type SessionUser } from "@/lib/auth";
 import { isProUser } from "@/lib/tier";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@clerk/nextjs";
-import { Anchor, Menu, Sparkles, X } from "lucide-react";
+import { Anchor, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
@@ -162,22 +162,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
           )}
         </nav>
 
-        {/* Upgrade CTA (free users only) */}
-        {!isPro && (
-          <div className="px-3 pb-3">
-            <Link
-              className="bg-primary/8 hover:bg-primary/14 border-primary/15 flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors"
-              href="/dashboard/settings"
-              onClick={closeMobile}
-            >
-              <Sparkles className="text-primary size-4 shrink-0" />
-              <div className="flex flex-col">
-                <span className="text-sidebar-foreground text-sm font-medium">{t("upgradeToPro")}</span>
-                <span className="text-sidebar-foreground/50 text-xs">{t("unlimitedLinks")}</span>
-              </div>
-            </Link>
-          </div>
-        )}
+        {/* TODO: ANC-107 — re-enable upgrade CTA once Stripe product is created */}
 
         {/* User menu */}
         <div className="border-sidebar-border border-t p-3">

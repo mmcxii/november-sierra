@@ -2,7 +2,6 @@
 
 import {
   addCustomDomain,
-  createCheckoutSession,
   createPortalSession,
   getOrCreateUserReferralCode,
   redeemReferralCode,
@@ -152,23 +151,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const handleDisplayNameOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setDisplayNameInput(e.target.value);
   const handleBioOnChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setBioInput(e.target.value);
 
-  const handleUpgrade = async () => {
-    setBillingLoading(true);
-    try {
-      const result = await createCheckoutSession();
-      if (result.success) {
-        if (result.url != null) {
-          window.location.href = result.url;
-        }
-        return;
-      }
-      toast.error(t(result.error));
-    } catch {
-      toast.error(t("somethingWentWrongPleaseTryAgain"));
-    } finally {
-      setBillingLoading(false);
-    }
-  };
+  // TODO: ANC-107 — restore handleUpgrade once Stripe product is created
 
   const handleManageBilling = async () => {
     setBillingLoading(true);
@@ -425,9 +408,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                 <p className="text-muted-foreground text-sm">
                   {t("upgradeToUnlockUnlimitedLinksCustomDomainsAndMore")}
                 </p>
-                <Button disabled={billingLoading} onClick={handleUpgrade}>
-                  {t("upgradeToPro")}
-                </Button>
+                {/* TODO: ANC-107 — re-enable once Stripe product is created */}
               </div>
             )}
 
