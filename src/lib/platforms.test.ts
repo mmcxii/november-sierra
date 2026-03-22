@@ -68,6 +68,21 @@ describe("detectPlatform", () => {
     ]);
   });
 
+  it("detects Nostr clients from URLs", () => {
+    //* Act
+    const results = [
+      detectPlatform("https://primal.net/p/npub1abc"),
+      detectPlatform("https://snort.social/p/npub1abc"),
+      detectPlatform("https://coracle.social/npub1abc"),
+      detectPlatform("https://iris.to/npub1abc"),
+      detectPlatform("https://njump.me/npub1abc"),
+      detectPlatform("https://nostrudel.ninja/#/u/npub1abc"),
+    ];
+
+    //* Assert
+    expect(results).toEqual(["nostr", "nostr", "nostr", "nostr", "nostr", "nostr"]);
+  });
+
   it("returns null for non-HTTP URI schemes", () => {
     //* Act
     const bitcoin = detectPlatform("bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa");

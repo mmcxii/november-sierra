@@ -44,6 +44,7 @@ export async function createLink(
   skipUrlCheck?: boolean,
   groupId?: string,
   icon?: null | string,
+  copyValue?: string,
 ): Promise<ActionResult> {
   const user = await getCurrentUser();
 
@@ -104,9 +105,10 @@ export async function createLink(
     .from(linksTable)
     .where(eq(linksTable.userId, user.id));
 
-  const platform = detectPlatform(fullUrl);
+  const platform = copyValue != null ? "nostr" : detectPlatform(fullUrl);
 
   await db.insert(linksTable).values({
+    copyValue: copyValue ?? null,
     groupId: resolvedGroupId,
     icon: isProUser(user) ? (icon ?? null) : null,
     platform,
@@ -130,6 +132,7 @@ export async function updateLink(
   skipUrlCheck?: boolean,
   groupId?: null | string,
   icon?: null | string,
+  copyValue?: null | string,
 ): Promise<ActionResult> {
   const user = await getCurrentUser();
 
@@ -194,7 +197,7 @@ export async function updateLink(
     }
   }
 
-  const platform = detectPlatform(fullUrl);
+  const platform = copyValue != null ? "nostr" : detectPlatform(fullUrl);
 
   const updateFields: Record<string, unknown> = {
     platform,
@@ -211,6 +214,11 @@ export async function updateLink(
   // Only update icon if explicitly passed (undefined = don't change)
   if (icon !== undefined) {
     updateFields.icon = isProUser(user) ? (icon ?? null) : null;
+  }
+
+  // Only update copyValue if explicitly passed (undefined = don't change, null = clear, string = set)
+  if (copyValue !== undefined) {
+    updateFields.copyValue = copyValue;
   }
 
   const updated = await db

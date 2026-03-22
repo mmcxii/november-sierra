@@ -32,6 +32,7 @@ async function getPageData(username: string) {
 
   // Fetch Quick Links group (Pro only)
   let quickLinks: {
+    copyValue: null | string;
     icon: null | string;
     id: string;
     platform: null | string;
@@ -56,6 +57,7 @@ async function getPageData(username: string) {
     if (quickLinksGroup != null) {
       quickLinks = await db
         .select({
+          copyValue: linksTable.copyValue,
           icon: linksTable.icon,
           id: linksTable.id,
           platform: linksTable.platform,
@@ -73,6 +75,7 @@ async function getPageData(username: string) {
 
   // Fetch featured link (Pro only)
   let featuredLink: null | {
+    copyValue: null | string;
     icon: null | string;
     id: string;
     platform: null | string;
@@ -84,6 +87,7 @@ async function getPageData(username: string) {
   if (isProUser(user)) {
     const [found] = await db
       .select({
+        copyValue: linksTable.copyValue,
         icon: linksTable.icon,
         id: linksTable.id,
         platform: linksTable.platform,
@@ -101,6 +105,7 @@ async function getPageData(username: string) {
   // Fetch ungrouped visible links (excluding featured)
   const ungroupedLinks = await db
     .select({
+      copyValue: linksTable.copyValue,
       icon: linksTable.icon,
       id: linksTable.id,
       platform: linksTable.platform,
@@ -137,6 +142,7 @@ async function getPageData(username: string) {
     visibleGroups.length > 0
       ? await db
           .select({
+            copyValue: linksTable.copyValue,
             groupId: linksTable.groupId,
             icon: linksTable.icon,
             id: linksTable.id,

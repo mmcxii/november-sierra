@@ -5,6 +5,7 @@ import { usersTable } from "./user";
 export const linksTable = pgTable(
   "links",
   {
+    copyValue: text("copy_value"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     groupId: text("group_id").references(() => linkGroupsTable.id, { onDelete: "set null" }),
     icon: text("icon"),
