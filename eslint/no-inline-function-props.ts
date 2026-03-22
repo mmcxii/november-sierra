@@ -17,7 +17,7 @@ function containsJsx(node: TSESTree.Node): boolean {
       continue;
     }
 
-    const value = (node as Record<string, unknown>)[key];
+    const value = (node as unknown as Record<string, unknown>)[key];
 
     if (Array.isArray(value)) {
       for (const item of value) {
