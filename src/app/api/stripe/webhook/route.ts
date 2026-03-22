@@ -2,18 +2,27 @@ import { db } from "@/lib/db/client";
 import { ensureQuickLinksGroup } from "@/lib/db/queries/quick-links";
 import { usersTable } from "@/lib/db/schema/user";
 import { stripe } from "@/lib/stripe";
+import { grantPro } from "@/lib/tier.server";
 import { removeDomain } from "@/lib/vercel";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 
 async function handleDowngrade(customerId: string): Promise<void> {
   const [user] = await db
-    .select({ customDomain: usersTable.customDomain, id: usersTable.id })
+    .select({
+      customDomain: usersTable.customDomain,
+      id: usersTable.id,
+      proExpiresAt: usersTable.proExpiresAt,
+    })
     .from(usersTable)
     .where(eq(usersTable.stripeCustomerId, customerId))
     .limit(1);
 
-  if (user?.customDomain != null) {
+  if (user == null) {
+    return;
+  }
+
+  if (user.customDomain != null) {
     try {
       await removeDomain(user.customDomain);
     } catch (error) {
@@ -21,13 +30,16 @@ async function handleDowngrade(customerId: string): Promise<void> {
     }
   }
 
+  // If user has remaining referral Pro time, keep Pro until it expires
+  const hasReferralPro = user.proExpiresAt != null && user.proExpiresAt > new Date();
+
   await db
     .update(usersTable)
     .set({
       customDomain: null,
       customDomainVerified: false,
       stripeSubscriptionId: null,
-      tier: "free",
+      ...(hasReferralPro ? {} : { proExpiresAt: null, tier: "free" }),
       updatedAt: new Date(),
     })
     .where(eq(usersTable.stripeCustomerId, customerId));
@@ -62,6 +74,7 @@ export async function POST(req: Request) {
       await db
         .update(usersTable)
         .set({
+          proExpiresAt: null,
           stripeCustomerId: session.customer as string,
           stripeSubscriptionId: session.subscription as string,
           tier: "pro",
@@ -70,6 +83,18 @@ export async function POST(req: Request) {
         .where(eq(usersTable.id, userId));
 
       await ensureQuickLinksGroup(userId);
+
+      // Reward referrer if user was referred
+      const [user] = await db
+        .select({ referredBy: usersTable.referredBy })
+        .from(usersTable)
+        .where(eq(usersTable.id, userId))
+        .limit(1);
+
+      if (user?.referredBy != null) {
+        await grantPro(user.referredBy, 30);
+        await db.update(usersTable).set({ referredBy: null, updatedAt: new Date() }).where(eq(usersTable.id, userId));
+      }
 
       break;
     }

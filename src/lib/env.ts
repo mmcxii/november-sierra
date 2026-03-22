@@ -24,6 +24,7 @@ export const envSchema = createEnv({
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 
+    ADMIN_USER_ID: process.env.ADMIN_USER_ID,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
@@ -39,6 +40,7 @@ export const envSchema = createEnv({
     VERCEL_TEAM_ID: process.env.VERCEL_TEAM_ID,
   },
   server: {
+    ADMIN_USER_ID: z.string().optional(),
     CLERK_SECRET_KEY: z.string(),
     CLERK_WEBHOOK_SECRET: z.string(),
     DATABASE_URL: z.url(),

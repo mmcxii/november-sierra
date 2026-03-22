@@ -89,6 +89,14 @@ export const SignUpForm: React.FC = () => {
     }
   };
 
+  //* Effects
+  React.useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref != null) {
+      localStorage.setItem("anchr_referral_code", ref);
+    }
+  }, []);
+
   if (verifying) {
     return (
       <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" key="verify" variant="featured">

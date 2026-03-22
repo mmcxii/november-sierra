@@ -1,14 +1,20 @@
 "use server";
 
+import { isAdmin } from "@/lib/auth";
 import { db } from "@/lib/db/client";
+import { referralCodesTable } from "@/lib/db/schema/referral-code";
+import { referralRedemptionsTable } from "@/lib/db/schema/referral-redemption";
 import { usersTable } from "@/lib/db/schema/user";
 import { envSchema } from "@/lib/env";
 import { stripe } from "@/lib/stripe";
 import { isDarkTheme, isValidThemeId } from "@/lib/themes";
+import { isProUser } from "@/lib/tier";
+import { grantPro } from "@/lib/tier.server";
+import { generateReferralCode } from "@/lib/utils/referral-code";
 import { isValidDomain } from "@/lib/utils/url";
 import { addDomain, getDomainConfig, removeDomain, verifyDomain } from "@/lib/vercel";
 import { auth } from "@clerk/nextjs/server";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export type ActionResult = { error: string; success: false } | { success: true; url?: string };
@@ -62,7 +68,7 @@ export async function updateHideBranding(hide: boolean): Promise<ActionResult> {
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
 
-  if (user == null || user.tier !== "pro") {
+  if (user == null || !isProUser(user)) {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
@@ -199,7 +205,7 @@ export async function addCustomDomain(domain: string): Promise<ActionResult> {
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
 
-  if (user == null || user.tier !== "pro") {
+  if (user == null || !isProUser(user)) {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
@@ -306,4 +312,116 @@ export async function removeCustomDomain(): Promise<ActionResult> {
   }
 
   return { success: true };
+}
+
+// ─── Referral Code Actions ──────────────────────────────────────────────────
+
+export async function redeemReferralCode(code: string): Promise<ActionResult> {
+  const { userId } = await auth();
+
+  if (userId == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  const normalized = code.trim().toUpperCase();
+
+  const [referralCode] = await db
+    .select()
+    .from(referralCodesTable)
+    .where(eq(referralCodesTable.code, normalized))
+    .limit(1);
+
+  if (referralCode == null) {
+    return { error: "invalidReferralCode", success: false };
+  }
+
+  // Check if code is deactivated
+  if (!referralCode.active) {
+    return { error: "thisReferralCodeIsNoLongerActive", success: false };
+  }
+
+  // Check if code is expired
+  if (referralCode.expiresAt != null && referralCode.expiresAt < new Date()) {
+    return { error: "thisReferralCodeHasExpired", success: false };
+  }
+
+  // Prevent self-redemption (admins are exempt)
+  if (referralCode.creatorId === userId && !isAdmin(userId)) {
+    return { error: "youCannotRedeemYourOwnReferralCode", success: false };
+  }
+
+  // Check max redemptions
+  if (referralCode.maxRedemptions != null && referralCode.currentRedemptions >= referralCode.maxRedemptions) {
+    return { error: "thisReferralCodeHasAlreadyBeenUsed", success: false };
+  }
+
+  // Check if user already redeemed this code
+  const [existing] = await db
+    .select({ id: referralRedemptionsTable.id })
+    .from(referralRedemptionsTable)
+    .where(and(eq(referralRedemptionsTable.codeId, referralCode.id), eq(referralRedemptionsTable.userId, userId)))
+    .limit(1);
+
+  if (existing != null) {
+    return { error: "youHaveAlreadyRedeemedThisCode", success: false };
+  }
+
+  // Insert redemption and increment counter
+  await db.insert(referralRedemptionsTable).values({
+    codeId: referralCode.id,
+    userId,
+  });
+
+  await db
+    .update(referralCodesTable)
+    .set({ currentRedemptions: sql`${referralCodesTable.currentRedemptions} + 1` })
+    .where(eq(referralCodesTable.id, referralCode.id));
+
+  // Grant Pro
+  await grantPro(userId, referralCode.durationDays);
+
+  // If user referral code, set referredBy for Stripe reward
+  if (referralCode.type === "user" && referralCode.creatorId != null) {
+    await db
+      .update(usersTable)
+      .set({ referredBy: referralCode.creatorId, updatedAt: new Date() })
+      .where(eq(usersTable.id, userId));
+  }
+
+  revalidatePath("/dashboard/settings");
+
+  return { success: true };
+}
+
+export type ReferralCodeResult = { code: string; success: true } | { error: string; success: false };
+
+export async function getOrCreateUserReferralCode(): Promise<ReferralCodeResult> {
+  const { userId } = await auth();
+
+  if (userId == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  // Check if user already has a referral code
+  const [existing] = await db
+    .select({ code: referralCodesTable.code })
+    .from(referralCodesTable)
+    .where(and(eq(referralCodesTable.creatorId, userId), eq(referralCodesTable.type, "user")))
+    .limit(1);
+
+  if (existing != null) {
+    return { code: existing.code, success: true };
+  }
+
+  const code = generateReferralCode("ANCHR");
+
+  await db.insert(referralCodesTable).values({
+    code,
+    creatorId: userId,
+    durationDays: 30,
+    maxRedemptions: null,
+    type: "user",
+  });
+
+  return { code, success: true };
 }

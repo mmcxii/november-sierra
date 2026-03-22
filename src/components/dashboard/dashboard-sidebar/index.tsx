@@ -19,14 +19,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { NAV_ITEMS } from "./utils";
+import { ADMIN_NAV_ITEMS, NAV_ITEMS } from "./utils";
 
 export type DashboardSidebarProps = {
+  isAdmin?: boolean;
   user: SessionUser;
 };
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
-  const { user } = props;
+  const { isAdmin: isAdminUser, user } = props;
 
   //* State
   const { t } = useTranslation();
@@ -129,6 +130,36 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
               );
             })}
           </ul>
+          {isAdminUser && (
+            <>
+              <hr className="border-anc-gold/25 mx-3 mt-2" />
+              <ul className="mt-2 flex flex-col gap-1">
+                {ADMIN_NAV_ITEMS.map((item) => {
+                  const isActive = pathname === item.href;
+
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        className={cn(
+                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                          {
+                            "bg-sidebar-accent text-sidebar-accent-foreground": isActive,
+                            "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground":
+                              !isActive,
+                          },
+                        )}
+                        href={item.href}
+                        onClick={closeMobile}
+                      >
+                        <item.icon className="size-4" />
+                        {t(item.labelKey)}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
         </nav>
 
         {/* Upgrade CTA (free users only) */}

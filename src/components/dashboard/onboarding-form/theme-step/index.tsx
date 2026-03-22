@@ -34,7 +34,9 @@ export const ThemeStep: React.FC<ThemeStepProps> = (props) => {
         toast.error(t("somethingWentWrongPleaseTryAgain"));
         return;
       }
-      await completeOnboarding();
+      const referralCode = localStorage.getItem("anchr_referral_code") ?? undefined;
+      await completeOnboarding(referralCode);
+      localStorage.removeItem("anchr_referral_code");
       onComplete();
     } catch {
       toast.error(t("somethingWentWrongPleaseTryAgain"));
@@ -50,7 +52,9 @@ export const ThemeStep: React.FC<ThemeStepProps> = (props) => {
   const handleSkip = async () => {
     setSubmitting(true);
     try {
-      await completeOnboarding();
+      const referralCode = localStorage.getItem("anchr_referral_code") ?? undefined;
+      await completeOnboarding(referralCode);
+      localStorage.removeItem("anchr_referral_code");
       onSkip();
     } catch {
       toast.error(t("somethingWentWrongPleaseTryAgain"));

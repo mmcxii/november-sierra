@@ -4,6 +4,8 @@ import {
   addCustomDomain,
   createCheckoutSession,
   createPortalSession,
+  getOrCreateUserReferralCode,
+  redeemReferralCode,
   removeAvatar,
   removeCustomDomain,
   updateHideBranding,
@@ -20,13 +22,14 @@ import { useDashboardTheme } from "@/components/dashboard/theme-provider/context
 import { ThemeSwatch } from "@/components/dashboard/theme-swatch";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { SessionUser } from "@/lib/auth";
 import { DARK_THEME_ID_LIST, LIGHT_THEME_ID_LIST, THEMES, isDarkTheme, type ThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
 import { useUploadThing } from "@/lib/uploadthing";
-import { Anchor, Camera, Check, CheckCircle2, Loader2, Lock } from "lucide-react";
+import { Anchor, Camera, Check, CheckCircle2, Copy, Loader2, Lock } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -60,6 +63,9 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const { isUploading, startUpload } = useUploadThing("avatarUploader");
   const [domainInput, setDomainInput] = React.useState("");
   const [domainPending, startDomainTransition] = React.useTransition();
+  const [referralInput, setReferralInput] = React.useState("");
+  const [referralPending, startReferralTransition] = React.useTransition();
+  const [userReferralCode, setUserReferralCode] = React.useState<null | string>(null);
   const isPro = isProUser(user);
   const previewKey = `${previewThemes.dark}|${previewThemes.light}|${brandingHidden}|${profileVersion}|${avatarUrl}`;
 
@@ -68,6 +74,14 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
       window.history.replaceState(null, "", "/dashboard/settings");
     }
   }, [checkoutSuccess]);
+
+  React.useEffect(() => {
+    getOrCreateUserReferralCode().then((result) => {
+      if (result.success) {
+        setUserReferralCode(result.code);
+      }
+    });
+  }, []);
 
   //* Handlers
   const handlePageThemeChange = React.useCallback((themeId: ThemeId) => {
@@ -218,6 +232,28 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     (id: ThemeId) => () => setPreferredLight(id),
     [setPreferredLight],
   );
+
+  const handleReferralInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setReferralInput(e.target.value);
+
+  const handleRedeemCode = () => {
+    startReferralTransition(async () => {
+      const result = await redeemReferralCode(referralInput);
+      if (!result.success) {
+        toast.error(t(result.error));
+        return;
+      }
+      setReferralInput("");
+      toast.success(t("referralCodeRedeemed"));
+    });
+  };
+
+  const handleCopyReferralCode = async () => {
+    if (userReferralCode == null) {
+      return;
+    }
+    await navigator.clipboard.writeText(userReferralCode);
+    toast.success(t("referralCodeCopied"));
+  };
 
   return (
     <div className="flex gap-8">
@@ -372,11 +408,18 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
               )}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             {isPro ? (
-              <Button disabled={billingLoading} onClick={handleManageBilling} variant="secondary">
-                {t("manageBilling")}
-              </Button>
+              <div className="space-y-3">
+                {user.proExpiresAt != null && user.proExpiresAt > new Date() && (
+                  <p className="text-muted-foreground text-sm">
+                    {t("proAccessExpiresOn{{date}}", { date: user.proExpiresAt.toLocaleDateString() })}
+                  </p>
+                )}
+                <Button disabled={billingLoading} onClick={handleManageBilling} variant="secondary">
+                  {t("manageBilling")}
+                </Button>
+              </div>
             ) : (
               <div className="space-y-3">
                 <p className="text-muted-foreground text-sm">
@@ -387,6 +430,47 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                 </Button>
               </div>
             )}
+
+            <hr className="border-border" />
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">{t("referFriends")}</p>
+              <p className="text-muted-foreground text-sm">
+                {t("shareYourReferralCodeNewUsersGet1FreeMonthOfProWhenTheyGoProYouGetAFreeMonthToo")}
+              </p>
+              {userReferralCode != null ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <code className="bg-muted rounded-md border px-3 py-2 font-mono text-sm">{userReferralCode}</code>
+                  <IconButton onClick={handleCopyReferralCode}>
+                    <Copy className="size-4" />
+                  </IconButton>
+                </div>
+              ) : (
+                <Loader2 className="text-muted-foreground size-4 animate-spin" />
+              )}
+            </div>
+
+            <hr className="border-border" />
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">{t("redeemAReferralCode")}</p>
+              <div className="flex gap-2">
+                <Input
+                  disabled={referralPending}
+                  onChange={handleReferralInputOnChange}
+                  placeholder="ANCHR-XXXXXX"
+                  value={referralInput}
+                />
+                <Button
+                  disabled={referralPending || referralInput.trim().length === 0}
+                  onClick={handleRedeemCode}
+                  variant="secondary"
+                >
+                  {referralPending && <Loader2 className="size-3.5 animate-spin" />}
+                  {t("redeem")}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

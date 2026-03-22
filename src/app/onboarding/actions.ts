@@ -1,5 +1,6 @@
 "use server";
 
+import { redeemReferralCode } from "@/app/(dashboard)/dashboard/settings/actions";
 import { db } from "@/lib/db/client";
 import { generateUniqueSlug } from "@/lib/db/queries/link";
 import { linksTable } from "@/lib/db/schema/link";
@@ -116,7 +117,7 @@ export async function addFirstLink(title: string, url: string): Promise<AddLinkR
   return { success: true };
 }
 
-export async function completeOnboarding(): Promise<{ success: boolean }> {
+export async function completeOnboarding(referralCode?: string): Promise<{ success: boolean }> {
   const { userId } = await auth();
 
   if (userId == null) {
@@ -124,6 +125,10 @@ export async function completeOnboarding(): Promise<{ success: boolean }> {
   }
 
   await db.update(usersTable).set({ onboardingComplete: true, updatedAt: new Date() }).where(eq(usersTable.id, userId));
+
+  if (referralCode != null && referralCode.length > 0) {
+    await redeemReferralCode(referralCode);
+  }
 
   return { success: true };
 }

@@ -5,6 +5,7 @@ import { db } from "@/lib/db/client";
 import { ensureQuickLinksGroup } from "@/lib/db/queries/quick-links";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
+import { isProUser } from "@/lib/tier";
 import { asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import * as React from "react";
@@ -17,7 +18,7 @@ const DashboardPage: React.FC = async () => {
   //* Variables
   const user = await requireUser();
 
-  if (user.tier === "pro") {
+  if (isProUser(user)) {
     await ensureQuickLinksGroup(user.id);
   }
 

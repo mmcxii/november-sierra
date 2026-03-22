@@ -8,7 +8,7 @@ import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { detectPlatform } from "@/lib/platforms";
 import { linkSchema } from "@/lib/schemas/link";
 import { groupSchema } from "@/lib/schemas/link-group";
-import { FREE_LINK_LIMIT } from "@/lib/tier";
+import { FREE_LINK_LIMIT, isProUser } from "@/lib/tier";
 import { ensureProtocol, generateSlug, urlResolves } from "@/lib/utils/url";
 import { and, count, eq, inArray, not, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -51,7 +51,7 @@ export async function createLink(
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  if (user.tier !== "pro") {
+  if (!isProUser(user)) {
     const [{ count: linkCount }] = await db
       .select({ count: count() })
       .from(linksTable)
@@ -104,7 +104,7 @@ export async function createLink(
 
   await db.insert(linksTable).values({
     groupId: resolvedGroupId,
-    icon: user.tier === "pro" ? (icon ?? null) : null,
+    icon: isProUser(user) ? (icon ?? null) : null,
     platform,
     position: (maxPosition[0]?.max ?? -1) + 1,
     slug,
@@ -202,7 +202,7 @@ export async function updateLink(
 
   // Only update icon if explicitly passed (undefined = don't change)
   if (icon !== undefined) {
-    updateFields.icon = user.tier === "pro" ? (icon ?? null) : null;
+    updateFields.icon = isProUser(user) ? (icon ?? null) : null;
   }
 
   const updated = await db
@@ -302,7 +302,7 @@ export async function toggleFeaturedLink(id: string): Promise<ActionResult> {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  if (user.tier !== "pro") {
+  if (!isProUser(user)) {
     return { error: "upgradeToPro", success: false };
   }
 
@@ -433,7 +433,7 @@ export async function createGroup(title: string): Promise<ActionResult> {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  if (user.tier !== "pro") {
+  if (!isProUser(user)) {
     return { error: "upgradeToPro", success: false };
   }
 
@@ -466,7 +466,7 @@ export async function updateGroupTitle(id: string, title: string): Promise<Actio
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  if (user.tier !== "pro") {
+  if (!isProUser(user)) {
     return { error: "upgradeToPro", success: false };
   }
 
@@ -512,7 +512,7 @@ export async function deleteGroup(id: string, deleteLinks: boolean): Promise<Act
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  if (user.tier !== "pro") {
+  if (!isProUser(user)) {
     return { error: "upgradeToPro", success: false };
   }
 

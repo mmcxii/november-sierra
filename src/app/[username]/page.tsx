@@ -9,6 +9,7 @@ import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { usersTable } from "@/lib/db/schema/user";
 import { type ThemeId, isValidThemeId } from "@/lib/themes";
+import { isProUser } from "@/lib/tier";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -39,7 +40,7 @@ async function getPageData(username: string) {
     url: string;
   }[] = [];
 
-  if (user.tier === "pro") {
+  if (isProUser(user)) {
     const [quickLinksGroup] = await db
       .select({ id: linkGroupsTable.id })
       .from(linkGroupsTable)
@@ -80,7 +81,7 @@ async function getPageData(username: string) {
     url: string;
   } = null;
 
-  if (user.tier === "pro") {
+  if (isProUser(user)) {
     const [found] = await db
       .select({
         icon: linksTable.icon,
@@ -259,7 +260,7 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
         />
       </div>
       <Container className="relative pb-8">
-        <Footer hideBranding={user.tier === "pro" && user.hideBranding} themeToggle={<LinkPageThemeToggle />} />
+        <Footer hideBranding={isProUser(user) && user.hideBranding} themeToggle={<LinkPageThemeToggle />} />
       </Container>
     </ThemeProvider>
   );

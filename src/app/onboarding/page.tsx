@@ -1,5 +1,5 @@
 import { OnboardingForm } from "@/components/dashboard/onboarding-form";
-import { requireUser } from "@/lib/auth";
+import { waitForUser } from "@/lib/auth";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import * as React from "react";
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const OnboardingPage: React.FC = async () => {
-  const user = await requireUser();
+  const user = await waitForUser();
 
   if (user.onboardingComplete) {
     redirect("/dashboard");

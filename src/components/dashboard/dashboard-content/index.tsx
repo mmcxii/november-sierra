@@ -5,6 +5,7 @@ import { PreviewToggle } from "@/components/dashboard/preview-toggle";
 import { QrCodeModal } from "@/components/dashboard/qr-code-modal";
 import { Button } from "@/components/ui/button";
 import type { SessionUser } from "@/lib/auth";
+import { isProUser } from "@/lib/tier";
 import { QrCode } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -26,7 +27,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = (props) => {
   const [qrLabel, setQrLabel] = React.useState("");
 
   //* Variables
-  const isPro = user.tier === "pro";
+  const isPro = isProUser(user);
   const customDomain = user.customDomainVerified && user.customDomain != null ? user.customDomain : null;
   const baseUrl = customDomain != null ? `https://${customDomain}` : `https://anchr.to/${user.username}`;
 

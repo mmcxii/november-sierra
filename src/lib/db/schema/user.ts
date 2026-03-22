@@ -13,6 +13,8 @@ export const usersTable = pgTable("users", {
   onboardingComplete: boolean("onboarding_complete").default(false).notNull(),
   pageDarkTheme: text("page_dark_theme").default("dark-depths").notNull(),
   pageLightTheme: text("page_light_theme").default("stateroom").notNull(),
+  proExpiresAt: timestamp("pro_expires_at"),
+  referredBy: text("referred_by"),
   stripeCustomerId: text("stripe_customer_id").unique(),
   stripeSubscriptionId: text("stripe_subscription_id"),
   tier: text("tier").default("free").notNull(),
