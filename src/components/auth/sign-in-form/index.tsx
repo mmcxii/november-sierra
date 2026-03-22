@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { type SignInValues, signInSchema } from "@/lib/schemas/auth";
+import { type SignInValues, type VerifyEmailValues, signInSchema, verifyEmailSchema } from "@/lib/schemas/auth";
 import { useSignIn } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
@@ -19,19 +18,23 @@ import { Trans, useTranslation } from "react-i18next";
 export const SignInForm: React.FC = () => {
   //* State
   const { t } = useTranslation();
-  const router = useRouter();
   const { isLoaded, setActive, signIn } = useSignIn();
-  const {
-    formState: { errors, isSubmitting },
-    handleSubmit,
-    register,
-    setError,
-  } = useForm<SignInValues>({
-    resolver: standardSchemaResolver(signInSchema),
-  });
+  const [verifying, setVerifying] = React.useState(false);
+  const signInForm = useForm<SignInValues>({ resolver: standardSchemaResolver(signInSchema) });
+  const verifyForm = useForm<VerifyEmailValues>({ resolver: standardSchemaResolver(verifyEmailSchema) });
 
   //* Handlers
-  const onSubmit = async (data: SignInValues) => {
+  const handleClerkError = (form: { setError: (name: "root", error: { message: string }) => void }, err: unknown) => {
+    if (isClerkAPIResponseError(err)) {
+      for (const e of err.errors) {
+        form.setError("root", { message: e.longMessage ?? e.message });
+      }
+    } else {
+      form.setError("root", { message: t("somethingWentWrongPleaseTryAgain") });
+    }
+  };
+
+  const onSignIn = async (data: SignInValues) => {
     if (!isLoaded) {
       return;
     }
@@ -45,41 +48,122 @@ export const SignInForm: React.FC = () => {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/dashboard");
+        window.location.replace("/dashboard");
+      } else if (result.status === "needs_second_factor" || result.status === "needs_client_trust") {
+        const emailFactor = result.supportedSecondFactors?.find((f) => f.strategy === "email_code");
+
+        if (emailFactor != null) {
+          await signIn.prepareSecondFactor({ strategy: "email_code" });
+          setVerifying(true);
+        }
       }
     } catch (err) {
       if (isClerkAPIResponseError(err)) {
         for (const e of err.errors) {
           switch (e.meta?.paramName) {
             case "identifier":
-              setError("email", {
-                message: e.longMessage ?? e.message,
-              });
+              signInForm.setError("email", { message: e.longMessage ?? e.message });
               break;
 
             case "password":
-              setError("password", {
-                message: e.longMessage ?? e.message,
-              });
+              signInForm.setError("password", { message: e.longMessage ?? e.message });
               break;
 
             default:
-              setError("root", {
-                message: e.longMessage ?? e.message,
-              });
+              signInForm.setError("root", { message: e.longMessage ?? e.message });
               break;
           }
         }
       } else {
-        setError("root", {
-          message: t("somethingWentWrongPleaseTryAgain"),
-        });
+        signInForm.setError("root", { message: t("somethingWentWrongPleaseTryAgain") });
       }
     }
   };
 
+  const onVerify = async (data: VerifyEmailValues) => {
+    if (!isLoaded) {
+      return;
+    }
+
+    try {
+      const result = await signIn.attemptSecondFactor({ code: data.code, strategy: "email_code" });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        window.location.replace("/dashboard");
+      }
+    } catch (err) {
+      handleClerkError(verifyForm, err);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!isLoaded) {
+      return;
+    }
+    verifyForm.clearErrors("root");
+    try {
+      await signIn.prepareSecondFactor({ strategy: "email_code" });
+    } catch (err) {
+      handleClerkError(verifyForm, err);
+    }
+  };
+
+  if (verifying) {
+    return (
+      <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" key="verify" variant="featured">
+        <div className="flex flex-col items-center">
+          <span className="tracking-anc-caps-extra text-xs text-[rgb(var(--m-muted))] uppercase">{t("welcomeTo")}</span>
+          <SiteWordmark size="xl" />
+        </div>
+        <CardHeader className="mt-[8vh] w-full max-w-sm items-center text-center">
+          <CardTitle className="text-xl text-[rgb(var(--m-text))]">{t("checkYourEmail")}</CardTitle>
+          <CardDescription className="text-[rgb(var(--m-muted))]">{t("enterTheCodeWeSentToYourEmail")}</CardDescription>
+        </CardHeader>
+        <CardContent className="w-full max-w-sm pt-6">
+          <form className="flex flex-col gap-4" onSubmit={verifyForm.handleSubmit(onVerify)}>
+            <div className="flex flex-col gap-2">
+              <Label className="text-[rgb(var(--m-text))]" htmlFor="code">
+                {t("verificationCode")}
+              </Label>
+              <Input
+                autoComplete="one-time-code"
+                className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] placeholder:text-[rgb(var(--m-muted))]/50 focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
+                disabled={verifyForm.formState.isSubmitting}
+                id="code"
+                inputMode="numeric"
+                type="text"
+                {...verifyForm.register("code")}
+              />
+              {verifyForm.formState.errors.code != null && (
+                <p className="text-xs text-[rgb(var(--m-accent))]">{verifyForm.formState.errors.code.message}</p>
+              )}
+            </div>
+            {verifyForm.formState.errors.root != null && (
+              <p className="text-center text-xs text-[rgb(var(--m-accent))]">
+                {verifyForm.formState.errors.root.message}
+              </p>
+            )}
+            <Button className="w-full" disabled={verifyForm.formState.isSubmitting} type="submit">
+              {verifyForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("verify")}
+            </Button>
+          </form>
+          <Button
+            className="mt-2 w-full"
+            disabled={verifyForm.formState.isSubmitting}
+            onClick={handleResendCode}
+            type="button"
+            variant="tertiary"
+          >
+            {t("resendCode")}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" variant="featured">
+    <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" key="sign-in" variant="featured">
       <div className="flex flex-col items-center">
         <span className="tracking-anc-caps-extra text-xs text-[rgb(var(--m-muted))] uppercase">{t("welcomeTo")}</span>
         <SiteWordmark size="xl" />
@@ -89,7 +173,7 @@ export const SignInForm: React.FC = () => {
         <CardDescription className="text-[rgb(var(--m-muted))]">{t("welcomeBack")}</CardDescription>
       </CardHeader>
       <CardContent className="w-full max-w-sm pt-6">
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+        <form className="flex flex-col gap-4" onSubmit={signInForm.handleSubmit(onSignIn)}>
           <div className="flex flex-col gap-2">
             <Label className="text-[rgb(var(--m-text))]" htmlFor="email">
               {t("email")}
@@ -97,13 +181,15 @@ export const SignInForm: React.FC = () => {
             <Input
               autoComplete="email"
               className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] placeholder:text-[rgb(var(--m-muted))]/50 focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
-              disabled={isSubmitting}
+              disabled={signInForm.formState.isSubmitting}
               id="email"
               placeholder="you@example.com"
               type="email"
-              {...register("email")}
+              {...signInForm.register("email")}
             />
-            {errors.email != null && <p className="text-xs text-[rgb(var(--m-accent))]">{errors.email.message}</p>}
+            {signInForm.formState.errors.email != null && (
+              <p className="text-xs text-[rgb(var(--m-accent))]">{signInForm.formState.errors.email.message}</p>
+            )}
           </div>
           <div className="flex flex-col gap-2">
             <Label className="text-[rgb(var(--m-text))]" htmlFor="password">
@@ -112,20 +198,22 @@ export const SignInForm: React.FC = () => {
             <Input
               autoComplete="current-password"
               className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] placeholder:text-[rgb(var(--m-muted))]/50 focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
-              disabled={isSubmitting}
+              disabled={signInForm.formState.isSubmitting}
               id="password"
               type="password"
-              {...register("password")}
+              {...signInForm.register("password")}
             />
-            {errors.password != null && (
-              <p className="text-xs text-[rgb(var(--m-accent))]">{errors.password.message}</p>
+            {signInForm.formState.errors.password != null && (
+              <p className="text-xs text-[rgb(var(--m-accent))]">{signInForm.formState.errors.password.message}</p>
             )}
           </div>
-          {errors.root != null && (
-            <p className="text-center text-xs text-[rgb(var(--m-accent))]">{errors.root.message}</p>
+          {signInForm.formState.errors.root != null && (
+            <p className="text-center text-xs text-[rgb(var(--m-accent))]">
+              {signInForm.formState.errors.root.message}
+            </p>
           )}
-          <Button className="w-full" disabled={!isLoaded || isSubmitting} type="submit">
-            {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
+          <Button className="w-full" disabled={!isLoaded || signInForm.formState.isSubmitting} type="submit">
+            {signInForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("continue")}
           </Button>
           <div className="-mt-4" id="clerk-captcha" />
         </form>
