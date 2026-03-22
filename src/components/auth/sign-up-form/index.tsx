@@ -69,8 +69,9 @@ export const SignUpForm: React.FC = () => {
       const result = await signUp.attemptEmailAddressVerification({ code: data.code });
 
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
+        void setActive({ session: result.createdSessionId });
         window.location.replace("/onboarding");
+        return;
       }
     } catch (err) {
       handleClerkError(verifyForm, err);

@@ -47,8 +47,9 @@ export const SignInForm: React.FC = () => {
       });
 
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
+        void setActive({ session: result.createdSessionId });
         window.location.replace("/dashboard");
+        return;
       } else if (result.status === "needs_second_factor" || (result.status as string) === "needs_client_trust") {
         const emailFactor = result.supportedSecondFactors?.find((f) => f.strategy === "email_code");
 
@@ -89,8 +90,9 @@ export const SignInForm: React.FC = () => {
       const result = await signIn.attemptSecondFactor({ code: data.code, strategy: "email_code" });
 
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
+        void setActive({ session: result.createdSessionId });
         window.location.replace("/dashboard");
+        return;
       }
     } catch (err) {
       handleClerkError(verifyForm, err);
