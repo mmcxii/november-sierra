@@ -4,6 +4,7 @@ import { SiteWordmark } from "@/components/marketing/site-wordmark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { type SignUpValues, type VerifyEmailValues, signUpSchema, verifyEmailSchema } from "@/lib/schemas/auth";
 import { useSignUp } from "@clerk/nextjs";
@@ -60,22 +61,32 @@ export const SignUpForm: React.FC = () => {
     }
   };
 
-  const onVerify = async (data: VerifyEmailValues) => {
-    if (!isLoaded) {
-      return;
-    }
-
-    try {
-      const result = await signUp.attemptEmailAddressVerification({ code: data.code });
-
-      if (result.status === "complete") {
-        void setActive({ session: result.createdSessionId });
-        window.location.replace("/onboarding");
+  const onVerify = React.useCallback(
+    async (data: VerifyEmailValues) => {
+      if (!isLoaded) {
         return;
       }
-    } catch (err) {
-      handleClerkError(verifyForm, err);
-    }
+
+      try {
+        const result = await signUp.attemptEmailAddressVerification({ code: data.code });
+
+        if (result.status === "complete") {
+          void setActive({ session: result.createdSessionId });
+          window.location.replace("/onboarding");
+          return;
+        }
+      } catch (err) {
+        handleClerkError(verifyForm, err);
+        verifyForm.setValue("code", "");
+      }
+    },
+    [isLoaded, setActive, signUp, verifyForm],
+  );
+
+  const codeValue = verifyForm.watch("code");
+
+  const handleOtpOnChange = (value: string) => {
+    verifyForm.setValue("code", value, { shouldValidate: true });
   };
 
   const handleResendCode = async () => {
@@ -98,6 +109,12 @@ export const SignUpForm: React.FC = () => {
     }
   }, []);
 
+  React.useEffect(() => {
+    if (/^\d{6}$/.test(codeValue) && !verifyForm.formState.isSubmitting) {
+      verifyForm.handleSubmit(onVerify)();
+    }
+  }, [codeValue, onVerify, verifyForm]);
+
   if (verifying) {
     return (
       <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" key="verify" variant="featured">
@@ -109,36 +126,47 @@ export const SignUpForm: React.FC = () => {
           <CardTitle className="text-xl text-[rgb(var(--m-text))]">{t("checkYourEmail")}</CardTitle>
           <CardDescription className="text-[rgb(var(--m-muted))]">{t("enterTheCodeWeSentToYourEmail")}</CardDescription>
         </CardHeader>
-        <CardContent className="w-full max-w-sm pt-6">
-          <form className="flex flex-col gap-4" onSubmit={verifyForm.handleSubmit(onVerify)}>
-            <div className="flex flex-col gap-2">
-              <Label className="text-[rgb(var(--m-text))]" htmlFor="code">
-                {t("verificationCode")}
-              </Label>
-              <Input
-                autoComplete="one-time-code"
-                className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] placeholder:text-[rgb(var(--m-muted))]/50 focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
-                disabled={verifyForm.formState.isSubmitting}
-                id="code"
-                inputMode="numeric"
-                type="text"
-                {...verifyForm.register("code")}
-              />
-              {verifyForm.formState.errors.code != null && (
-                <p className="text-xs text-[rgb(var(--m-accent))]">{verifyForm.formState.errors.code.message}</p>
-              )}
-            </div>
-            {verifyForm.formState.errors.root != null && (
-              <p className="text-center text-xs text-[rgb(var(--m-accent))]">
-                {verifyForm.formState.errors.root.message}
-              </p>
-            )}
-            <Button className="w-full" disabled={verifyForm.formState.isSubmitting} type="submit">
-              {verifyForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("verify")}
-            </Button>
-          </form>
+        <CardContent className="flex w-full max-w-sm flex-col items-center pt-6">
+          <InputOTP
+            autoComplete="one-time-code"
+            disabled={verifyForm.formState.isSubmitting}
+            maxLength={6}
+            onChange={handleOtpOnChange}
+            value={codeValue}
+          >
+            <InputOTPGroup>
+              {[0, 1, 2].map((i) => (
+                <InputOTPSlot
+                  className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))]"
+                  index={i}
+                  key={i}
+                />
+              ))}
+            </InputOTPGroup>
+            <InputOTPSeparator className="text-[rgb(var(--m-muted))]" />
+            <InputOTPGroup>
+              {[3, 4, 5].map((i) => (
+                <InputOTPSlot
+                  className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))]"
+                  index={i}
+                  key={i}
+                />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
+          {verifyForm.formState.isSubmitting && (
+            <Loader2 className="mt-4 size-4 animate-spin text-[rgb(var(--m-muted))]" />
+          )}
+          {verifyForm.formState.errors.code != null && (
+            <p className="mt-2 text-xs text-[rgb(var(--m-accent))]">{verifyForm.formState.errors.code.message}</p>
+          )}
+          {verifyForm.formState.errors.root != null && (
+            <p className="mt-2 text-center text-xs text-[rgb(var(--m-accent))]">
+              {verifyForm.formState.errors.root.message}
+            </p>
+          )}
           <Button
-            className="mt-2 w-full"
+            className="mt-4 w-full"
             disabled={verifyForm.formState.isSubmitting}
             onClick={handleResendCode}
             type="button"
