@@ -39,6 +39,7 @@ type ReferralCode = {
   maxRedemptions: null | number;
   note: null | string;
   redemptions: Redemption[];
+  reservedUsername: null | string;
 };
 
 export type AdminContentProps = {
@@ -50,6 +51,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
 
   const { t } = useTranslation();
   const [noteInput, setNoteInput] = React.useState("");
+  const [reservedUsernameInput, setReservedUsernameInput] = React.useState("");
   const [durationInput, setDurationInput] = React.useState("");
   const [isPermanent, setIsPermanent] = React.useState(false);
   const [maxRedemptionsInput, setMaxRedemptionsInput] = React.useState("");
@@ -66,6 +68,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
         expiresAt: expiresAtInput !== "" ? expiresAtInput : null,
         maxRedemptions: maxRedemptionsInput !== "" ? Number(maxRedemptionsInput) : null,
         note: noteInput !== "" ? noteInput : null,
+        reservedUsername: reservedUsernameInput !== "" ? reservedUsernameInput : null,
       });
 
       if (!result.success) {
@@ -74,6 +77,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
       }
 
       setNoteInput("");
+      setReservedUsernameInput("");
       setDurationInput("");
       setIsPermanent(false);
       setMaxRedemptionsInput("");
@@ -124,6 +128,8 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
   };
 
   const handleNoteInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setNoteInput(e.target.value);
+  const handleReservedUsernameInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setReservedUsernameInput(e.target.value);
   const handleDurationInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setDurationInput(e.target.value);
   const handlePermanentOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setIsPermanent(e.target.checked);
   const handleMaxRedemptionsInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -141,6 +147,21 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
           <div>
             <p className="text-muted-foreground mb-2 text-sm font-medium">{t("note")}</p>
             <Input disabled={createPending} onChange={handleNoteInputOnChange} value={noteInput} />
+          </div>
+          <div>
+            <p className="text-muted-foreground mb-2 text-sm font-medium">{t("reservedHandle")}</p>
+            <div className="flex items-center gap-0">
+              {/* eslint-disable-next-line anchr/no-raw-string-jsx -- static @ prefix */}
+              <span className="bg-muted text-muted-foreground border-input flex h-9 items-center rounded-l-md border border-r-0 px-3 text-sm">
+                @
+              </span>
+              <Input
+                className="rounded-l-none"
+                disabled={createPending}
+                onChange={handleReservedUsernameInputOnChange}
+                value={reservedUsernameInput}
+              />
+            </div>
           </div>
           <div>
             <p className="text-muted-foreground mb-2 text-sm font-medium">{t("duration")}</p>
@@ -207,6 +228,8 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
                     <th className="pr-4 pb-2 text-left font-medium">Code</th>
                     <th className="pr-4 pb-2 text-left font-medium">{t("note")}</th>
                     {/* eslint-disable-next-line anchr/no-raw-string-jsx -- table column header matching data field */}
+                    <th className="pr-4 pb-2 text-left font-medium">Handle</th>
+                    {/* eslint-disable-next-line anchr/no-raw-string-jsx -- table column header matching data field */}
                     <th className="pr-4 pb-2 text-left font-medium">Status</th>
                     <th className="pr-4 pb-2 text-left font-medium">{t("uses")}</th>
                     <th className="pr-4 pb-2 text-left font-medium">{t("duration")}</th>
@@ -250,6 +273,14 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
                           </td>
                           <td className="text-muted-foreground max-w-[200px] truncate py-3 pr-4">{code.note ?? "—"}</td>
                           <td className="py-3 pr-4">
+                            {code.reservedUsername != null ? (
+                              /* eslint-disable-next-line anchr/no-raw-string-jsx -- dynamic username with @ prefix */
+                              <code className="text-xs">@{code.reservedUsername}</code>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="py-3 pr-4">
                             <StatusBadge status={status} />
                           </td>
                           <td className="py-3 pr-4 font-mono text-xs">
@@ -288,7 +319,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
                         </tr>
                         {isExpanded && (
                           <tr>
-                            <td className="bg-muted/30 px-8 py-3" colSpan={9}>
+                            <td className="bg-muted/30 px-8 py-3" colSpan={10}>
                               {code.redemptions.length === 0 ? (
                                 <p className="text-muted-foreground text-xs italic">{t("noRedemptionsYet")}</p>
                               ) : (

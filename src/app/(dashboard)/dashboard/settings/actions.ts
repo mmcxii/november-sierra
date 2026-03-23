@@ -2,6 +2,7 @@
 
 import { isAdmin } from "@/lib/auth";
 import { db } from "@/lib/db/client";
+import { isUsernameReservedByCode } from "@/lib/db/queries/username";
 import { referralCodesTable } from "@/lib/db/schema/referral-code";
 import { referralRedemptionsTable } from "@/lib/db/schema/referral-redemption";
 import { usersTable } from "@/lib/db/schema/user";
@@ -45,7 +46,15 @@ export async function checkUsernameAvailability(username: string): Promise<Check
     .where(and(eq(usersTable.username, result.data), ne(usersTable.id, userId)))
     .limit(1);
 
-  return { available: existing.length === 0 };
+  if (existing.length > 0) {
+    return { available: false };
+  }
+
+  if (await isUsernameReservedByCode(result.data)) {
+    return { available: false };
+  }
+
+  return { available: true };
 }
 
 export async function updateUsername(username: string): Promise<ActionResult> {
@@ -68,6 +77,10 @@ export async function updateUsername(username: string): Promise<ActionResult> {
     .limit(1);
 
   if (existing.length > 0) {
+    return { error: "thisUsernameIsAlreadyTaken", success: false };
+  }
+
+  if (await isUsernameReservedByCode(result.data)) {
     return { error: "thisUsernameIsAlreadyTaken", success: false };
   }
 
@@ -460,6 +473,36 @@ export async function redeemReferralCode(code: string): Promise<ActionResult> {
       .update(usersTable)
       .set({ referredBy: referralCode.creatorId, updatedAt: new Date() })
       .where(eq(usersTable.id, userId));
+  }
+
+  // Apply reserved username if set (re-check availability to prevent race conditions)
+  if (referralCode.reservedUsername != null) {
+    const [takenByUser] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, referralCode.reservedUsername))
+      .limit(1);
+
+    if (takenByUser == null) {
+      const [currentUser] = await db
+        .select({ username: usersTable.username })
+        .from(usersTable)
+        .where(eq(usersTable.id, userId))
+        .limit(1);
+
+      const oldUsername = currentUser?.username;
+
+      await db
+        .update(usersTable)
+        .set({ updatedAt: new Date(), username: referralCode.reservedUsername })
+        .where(eq(usersTable.id, userId));
+
+      if (oldUsername != null) {
+        revalidatePath(`/${oldUsername}`);
+      }
+
+      revalidatePath(`/${referralCode.reservedUsername}`);
+    }
   }
 
   revalidatePath("/dashboard/settings");

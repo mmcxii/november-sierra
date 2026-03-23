@@ -14,5 +14,6 @@ export const referralCodesTable = pgTable("referral_codes", {
     .$defaultFn(() => crypto.randomUUID()),
   maxRedemptions: integer("max_redemptions"),
   note: text("note"),
+  reservedUsername: text("reserved_username"),
   type: text("type").notNull(),
 });

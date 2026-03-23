@@ -3,6 +3,7 @@
 import { redeemReferralCode } from "@/app/(dashboard)/dashboard/settings/actions";
 import { db } from "@/lib/db/client";
 import { generateUniqueSlug } from "@/lib/db/queries/link";
+import { isUsernameReservedByCode } from "@/lib/db/queries/username";
 import { linksTable } from "@/lib/db/schema/link";
 import { usersTable } from "@/lib/db/schema/user";
 import { detectPlatform } from "@/lib/platforms";
@@ -34,7 +35,15 @@ export async function checkUsernameAvailability(username: string): Promise<Check
     .where(and(eq(usersTable.username, result.data), ne(usersTable.id, userId)))
     .limit(1);
 
-  return { available: existing.length === 0 };
+  if (existing.length > 0) {
+    return { available: false };
+  }
+
+  if (await isUsernameReservedByCode(result.data)) {
+    return { available: false };
+  }
+
+  return { available: true };
 }
 
 export type UpdateUsernameErrorKey = "somethingWentWrongPleaseTryAgain" | "thisUsernameIsAlreadyTaken";
@@ -64,6 +73,10 @@ export async function updateUsername(username: string): Promise<UpdateUsernameRe
     .limit(1);
 
   if (existing.length > 0) {
+    return { error: "thisUsernameIsAlreadyTaken", success: false };
+  }
+
+  if (await isUsernameReservedByCode(result.data)) {
     return { error: "thisUsernameIsAlreadyTaken", success: false };
   }
 

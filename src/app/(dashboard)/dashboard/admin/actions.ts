@@ -2,7 +2,10 @@
 
 import { isAdmin } from "@/lib/auth";
 import { db } from "@/lib/db/client";
+import { isUsernameReservedByCode } from "@/lib/db/queries/username";
 import { referralCodesTable } from "@/lib/db/schema/referral-code";
+import { usersTable } from "@/lib/db/schema/user";
+import { usernameSchema } from "@/lib/schemas/username";
 import { generateReferralCode } from "@/lib/utils/referral-code";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
@@ -25,8 +28,35 @@ export async function createAdminCode(input: {
   expiresAt?: null | string;
   maxRedemptions?: null | number;
   note?: null | string;
+  reservedUsername?: null | string;
 }): Promise<AdminActionResult> {
   const userId = await requireAdmin();
+
+  let validatedUsername: null | string = null;
+
+  if (input.reservedUsername != null && input.reservedUsername.length > 0) {
+    const parsed = usernameSchema.shape.username.safeParse(input.reservedUsername);
+
+    if (!parsed.success) {
+      return { error: "invalidHandle", success: false };
+    }
+
+    const [existingUser] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, parsed.data))
+      .limit(1);
+
+    if (existingUser != null) {
+      return { error: "thisHandleIsAlreadyTaken", success: false };
+    }
+
+    if (await isUsernameReservedByCode(parsed.data)) {
+      return { error: "thisHandleIsAlreadyReservedByAnotherCode", success: false };
+    }
+
+    validatedUsername = parsed.data;
+  }
 
   const code = generateReferralCode("ANCHR");
 
@@ -37,6 +67,7 @@ export async function createAdminCode(input: {
     expiresAt: input.expiresAt != null ? new Date(input.expiresAt) : null,
     maxRedemptions: input.maxRedemptions ?? null,
     note: input.note ?? null,
+    reservedUsername: validatedUsername,
     type: "admin",
   });
 
