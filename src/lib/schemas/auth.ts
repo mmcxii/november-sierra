@@ -15,7 +15,10 @@ export const signUpSchema = z.object({
 export type SignUpValues = z.infer<typeof signUpSchema>;
 
 export const verifyEmailSchema = z.object({
-  code: z.string().min(1),
+  code: z
+    .string()
+    .length(6)
+    .regex(/^\d{6}$/),
 });
 
 export type VerifyEmailValues = z.infer<typeof verifyEmailSchema>;

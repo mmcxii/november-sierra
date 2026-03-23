@@ -493,6 +493,7 @@
   --tracking-anc-caps-extra: var(--anc-tracking-caps-extra);
   --tracking-anc-wordmark: var(--anc-tracking-wordmark);
   --tracking-anc-wordmark-sm: var(--anc-tracking-wordmark-sm);
+  --animate-caret-blink: caret-blink 1.2s ease-out infinite;
 }
 
 /* ── Marketing page theme tokens ────────────────────────────────────────── */
@@ -1047,6 +1048,11 @@
 
 .anc-celebration-ring {
   animation: celebration-ring 2.4s ease-out infinite;
+}
+
+@keyframes caret-blink {
+  0%, 70%, 100% { opacity: 1; }
+  20%, 50% { opacity: 0; }
 }
 
 @layer base {

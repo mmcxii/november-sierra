@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { Textarea } from "@/components/ui/textarea";
 import type { SessionUser } from "@/lib/auth";
 import { usernameSchema } from "@/lib/schemas/username";
@@ -158,6 +159,24 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     };
   }, [usernameInput, usernameHasValidationError, usernameUnchanged]);
 
+  // NOTE: OTP auto-submit effects are below — they reference handleEmailVerify and handleReverifySubmit
+  // which are declared in the Handlers section. We use a ref-based approach to avoid circular deps.
+  const handleEmailVerifyRef = React.useRef<undefined | (() => Promise<void>)>(undefined);
+  const handleReverifySubmitRef = React.useRef<undefined | (() => Promise<void>)>(undefined);
+
+  React.useEffect(() => {
+    if (/^\d{6}$/.test(verificationCode) && !emailPending) {
+      handleEmailVerifyRef.current?.();
+    }
+  }, [verificationCode, emailPending]);
+
+  React.useEffect(() => {
+    const hasPassword = reverificationRef.current?.supportedFirstFactors?.some((f) => f.strategy === "password");
+    if (!hasPassword && /^\d{6}$/.test(reverifyPassword) && !emailPending) {
+      handleReverifySubmitRef.current?.();
+    }
+  }, [reverifyPassword, emailPending]);
+
   //* Handlers
   const handlePageThemeChange = React.useCallback((themeId: ThemeId) => {
     setPreviewThemes((prev) => (isDarkTheme(themeId) ? { ...prev, dark: themeId } : { ...prev, light: themeId }));
@@ -248,8 +267,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const handleUsernameOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setUsernameInput(e.target.value);
 
   const handleEmailInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmailInput(e.target.value);
-  const handleVerificationCodeOnChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setVerificationCode(e.target.value);
+  const handleVerificationOtpOnChange = (value: string) => setVerificationCode(value);
+  const handleReverifyOtpOnChange = (value: string) => setReverifyPassword(value);
 
   const handleEmailUpdate = async () => {
     if (clerkUser == null) {
@@ -287,7 +306,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     }
   };
 
-  const handleEmailVerify = async () => {
+  const handleEmailVerify = React.useCallback(async () => {
     if (clerkUser == null || emailAddressIdRef.current == null) {
       return;
     }
@@ -329,10 +348,11 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
       } else {
         toast.error(t("somethingWentWrongPleaseTryAgain"));
       }
+      setVerificationCode("");
     } finally {
       setEmailPending(false);
     }
-  };
+  }, [clerkUser, emailInput, t, verificationCode]);
 
   const handleEmailCancel = () => {
     if (emailStep === "reverify") {
@@ -373,7 +393,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const handleReverifyPasswordOnChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setReverifyPassword(e.target.value);
 
-  const handleReverifySubmit = async () => {
+  const handleReverifySubmit = React.useCallback(async () => {
     setEmailPending(true);
 
     try {
@@ -397,10 +417,15 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
       } else {
         toast.error(t("somethingWentWrongPleaseTryAgain"));
       }
+      setReverifyPassword("");
     } finally {
       setEmailPending(false);
     }
-  };
+  }, [reverifyComplete, reverifyPassword, session, t]);
+
+  // Keep refs in sync so the effects above can call latest versions
+  handleEmailVerifyRef.current = handleEmailVerify;
+  handleReverifySubmitRef.current = handleReverifySubmit;
 
   // TODO: ANC-107 — restore handleUpgrade once Stripe product is created
 
@@ -541,47 +566,84 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
               )}
               {emailStep === "reverify" && (
                 <div className="space-y-2">
-                  <p className="text-muted-foreground text-xs">{t("confirmYourPasswordToContinue")}</p>
-                  <div className="flex gap-2">
-                    <Input
-                      disabled={emailPending}
-                      onChange={handleReverifyPasswordOnChange}
-                      placeholder={t("password")}
-                      type="password"
-                      value={reverifyPassword}
-                    />
-                    <Button
-                      disabled={emailPending || reverifyPassword.length === 0}
-                      onClick={handleReverifySubmit}
-                      variant="secondary"
-                    >
-                      {emailPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("continue")}
-                    </Button>
-                    <Button disabled={emailPending} onClick={handleEmailCancel} variant="tertiary">
-                      {t("cancel")}
-                    </Button>
-                  </div>
+                  {reverificationRef.current?.supportedFirstFactors?.some((f) => f.strategy === "password") ? (
+                    <>
+                      <p className="text-muted-foreground text-xs">{t("confirmYourPasswordToContinue")}</p>
+                      <div className="flex gap-2">
+                        <Input
+                          disabled={emailPending}
+                          onChange={handleReverifyPasswordOnChange}
+                          placeholder={t("password")}
+                          type="password"
+                          value={reverifyPassword}
+                        />
+                        <Button
+                          disabled={emailPending || reverifyPassword.length === 0}
+                          onClick={handleReverifySubmit}
+                          variant="secondary"
+                        >
+                          {emailPending && <Loader2 className="size-3.5 animate-spin" />}
+                          {t("continue")}
+                        </Button>
+                        <Button disabled={emailPending} onClick={handleEmailCancel} variant="tertiary">
+                          {t("cancel")}
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-muted-foreground text-xs">{t("enterTheCodeWeSentToYourEmail")}</p>
+                      <div className="flex items-center gap-2">
+                        <InputOTP
+                          disabled={emailPending}
+                          maxLength={6}
+                          onChange={handleReverifyOtpOnChange}
+                          value={reverifyPassword}
+                        >
+                          <InputOTPGroup>
+                            {[0, 1, 2].map((i) => (
+                              <InputOTPSlot index={i} key={i} />
+                            ))}
+                          </InputOTPGroup>
+                          <InputOTPSeparator />
+                          <InputOTPGroup>
+                            {[3, 4, 5].map((i) => (
+                              <InputOTPSlot index={i} key={i} />
+                            ))}
+                          </InputOTPGroup>
+                        </InputOTP>
+                        {emailPending && <Loader2 className="size-3.5 animate-spin" />}
+                        <Button disabled={emailPending} onClick={handleEmailCancel} variant="tertiary">
+                          {t("cancel")}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
               {emailStep === "verify" && (
                 <div className="space-y-2">
                   <p className="text-muted-foreground text-xs">{t("enterTheCodeWeSentToYourEmail")}</p>
-                  <div className="flex gap-2">
-                    <Input
+                  <div className="flex items-center gap-2">
+                    <InputOTP
                       disabled={emailPending}
-                      onChange={handleVerificationCodeOnChange}
-                      placeholder={t("verificationCode")}
+                      maxLength={6}
+                      onChange={handleVerificationOtpOnChange}
                       value={verificationCode}
-                    />
-                    <Button
-                      disabled={emailPending || verificationCode.trim().length === 0}
-                      onClick={handleEmailVerify}
-                      variant="secondary"
                     >
-                      {emailPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("verify")}
-                    </Button>
+                      <InputOTPGroup>
+                        {[0, 1, 2].map((i) => (
+                          <InputOTPSlot index={i} key={i} />
+                        ))}
+                      </InputOTPGroup>
+                      <InputOTPSeparator />
+                      <InputOTPGroup>
+                        {[3, 4, 5].map((i) => (
+                          <InputOTPSlot index={i} key={i} />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                    {emailPending && <Loader2 className="size-3.5 animate-spin" />}
                     <Button disabled={emailPending} onClick={handleEmailCancel} variant="tertiary">
                       {t("cancel")}
                     </Button>
