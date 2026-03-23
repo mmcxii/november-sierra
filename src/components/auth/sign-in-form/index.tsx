@@ -125,7 +125,7 @@ export const SignInForm: React.FC = () => {
   //* Effects
   React.useEffect(() => {
     if (/^\d{6}$/.test(codeValue) && !verifyForm.formState.isSubmitting) {
-      verifyForm.handleSubmit(onVerify)();
+      void verifyForm.handleSubmit(onVerify)();
     }
   }, [codeValue, onVerify, verifyForm]);
 

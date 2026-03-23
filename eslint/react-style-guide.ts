@@ -581,7 +581,12 @@ export const reactStyleGuide = createRule({
             funcDecl = declaration as TSESTree.FunctionDeclaration;
           }
 
-          const params = arrowFunc != null ? arrowFunc.params : funcDecl != null ? funcDecl.params : [];
+          let params: TSESTree.Parameter[] = [];
+          if (arrowFunc != null) {
+            params = arrowFunc.params;
+          } else if (funcDecl != null) {
+            params = funcDecl.params;
+          }
 
           if (params.length > 0 && params[0].type === "ObjectPattern") {
             const objectPattern = params[0];
@@ -606,6 +611,7 @@ export const reactStyleGuide = createRule({
             context.report({
               fix(fixer) {
                 const bodyNode = funcBody.bodyNode;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- body always has an opening brace token
                 const openBrace = sourceCode.getFirstToken(bodyNode)!;
                 const fixes = [
                   fixer.replaceText(objectPattern, paramWithType),

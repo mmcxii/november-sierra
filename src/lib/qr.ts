@@ -70,7 +70,10 @@ export const downloadQrPng = (qrCanvas: HTMLCanvasElement, filename: string, log
   const out = document.createElement("canvas");
   out.width = size;
   out.height = size;
-  const ctx = out.getContext("2d")!;
+  const ctx = out.getContext("2d");
+  if (ctx == null) {
+    return;
+  }
 
   ctx.drawImage(qrCanvas, 0, 0);
 

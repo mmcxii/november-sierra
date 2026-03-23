@@ -66,11 +66,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = (props) => {
               target="_blank"
               title={link.title}
             >
-              {link.icon != null ? (
-                <RenderedIcon className="text-anc-theme-link-icon size-4" iconId={link.icon} />
-              ) : link.platform != null ? (
+              {link.icon != null && <RenderedIcon className="text-anc-theme-link-icon size-4" iconId={link.icon} />}
+              {link.icon == null && link.platform != null && (
                 <PlatformIcon className="text-anc-theme-link-icon size-4" platform={link.platform} />
-              ) : (
+              )}
+              {link.icon == null && link.platform == null && (
                 <Link2 className="text-anc-theme-link-icon size-4" strokeWidth={1.75} />
               )}
             </a>

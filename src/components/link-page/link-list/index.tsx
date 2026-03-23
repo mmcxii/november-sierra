@@ -59,11 +59,11 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
         target="_blank"
       >
         <div className="lp-link-icon-bg flex size-7 shrink-0 items-center justify-center rounded-lg">
-          {link.icon != null ? (
-            <RenderedIcon className="lp-link-icon-color size-4" iconId={link.icon} />
-          ) : link.platform != null ? (
+          {link.icon != null && <RenderedIcon className="lp-link-icon-color size-4" iconId={link.icon} />}
+          {link.icon == null && link.platform != null && (
             <PlatformIcon className="lp-link-icon-color size-4" platform={link.platform} />
-          ) : (
+          )}
+          {link.icon == null && link.platform == null && (
             <Link2 className="text-anc-theme-link-icon size-4" strokeWidth={1.75} />
           )}
         </div>
@@ -88,11 +88,13 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
           target="_blank"
         >
           <div className="bg-anc-theme-featured-icon-bg flex size-7 shrink-0 items-center justify-center rounded-lg">
-            {featuredLink.icon != null ? (
+            {featuredLink.icon != null && (
               <RenderedIcon className="text-anc-theme-featured-icon size-4" iconId={featuredLink.icon} />
-            ) : featuredLink.platform != null ? (
+            )}
+            {featuredLink.icon == null && featuredLink.platform != null && (
               <PlatformIcon className="text-anc-theme-featured-icon size-4" platform={featuredLink.platform} />
-            ) : (
+            )}
+            {featuredLink.icon == null && featuredLink.platform == null && (
               <Link2 className="text-anc-theme-featured-icon size-4" strokeWidth={1.75} />
             )}
           </div>

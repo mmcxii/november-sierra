@@ -30,6 +30,7 @@ export const RoundedQrCanvas = React.forwardRef<HTMLCanvasElement, RoundedQrCanv
   const { bgColor = QR_BACKGROUND, className, fgColor = QR_FOREGROUND, level = "H", size, style, value } = props;
 
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ref is always populated before imperative handle callback
   React.useImperativeHandle(ref, () => canvasRef.current!);
 
   React.useEffect(() => {

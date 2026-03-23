@@ -3,6 +3,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import pluginImport from "eslint-plugin-import";
 import { defineConfig, globalIgnores } from "eslint/config";
+import { noDirectDbInComponents } from "./eslint/no-direct-db-in-components.js";
 import { noInlineFunctionProps } from "./eslint/no-inline-function-props.js";
 import { noInlineStyle } from "./eslint/no-inline-style.js";
 import { noJsxWhitespaceLiteral } from "./eslint/no-jsx-whitespace-literal.js";
@@ -28,6 +29,7 @@ const eslintConfig = defineConfig([
     plugins: {
       anchr: {
         rules: {
+          "no-direct-db-in-components": noDirectDbInComponents,
           "no-inline-function-props": noInlineFunctionProps,
           "no-inline-style": noInlineStyle,
           "no-jsx-whitespace-literal": noJsxWhitespaceLiteral,
@@ -53,6 +55,8 @@ const eslintConfig = defineConfig([
           "newlines-between": "never",
         },
       ],
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-nested-ternary": "error",
       "no-restricted-syntax": [
         "error",
         // Bans: cn(foo ? "a" : "b")
@@ -101,6 +105,9 @@ const eslintConfig = defineConfig([
     },
     rules: {
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-non-null-assertion": "error",
       "anchr/prefer-nullish-check": "error",
     },
   },
@@ -110,6 +117,7 @@ const eslintConfig = defineConfig([
     files: ["src/components/**/*.tsx", "src/hooks/**/*.{ts,tsx}"],
     ignores: ["src/components/ui/**"],
     rules: {
+      "anchr/no-direct-db-in-components": "error",
       "anchr/single-component-per-file": "error",
     },
   },
@@ -127,6 +135,14 @@ const eslintConfig = defineConfig([
     files: ["src/app/**/*.{ts,tsx}", "src/middleware.ts", "./*.config.{ts,mjs,cjs}"],
     rules: {
       "import/no-default-export": "off",
+    },
+  },
+
+  // Allow console.log in CLI scripts and agents
+  {
+    files: [".agents/**", "scripts/**"],
+    rules: {
+      "no-console": "off",
     },
   },
 ]);

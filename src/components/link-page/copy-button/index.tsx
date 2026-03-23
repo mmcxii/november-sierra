@@ -18,7 +18,7 @@ export const CopyButton: React.FC<CopyButtonProps> = (props) => {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigator.clipboard.writeText(value);
+    void navigator.clipboard.writeText(value);
     setCopied(true);
     toast.success(t("npubCopied"));
   };
@@ -33,7 +33,7 @@ export const CopyButton: React.FC<CopyButtonProps> = (props) => {
 
   return (
     <button
-      aria-label={copied ? "Copied" : "Copy"}
+      aria-label={copied ? t("copied") : t("copy")}
       className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-white/10"
       onClick={handleClick}
       type="button"

@@ -64,7 +64,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
   const handleCreate = () => {
     startCreateTransition(async () => {
       const result = await createAdminCode({
-        durationDays: isPermanent ? null : durationInput !== "" ? Number(durationInput) : null,
+        durationDays: isPermanent || durationInput === "" ? null : Number(durationInput),
         expiresAt: expiresAtInput !== "" ? expiresAtInput : null,
         maxRedemptions: maxRedemptionsInput !== "" ? Number(maxRedemptionsInput) : null,
         note: noteInput !== "" ? noteInput : null,
@@ -92,7 +92,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
     const action = code.active ? deactivateAdminCode : reactivateAdminCode;
     const toastKey = code.active ? "referralCodeDeactivated" : "referralCodeReactivated";
 
-    action(code.id)
+    void action(code.id)
       .then((result) => {
         if (!result.success) {
           toast.error(t(result.error));
@@ -106,7 +106,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
   const handleDelete = (code: ReferralCode) => {
     setActionPendingId(code.id);
 
-    deleteAdminCode(code.id)
+    void deleteAdminCode(code.id)
       .then((result) => {
         if (!result.success) {
           toast.error(t(result.error));
@@ -119,7 +119,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
 
   const handleCopyCode = (codeValue: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(codeValue);
+    void navigator.clipboard.writeText(codeValue);
     toast.success(t("referralCodeCopied"));
   };
 
@@ -224,18 +224,14 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
                 <thead>
                   <tr className="text-muted-foreground border-b">
                     <th className="pr-4 pb-2 text-left font-medium" />
-                    {/* eslint-disable-next-line anchr/no-raw-string-jsx -- table column header matching data field */}
-                    <th className="pr-4 pb-2 text-left font-medium">Code</th>
+                    <th className="pr-4 pb-2 text-left font-medium">{t("code")}</th>
                     <th className="pr-4 pb-2 text-left font-medium">{t("note")}</th>
-                    {/* eslint-disable-next-line anchr/no-raw-string-jsx -- table column header matching data field */}
-                    <th className="pr-4 pb-2 text-left font-medium">Handle</th>
-                    {/* eslint-disable-next-line anchr/no-raw-string-jsx -- table column header matching data field */}
-                    <th className="pr-4 pb-2 text-left font-medium">Status</th>
+                    <th className="pr-4 pb-2 text-left font-medium">{t("handle")}</th>
+                    <th className="pr-4 pb-2 text-left font-medium">{t("status")}</th>
                     <th className="pr-4 pb-2 text-left font-medium">{t("uses")}</th>
                     <th className="pr-4 pb-2 text-left font-medium">{t("duration")}</th>
                     <th className="pr-4 pb-2 text-left font-medium">{t("expires")}</th>
-                    {/* eslint-disable-next-line anchr/no-raw-string-jsx -- table column header matching data field */}
-                    <th className="pr-4 pb-2 text-left font-medium">Created</th>
+                    <th className="pr-4 pb-2 text-left font-medium">{t("created")}</th>
                     <th className="pb-2 text-left font-medium" />
                   </tr>
                 </thead>

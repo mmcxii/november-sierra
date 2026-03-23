@@ -192,9 +192,9 @@ describe("getPlatformBrandColor", () => {
 
     //* Assert
     expect(github).toBeDefined();
-    expect(github!.light).not.toBe(github!.dark);
+    expect(github?.light).not.toBe(github?.dark);
     expect(x).toBeDefined();
-    expect(x!.light).not.toBe(x!.dark);
+    expect(x?.light).not.toBe(x?.dark);
   });
 
   it("returns undefined for invalid platform IDs", () => {

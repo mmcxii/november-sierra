@@ -19,9 +19,8 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = (props) => {
 
   return (
     <span className="bg-primary/10 text-primary flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] leading-none font-medium">
-      {Icon != null ? (
-        <Icon aria-hidden className="size-3" color="currentColor" />
-      ) : custom != null ? (
+      {Icon != null && <Icon aria-hidden className="size-3" color="currentColor" />}
+      {Icon == null && custom != null && (
         <svg
           aria-hidden
           className="size-3"
@@ -31,7 +30,7 @@ export const PlatformBadge: React.FC<PlatformBadgeProps> = (props) => {
         >
           <path d={custom.d} />
         </svg>
-      ) : null}
+      )}
       {PLATFORMS[id].name}
     </span>
   );

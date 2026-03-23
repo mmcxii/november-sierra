@@ -52,6 +52,7 @@ import { Eye, EyeOff, FolderPlus, Link2, Loader2, Plus, Trash2 } from "lucide-re
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { resolveCheckboxState } from "./utils";
 
 export type GroupItem = typeof linkGroupsTable.$inferSelect;
 export type LinkItem = typeof linksTable.$inferSelect;
@@ -452,7 +453,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
           {orderedLinks.length > 0 && (
             <Checkbox
               aria-label={allSelected ? t("deselectAll") : t("selectAll")}
-              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+              checked={resolveCheckboxState(allSelected, someSelected)}
               onCheckedChange={handleSelectAll}
             />
           )}
@@ -484,13 +485,9 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
               type="button"
               variant="secondary"
             >
-              {isBulkUpdating ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : allSelectedVisible ? (
-                <EyeOff className="size-3.5" />
-              ) : (
-                <Eye className="size-3.5" />
-              )}
+              {isBulkUpdating && <Loader2 className="size-3.5 animate-spin" />}
+              {!isBulkUpdating && allSelectedVisible && <EyeOff className="size-3.5" />}
+              {!isBulkUpdating && !allSelectedVisible && <Eye className="size-3.5" />}
               {allSelectedVisible ? t("hideSelected") : t("showSelected")}
             </Button>
             <Button

@@ -215,6 +215,7 @@ export const noInlineFunctionProps = createRule({
               // Insert extracted handler before the return statement
               fixer.insertTextBefore(returnStmt, `const ${handlerName} = ${functionText};\n\n${indent}`),
               // Replace the inline function with the handler reference
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- value is always present for JSXAttribute with a function expression
               fixer.replaceText(node.value!, `{${handlerName}}`),
             ];
           },

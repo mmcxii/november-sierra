@@ -9,14 +9,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type NostrClientId, NOSTR_CLIENTS, buildNostrProfileUrl, detectNostrClient, isNpub } from "@/lib/nostr";
-import { detectPlatform } from "@/lib/platforms";
 import { type LinkValues, linkSchema } from "@/lib/schemas/link";
-import { ensureProtocol, generateSlug } from "@/lib/utils/url";
+import { ensureProtocol } from "@/lib/utils/url";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Loader2 } from "lucide-react";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { resolveDetectedPlatform, resolveSlugPlaceholder } from "./utils";
 
 export type LinkFormProps = {
   customDomain?: null | string;
@@ -83,16 +83,8 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
   const isEditing = defaultValues != null;
   const urlValue = watch("url");
   const isNostrMode = urlValue != null && isNpub(urlValue);
-  const detectedPlatform = isNostrMode
-    ? "nostr"
-    : urlValue != null && urlValue.length > 0
-      ? detectPlatform(urlValue)
-      : null;
-  const slugPlaceholder = isNostrMode
-    ? "nostr"
-    : urlValue != null && urlValue.length > 0
-      ? generateSlug(ensureProtocol(urlValue))
-      : "";
+  const detectedPlatform = resolveDetectedPlatform(isNostrMode, urlValue);
+  const slugPlaceholder = resolveSlugPlaceholder(isNostrMode, urlValue);
   const { ref: titleRegisterRef, ...titleRegisterRest } = register("title");
   const slugPrefix = customDomain != null ? `${customDomain}/` : `anchr.to/${username}/`;
   const URL_UNREACHABLE_KEY = "thisUrlCouldNotBeReachedPleaseCheckItAndTryAgain";
@@ -178,7 +170,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
   };
 
   const handleSaveAndAddAnother = () => {
-    handleSubmit(async (data: LinkValues) => {
+    void handleSubmit(async (data: LinkValues) => {
       if (!(await submitLink(data))) {
         return;
       }

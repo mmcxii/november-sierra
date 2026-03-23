@@ -8,6 +8,16 @@ import { UAParser } from "ua-parser-js";
 
 type Params = { slug: string; username: string };
 
+function resolveDeviceType(type: undefined | string): string {
+  if (type === "mobile") {
+    return "mobile";
+  }
+  if (type === "tablet") {
+    return "tablet";
+  }
+  return "desktop";
+}
+
 export async function GET(request: NextRequest, props: { params: Promise<Params> }): Promise<NextResponse> {
   const { slug, username } = await props.params;
 
@@ -38,7 +48,7 @@ export async function GET(request: NextRequest, props: { params: Promise<Params>
       browser: ua.getBrowser().name ?? null,
       city: request.headers.get("x-vercel-ip-city") ?? null,
       country: request.headers.get("x-vercel-ip-country") ?? null,
-      device: deviceType === "mobile" ? "mobile" : deviceType === "tablet" ? "tablet" : "desktop",
+      device: resolveDeviceType(deviceType),
       linkId: link.id,
       os: ua.getOS().name ?? null,
       referrer: request.headers.get("referer") ?? null,

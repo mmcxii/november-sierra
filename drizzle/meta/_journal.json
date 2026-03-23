@@ -21,6 +21,13 @@
       "tag": "0002_add-copy-value-to-links",
       "version": "7",
       "when": 1774211562828
+    },
+    {
+      "breakpoints": true,
+      "idx": 3,
+      "tag": "0003_far_maverick",
+      "version": "7",
+      "when": 1774229732270
     }
   ],
   "version": "7"

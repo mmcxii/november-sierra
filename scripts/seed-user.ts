@@ -17,7 +17,9 @@ const usersTable = pgTable("users", {
 });
 
 async function main() {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- CLI script requires env vars
   const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- CLI script requires env vars
   const db = drizzle(neon(process.env.DATABASE_URL!));
 
   const { data: users } = await clerk.users.getUserList({ limit: 1 });

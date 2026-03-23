@@ -112,7 +112,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
         setEmailStep("reverify");
 
         // Start the verification session
-        session?.startVerification({ level: level ?? "first_factor" }).then(async (response) => {
+        void session?.startVerification({ level: level ?? "first_factor" }).then(async (response) => {
           reverificationRef.current = response;
           await prepareReverification(response);
         });
@@ -127,7 +127,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   }, [checkoutSuccess]);
 
   React.useEffect(() => {
-    getOrCreateUserReferralCode().then((result) => {
+    void getOrCreateUserReferralCode().then((result) => {
       if (result.success) {
         setUserReferralCode(result.code);
       }
@@ -166,14 +166,14 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
 
   React.useEffect(() => {
     if (/^\d{6}$/.test(verificationCode) && !emailPending) {
-      handleEmailVerifyRef.current?.();
+      void handleEmailVerifyRef.current?.();
     }
   }, [verificationCode, emailPending]);
 
   React.useEffect(() => {
     const hasPassword = reverificationRef.current?.supportedFirstFactors?.some((f) => f.strategy === "password");
     if (!hasPassword && /^\d{6}$/.test(reverifyPassword) && !emailPending) {
-      handleReverifySubmitRef.current?.();
+      void handleReverifySubmitRef.current?.();
     }
   }, [reverifyPassword, emailPending]);
 
@@ -871,12 +871,13 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
             <CardDescription>{t("useYourOwnDomainForYourAnchrPage")}</CardDescription>
           </CardHeader>
           <CardContent>
-            {!isPro ? (
+            {!isPro && (
               <div className="flex items-center gap-2">
                 <Lock className="text-muted-foreground size-4" />
                 <p className="text-muted-foreground text-sm">{t("upgradeToProToUseACustomDomain")}</p>
               </div>
-            ) : user.customDomain == null ? (
+            )}
+            {isPro && user.customDomain == null && (
               <div className="flex gap-2">
                 <Input
                   disabled={domainPending}
@@ -893,7 +894,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                   {t("addDomain")}
                 </Button>
               </div>
-            ) : !user.customDomainVerified ? (
+            )}
+            {isPro && user.customDomain != null && !user.customDomainVerified && (
               <div className="space-y-4">
                 <p className="text-foreground text-sm font-medium">{user.customDomain}</p>
                 <div>
@@ -933,7 +935,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                   </Button>
                 </div>
               </div>
-            ) : (
+            )}
+            {isPro && user.customDomain != null && user.customDomainVerified && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="text-primary size-4" />

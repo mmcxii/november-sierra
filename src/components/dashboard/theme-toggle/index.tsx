@@ -18,8 +18,6 @@ export const DashboardThemeToggle: React.FC = () => {
   const { isDark, mode, setMode } = useDashboardTheme();
   const { t } = useTranslation();
 
-  const TriggerIcon = mode === "system" ? Monitor : isDark ? Moon : Sun;
-
   const handleDropdownMenuRadioGroupOnValueChange = (v: string) => setMode(v as UiMode);
 
   return (
@@ -30,7 +28,9 @@ export const DashboardThemeToggle: React.FC = () => {
           className="text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground rounded-md p-2 transition-colors"
           type="button"
         >
-          <TriggerIcon className="size-4" />
+          {mode === "system" && <Monitor className="size-4" />}
+          {mode !== "system" && isDark && <Moon className="size-4" />}
+          {mode !== "system" && !isDark && <Sun className="size-4" />}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top">

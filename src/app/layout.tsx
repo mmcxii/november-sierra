@@ -7,6 +7,7 @@ import "./globals.css";
 import { DashboardThemeProvider } from "@/components/dashboard/theme-provider";
 import { PosthogProvider } from "@/components/posthog";
 import { Toaster } from "@/components/ui/sonner";
+import { envSchema } from "@/lib/env";
 import { initTranslations } from "@/lib/i18n/server";
 import { TranslationsProvider } from "@/lib/i18n/translations-provider";
 import { THEME_SCRIPT } from "@/lib/theme-script";
@@ -24,7 +25,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   description: "A single harbor for all your links.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL!),
+  metadataBase: new URL(envSchema.NEXT_PUBLIC_APP_URL),
   openGraph: {
     locale: "en_US",
     siteName: "Anchr",

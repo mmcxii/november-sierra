@@ -14,7 +14,7 @@ export const TranslationsProvider: React.FC<TranslationsProviderProps> = (props)
 
   const i18nInstance = createInstance();
 
-  i18nInstance.init({
+  void i18nInstance.init({
     defaultNS: "translation",
     fallbackLng: defaultLocale,
     lng: locale,

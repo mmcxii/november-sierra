@@ -20,7 +20,7 @@ export function ensureProtocol(url: string): string {
   return `https://${trimmed}`;
 }
 
-const BLOCKED_PROTOCOLS = /^(javascript|data|vbscript):/i;
+export const BLOCKED_PROTOCOLS = /^(javascript|data|vbscript):/i;
 const INTERNAL_HOSTS = /^(www\.)?anchr\.to$/i;
 
 export function isSafeUrl(url: string, options?: { allowInternalHosts?: boolean }): boolean {

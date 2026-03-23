@@ -1,9 +1,8 @@
 import { isNpub } from "@/lib/nostr";
-import { ensureProtocol } from "@/lib/utils/url";
+import { BLOCKED_PROTOCOLS, ensureProtocol } from "@/lib/utils/url";
 import { z } from "zod";
 
 const urlValidator = z.string().url();
-const BLOCKED_PROTOCOLS = /^(javascript|data|vbscript):/i;
 
 export const linkSchema = z.object({
   groupId: z.string().optional().or(z.literal("")),
