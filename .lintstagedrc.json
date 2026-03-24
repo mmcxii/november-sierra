@@ -1,5 +1,6 @@
 {
   "*.json": ["sortier --write", "prettier --write"],
   "*.md": ["prettier --write"],
-  "*.{ts,tsx,js,cjs,mjs}": ["eslint --fix", "sortier --write", "prettier --write"]
+  "*.{ts,tsx,js,cjs,mjs}": ["eslint --fix", "sortier --write", "prettier --write"],
+  "src/lib/i18n/locales/*.json": ["npx tsx scripts/validate-i18n-keys.ts"]
 }

@@ -54,7 +54,7 @@ export const LinkStep: React.FC<LinkStepProps> = (props) => {
       <div className="flex flex-col items-center gap-2 text-center">
         <ExternalLink className="text-muted-foreground size-8" />
         <h1 className="text-2xl font-semibold tracking-tight">{t("addYourFirstLink")}</h1>
-        <p className="text-muted-foreground text-sm">{t("whatShouldVisitorsSeFirst")}</p>
+        <p className="text-muted-foreground text-sm">{t("whatShouldVisitorsSeeFirst")}</p>
       </div>
 
       <form className="flex flex-col gap-6" onSubmit={handleSubmit}>

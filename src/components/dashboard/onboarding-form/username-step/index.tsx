@@ -73,7 +73,7 @@ export const UsernameStep: React.FC<UsernameStepProps> = (props) => {
     <>
       <div className="flex flex-col gap-2 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">{t("chooseYourUsername")}</h1>
-        <p className="text-muted-foreground text-sm">{t("thisWillBeYourUniqueAnchrUrl")}</p>
+        <p className="text-muted-foreground text-sm">{t("thisWillBeYourUniqueAnchrToUrl")}</p>
       </div>
 
       <form className="flex flex-col gap-6" onSubmit={form.handleSubmit(handleSubmit)}>

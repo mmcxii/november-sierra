@@ -28,7 +28,7 @@ const DashboardErrorPage: React.FC<DashboardErrorPageProps> = (props) => {
 
         {/* Description */}
         <p className="text-anc-steel/80 mb-8 text-sm leading-relaxed">
-          {t("weHitUnexpectedWatersPleaseTryAgainAndIfTheIssuePersistsWeAreAlreadyOnIt")}
+          {t("weHitUnexpectedWatersPleaseTryAgainAndIfTheIssuePersistsWereAlreadyOnIt")}
         </p>
 
         {/* CTA */}

@@ -96,7 +96,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
     }
     const otherSlugs = isEditing ? existingSlugs.filter((s) => s !== defaultValues.slug) : existingSlugs;
     if (otherSlugs.includes(slug)) {
-      setError("slug", { message: t("thisSlugIsAlreadyInUse") });
+      setError("slug", { message: t("thisPathIsAlreadyInUse") });
       return false;
     }
     return true;

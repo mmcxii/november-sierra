@@ -725,7 +725,11 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
             </DialogDescription>
           </DialogHeader>
           <GroupForm
-            defaultValues={editingGroup != null ? { id: editingGroup.id, title: editingGroup.title } : undefined}
+            defaultValues={
+              editingGroup != null
+                ? { id: editingGroup.id, slug: editingGroup.slug, title: editingGroup.title }
+                : undefined
+            }
             key={groupDialogKey}
             onSuccess={handleGroupDialogSuccess}
           />

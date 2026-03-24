@@ -159,6 +159,7 @@ async function getPageData(username: string) {
   const groups = visibleGroups.map((group) => ({
     id: group.id,
     links: groupedLinks.filter((l) => l.groupId === group.id),
+    slug: group.slug,
     title: group.title,
   }));
 

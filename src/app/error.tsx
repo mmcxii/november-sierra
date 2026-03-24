@@ -39,7 +39,7 @@ const ErrorPage: React.FC<ErrorPageProps> = (props) => {
 
         {/* Description */}
         <p className="text-anc-steel/80 mb-10 leading-relaxed">
-          {t("weHitUnexpectedWatersPleaseTryAgainAndIfTheIssuePersistsWeAreAlreadyOnIt")}
+          {t("weHitUnexpectedWatersPleaseTryAgainAndIfTheIssuePersistsWereAlreadyOnIt")}
         </p>
 
         {/* CTA */}

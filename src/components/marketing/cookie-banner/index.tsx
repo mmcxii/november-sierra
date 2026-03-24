@@ -28,7 +28,7 @@ export const CookieBanner: React.FC = () => {
   return (
     <div className="m-page-bg-bg m-border-color-muted-15 fixed inset-x-0 bottom-0 z-50 border-t py-4">
       <Container className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <p className="m-muted-70 text-sm">{t("cookieBannerMessage")}</p>
+        <p className="m-muted-70 text-sm">{t("weUseCookiesForAnalyticsToImproveYourExperience")}</p>
         <div className="flex items-center gap-3">
           <button
             className="m-muted-10-bg m-muted-60 cursor-pointer rounded-md px-4 py-1.5 text-sm font-medium transition-colors"

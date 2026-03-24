@@ -3,6 +3,7 @@
 import { type SessionUser, getCurrentUser, isAdmin } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { generateUniqueSlug } from "@/lib/db/queries/link";
+import { generateUniqueGroupSlug, isSlugAvailable } from "@/lib/db/queries/slug";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { detectPlatform } from "@/lib/platforms";
@@ -59,7 +60,7 @@ export async function createLink(
       .where(eq(linksTable.userId, user.id));
 
     if (linkCount >= FREE_LINK_LIMIT) {
-      return { error: "youveReachedTheFreeLimit", success: false };
+      return { error: "youveReachedTheFreeLimitUpgradeToProForUnlimitedLinks", success: false };
     }
   }
 
@@ -99,6 +100,10 @@ export async function createLink(
   }
 
   const slug = customSlug != null && customSlug.length > 0 ? customSlug : await generateUniqueSlug(user.id, fullUrl);
+
+  if (customSlug != null && customSlug.length > 0 && !(await isSlugAvailable(user.id, slug))) {
+    return { error: "thisPathIsAlreadyInUse", success: false };
+  }
 
   const maxPosition = await db
     .select({ max: sql<number>`coalesce(max(${linksTable.position}), -1)` })
@@ -442,7 +447,7 @@ export async function deleteLink(id: string): Promise<ActionResult> {
 
 // ─── Group Actions ───────────────────────────────────────────────────────────
 
-export async function createGroup(title: string): Promise<ActionResult> {
+export async function createGroup(title: string, customSlug?: string): Promise<ActionResult> {
   const user = await getCurrentUser();
 
   if (user == null) {
@@ -453,10 +458,19 @@ export async function createGroup(title: string): Promise<ActionResult> {
     return { error: "upgradeToPro", success: false };
   }
 
-  const result = groupSchema.safeParse({ title });
+  const result = groupSchema.safeParse({ slug: customSlug, title });
 
   if (!result.success) {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  const slug =
+    customSlug != null && customSlug.length > 0
+      ? customSlug.toLowerCase()
+      : await generateUniqueGroupSlug(user.id, result.data.title);
+
+  if (customSlug != null && customSlug.length > 0 && !(await isSlugAvailable(user.id, slug))) {
+    return { error: "thisPathIsAlreadyInUse", success: false };
   }
 
   const maxPosition = await db
@@ -466,6 +480,7 @@ export async function createGroup(title: string): Promise<ActionResult> {
 
   await db.insert(linkGroupsTable).values({
     position: (maxPosition[0]?.max ?? -1) + 1,
+    slug,
     title: result.data.title,
     userId: user.id,
   });
@@ -475,7 +490,7 @@ export async function createGroup(title: string): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function updateGroupTitle(id: string, title: string): Promise<ActionResult> {
+export async function updateGroup(id: string, title: string, customSlug?: string): Promise<ActionResult> {
   const user = await getCurrentUser();
 
   if (user == null) {
@@ -488,7 +503,7 @@ export async function updateGroupTitle(id: string, title: string): Promise<Actio
 
   // Prevent renaming the Quick Links group
   const [group] = await db
-    .select({ isQuickLinks: linkGroupsTable.isQuickLinks })
+    .select({ isQuickLinks: linkGroupsTable.isQuickLinks, slug: linkGroupsTable.slug })
     .from(linkGroupsTable)
     .where(and(eq(linkGroupsTable.id, id), eq(linkGroupsTable.userId, user.id)))
     .limit(1);
@@ -501,15 +516,21 @@ export async function updateGroupTitle(id: string, title: string): Promise<Actio
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  const result = groupSchema.safeParse({ title });
+  const result = groupSchema.safeParse({ slug: customSlug, title });
 
   if (!result.success) {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
+  const slug = customSlug != null && customSlug.length > 0 ? customSlug.toLowerCase() : group.slug;
+
+  if (slug != null && slug !== group.slug && !(await isSlugAvailable(user.id, slug, { groupId: id }))) {
+    return { error: "thisPathIsAlreadyInUse", success: false };
+  }
+
   const updated = await db
     .update(linkGroupsTable)
-    .set({ title: result.data.title })
+    .set({ slug, title: result.data.title })
     .where(and(eq(linkGroupsTable.id, id), eq(linkGroupsTable.userId, user.id)));
 
   if (updated.rowCount === 0) {

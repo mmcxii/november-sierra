@@ -2,20 +2,35 @@ import { generateSlug } from "@/lib/utils/url";
 import { and, eq, like, or } from "drizzle-orm";
 import { db } from "../client";
 import { linksTable } from "../schema/link";
+import { linkGroupsTable } from "../schema/link-group";
 
 export async function generateUniqueSlug(userId: string, url: string): Promise<string> {
   const baseSlug = generateSlug(url);
   const pathSlug = generateSlug(url, true);
 
-  // Find exact match and hyphen-suffixed slugs (avoids false positives like "x" matching "xylophone")
-  const existing = await db
-    .select({ slug: linksTable.slug })
-    .from(linksTable)
-    .where(
-      and(eq(linksTable.userId, userId), or(eq(linksTable.slug, baseSlug), like(linksTable.slug, `${baseSlug}-%`))),
-    );
+  // Find exact match and hyphen-suffixed slugs across both links and groups
+  const [existingLinks, existingGroups] = await Promise.all([
+    db
+      .select({ slug: linksTable.slug })
+      .from(linksTable)
+      .where(
+        and(eq(linksTable.userId, userId), or(eq(linksTable.slug, baseSlug), like(linksTable.slug, `${baseSlug}-%`))),
+      ),
+    db
+      .select({ slug: linkGroupsTable.slug })
+      .from(linkGroupsTable)
+      .where(
+        and(
+          eq(linkGroupsTable.userId, userId),
+          or(eq(linkGroupsTable.slug, baseSlug), like(linkGroupsTable.slug, `${baseSlug}-%`)),
+        ),
+      ),
+  ]);
 
-  const taken = new Set(existing.map((r) => r.slug));
+  const taken = new Set([
+    ...existingLinks.map((r) => r.slug),
+    ...existingGroups.map((r) => r.slug).filter((s): s is string => s != null),
+  ]);
 
   if (!taken.has(baseSlug)) {
     return baseSlug;

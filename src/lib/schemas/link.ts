@@ -9,7 +9,7 @@ export const linkSchema = z.object({
   slug: z
     .string()
     .max(100)
-    .regex(/^[a-z0-9-]*$/, { message: "slugCanOnlyContainLowercaseLettersNumbersAndHyphens" })
+    .regex(/^[a-z0-9-]*$/, { message: "pathCanOnlyContainLowercaseLettersNumbersAndHyphens" })
     .optional()
     .or(z.literal("")),
   title: z.string().min(1).max(100),

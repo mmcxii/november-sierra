@@ -18,6 +18,7 @@ type LinkData = {
 export type LinkGroup = {
   id: string;
   links: LinkData[];
+  slug: null | string;
   title: string;
 };
 
@@ -120,7 +121,16 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
 
         return (
           <React.Fragment key={group.id}>
-            <h2 className="text-anc-theme-link-text mt-2 text-center text-sm font-semibold">{group.title}</h2>
+            {group.slug != null ? (
+              <a
+                className="text-anc-theme-link-text hover:text-anc-theme-name mt-2 text-center text-sm font-semibold underline-offset-4 transition-colors hover:underline"
+                href={`${linkBasePath}/${group.slug}`}
+              >
+                {group.title}
+              </a>
+            ) : (
+              <h2 className="text-anc-theme-link-text mt-2 text-center text-sm font-semibold">{group.title}</h2>
+            )}
             {group.links.map(renderLink)}
           </React.Fragment>
         );

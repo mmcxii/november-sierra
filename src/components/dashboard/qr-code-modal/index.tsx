@@ -214,7 +214,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = (props) => {
                   onClick={handleButtonOnClick}
                   type="button"
                 >
-                  {t("{{label}}({{px}}px)", { label: size.label, px: size.px })}
+                  {t("{{label}}{{px}}Px", { label: size.label, px: size.px })}
                 </button>
               );
             })}
