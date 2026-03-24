@@ -60,6 +60,12 @@ export async function POST(req: Request) {
         break;
       }
 
+      // Skip avatar/displayName sync when Nostr profile is active
+      if (existing.useNostrProfile) {
+        await db.update(usersTable).set({ updatedAt: new Date() }).where(eq(usersTable.id, id));
+        break;
+      }
+
       const updates: Partial<typeof usersTable.$inferInsert> = { updatedAt: new Date() };
 
       if (!existing.customAvatar) {
