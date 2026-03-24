@@ -10,6 +10,9 @@ export const usersTable = pgTable("users", {
   displayName: text("display_name"),
   hideBranding: boolean("hide_branding").default(false).notNull(),
   id: text("id").primaryKey(),
+  nostrNpub: text("nostr_npub"),
+  nostrProfileFetchedAt: timestamp("nostr_profile_fetched_at"),
+  nostrRelays: text("nostr_relays"),
   onboardingComplete: boolean("onboarding_complete").default(false).notNull(),
   pageDarkTheme: text("page_dark_theme").default("dark-depths").notNull(),
   pageLightTheme: text("page_light_theme").default("stateroom").notNull(),
@@ -19,5 +22,6 @@ export const usersTable = pgTable("users", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   tier: text("tier").default("free").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  useNostrProfile: boolean("use_nostr_profile").default(false).notNull(),
   username: text("username").unique().notNull(),
 });
