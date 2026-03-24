@@ -10,13 +10,6 @@ import { referralCodesTable } from "@/lib/db/schema/referral-code";
 import { referralRedemptionsTable } from "@/lib/db/schema/referral-redemption";
 import { usersTable } from "@/lib/db/schema/user";
 import { envSchema } from "@/lib/env";
-import { isNpub } from "@/lib/nostr";
-import {
-  fetchNostrProfile,
-  isValidRelayUrl,
-  MAX_RELAYS,
-  type NostrProfileData,
-} from "@/lib/nostr-profile";
 import { stripe } from "@/lib/stripe";
 import { isDarkTheme, isValidThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
@@ -198,16 +191,6 @@ export async function updateProfile(displayName: string, bio: string): Promise<A
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  const [existing] = await db
-    .select({ useNostrProfile: usersTable.useNostrProfile })
-    .from(usersTable)
-    .where(eq(usersTable.id, userId))
-    .limit(1);
-
-  if (existing?.useNostrProfile) {
-    return { error: "disconnectNostrProfileToEditManually", success: false };
-  }
-
   const trimmedDisplayName = displayName.trim();
   const trimmedBio = bio.trim();
 
@@ -236,131 +219,9 @@ export async function removeAvatar(): Promise<ActionResult> {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  const [existing] = await db
-    .select({ useNostrProfile: usersTable.useNostrProfile })
-    .from(usersTable)
-    .where(eq(usersTable.id, userId))
-    .limit(1);
-
-  if (existing?.useNostrProfile) {
-    return { error: "disconnectNostrProfileToEditManually", success: false };
-  }
-
   const [user] = await db
     .update(usersTable)
     .set({ avatarUrl: null, customAvatar: false, updatedAt: new Date() })
-    .where(eq(usersTable.id, userId))
-    .returning({ username: usersTable.username });
-
-  revalidatePath("/dashboard/settings");
-  if (user?.username) {
-    revalidatePath(`/${user.username}`);
-  }
-
-  return { success: true };
-}
-
-// ─── Nostr Profile Actions ──────────────────────────────────────────────────
-
-export type NostrPreviewResult =
-  | { data: NostrProfileData; success: true }
-  | { error: string; success: false };
-
-export async function fetchNostrPreview(npub: string, relays: string[]): Promise<NostrPreviewResult> {
-  const { userId } = await auth();
-
-  if (userId == null) {
-    return { error: "somethingWentWrongPleaseTryAgain", success: false };
-  }
-
-  const trimmedNpub = npub.trim();
-
-  if (!isNpub(trimmedNpub)) {
-    return { error: "pleaseEnterAValidNpub", success: false };
-  }
-
-  const validRelays = relays.filter((r) => isValidRelayUrl(r.trim()));
-
-  if (validRelays.length === 0) {
-    return { error: "pleaseAddAtLeastOneRelay", success: false };
-  }
-
-  if (validRelays.length > MAX_RELAYS) {
-    return { error: "somethingWentWrongPleaseTryAgain", success: false };
-  }
-
-  const data = await fetchNostrProfile(trimmedNpub, validRelays);
-
-  if (data == null) {
-    return { error: "couldNotFetchNostrProfilePleaseTryAgainOrCheckYourRelays", success: false };
-  }
-
-  return { data, success: true };
-}
-
-export async function saveNostrProfile(
-  npub: string,
-  relays: string[],
-  profileData: NostrProfileData,
-): Promise<ActionResult> {
-  const { userId } = await auth();
-
-  if (userId == null) {
-    return { error: "somethingWentWrongPleaseTryAgain", success: false };
-  }
-
-  const trimmedNpub = npub.trim();
-
-  if (!isNpub(trimmedNpub)) {
-    return { error: "pleaseEnterAValidNpub", success: false };
-  }
-
-  const validRelays = relays.filter((r) => isValidRelayUrl(r.trim()));
-
-  if (validRelays.length === 0) {
-    return { error: "pleaseAddAtLeastOneRelay", success: false };
-  }
-
-  const [user] = await db
-    .update(usersTable)
-    .set({
-      avatarUrl: profileData.picture,
-      bio: profileData.about,
-      customAvatar: profileData.picture != null,
-      displayName: profileData.displayName,
-      nostrNpub: trimmedNpub,
-      nostrProfileFetchedAt: new Date(),
-      nostrRelays: JSON.stringify(validRelays),
-      updatedAt: new Date(),
-      useNostrProfile: true,
-    })
-    .where(eq(usersTable.id, userId))
-    .returning({ username: usersTable.username });
-
-  revalidatePath("/dashboard/settings");
-  if (user?.username) {
-    revalidatePath(`/${user.username}`);
-  }
-
-  return { success: true };
-}
-
-export async function disconnectNostrProfile(): Promise<ActionResult> {
-  const { userId } = await auth();
-
-  if (userId == null) {
-    return { error: "somethingWentWrongPleaseTryAgain", success: false };
-  }
-
-  const [user] = await db
-    .update(usersTable)
-    .set({
-      nostrNpub: null,
-      nostrProfileFetchedAt: null,
-      nostrRelays: null,
-      updatedAt: new Date(),
-      useNostrProfile: false,
-    })
     .where(eq(usersTable.id, userId))
     .returning({ username: usersTable.username });
 
