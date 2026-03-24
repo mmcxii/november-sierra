@@ -4,10 +4,13 @@ import {
   addCustomDomain,
   checkUsernameAvailability,
   createPortalSession,
+  disconnectNostrProfile,
+  fetchNostrPreview,
   getOrCreateUserReferralCode,
   redeemReferralCode,
   removeAvatar,
   removeCustomDomain,
+  saveNostrProfile,
   updateHideBranding,
   updatePageDarkTheme,
   updatePageLightTheme,
@@ -26,8 +29,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { SessionUser } from "@/lib/auth";
+import { DEFAULT_RELAYS, type NostrProfileData } from "@/lib/nostr-profile";
 import { usernameSchema } from "@/lib/schemas/username";
 import { DARK_THEME_ID_LIST, LIGHT_THEME_ID_LIST, THEMES, isDarkTheme, type ThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
@@ -35,7 +40,7 @@ import { useUploadThing } from "@/lib/uploadthing";
 import { useReverification, useSession, useUser } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import type { SessionVerificationResource } from "@clerk/shared/types";
-import { Anchor, Camera, Check, CheckCircle2, Copy, Loader2, Lock, X } from "lucide-react";
+import { Anchor, Camera, Check, CheckCircle2, Copy, Loader2, Lock, Minus, Plus, X } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -75,6 +80,17 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const [referralInput, setReferralInput] = React.useState("");
   const [referralPending, startReferralTransition] = React.useTransition();
   const [userReferralCode, setUserReferralCode] = React.useState<null | string>(null);
+  // Nostr profile state
+  const [useNostrProfile, setUseNostrProfile] = React.useState(user.useNostrProfile);
+  const [npubInput, setNpubInput] = React.useState(user.nostrNpub ?? "");
+  const [relayInputs, setRelayInputs] = React.useState<string[]>(
+    user.nostrRelays != null ? (JSON.parse(user.nostrRelays) as string[]) : [...DEFAULT_RELAYS],
+  );
+  const [nostrPreview, setNostrPreview] = React.useState<NostrProfileData | null>(null);
+  const [nostrFetching, setNostrFetching] = React.useState(false);
+  const [nostrPending, startNostrTransition] = React.useTransition();
+  const npubDebounceRef = React.useRef<null | ReturnType<typeof setTimeout>>(null);
+
   const isPro = isProUser(user);
   const previewKey = `${previewThemes.dark}|${previewThemes.light}|${brandingHidden}|${profileVersion}|${avatarUrl}`;
 
@@ -159,6 +175,42 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     };
   }, [usernameInput, usernameHasValidationError, usernameUnchanged]);
 
+  // Nostr npub auto-fetch
+  React.useEffect(() => {
+    if (npubDebounceRef.current != null) {
+      clearTimeout(npubDebounceRef.current);
+    }
+
+    if (!useNostrProfile || npubInput.trim().length === 0) {
+      setNostrPreview(null);
+      return;
+    }
+
+    npubDebounceRef.current = setTimeout(async () => {
+      setNostrFetching(true);
+      const result = await fetchNostrPreview(npubInput.trim(), relayInputs);
+      setNostrFetching(false);
+
+      if (result.success) {
+        setNostrPreview(result.data);
+        setDisplayNameInput(result.data.displayName ?? "");
+        setBioInput(result.data.about ?? "");
+        if (result.data.picture != null) {
+          setAvatarUrl(result.data.picture);
+        }
+      } else {
+        setNostrPreview(null);
+        toast.error(t(result.error));
+      }
+    }, 600);
+
+    return () => {
+      if (npubDebounceRef.current != null) {
+        clearTimeout(npubDebounceRef.current);
+      }
+    };
+  }, [npubInput, useNostrProfile]); // eslint-disable-line react-hooks/exhaustive-deps -- only re-fetch on npub/toggle change
+
   // NOTE: OTP auto-submit effects are below — they reference handleEmailVerify and handleReverifySubmit
   // which are declared in the Handlers section. We use a ref-based approach to avoid circular deps.
   const handleEmailVerifyRef = React.useRef<undefined | (() => Promise<void>)>(undefined);
@@ -230,6 +282,12 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   };
 
   const handleProfileSave = () => {
+    // If Nostr profile is active and we have preview data, use the Nostr save flow
+    if (useNostrProfile && nostrPreview != null) {
+      handleNostrSave();
+      return;
+    }
+
     startProfileTransition(async () => {
       // Save username if changed
       if (!usernameUnchanged && usernameAvailability === "available" && !usernameHasValidationError) {
@@ -259,6 +317,78 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
 
       toast.success(t("profileUpdated"));
     });
+  };
+
+  const handleNostrToggle = (checked: boolean) => {
+    setUseNostrProfile(checked);
+
+    if (!checked && user.useNostrProfile) {
+      // Was previously connected — don't clear state yet, show disconnect button
+      return;
+    }
+
+    if (!checked) {
+      setNostrPreview(null);
+    }
+  };
+
+  const handleDisconnectNostr = () => {
+    startNostrTransition(async () => {
+      const result = await disconnectNostrProfile();
+
+      if (!result.success) {
+        toast.error(t(result.error));
+        return;
+      }
+
+      setUseNostrProfile(false);
+      setNpubInput("");
+      setRelayInputs([...DEFAULT_RELAYS]);
+      setNostrPreview(null);
+      toast.success(t("nostrProfileDisconnected"));
+    });
+  };
+
+  const handleNostrSave = () => {
+    startNostrTransition(async () => {
+      if (nostrPreview == null) {
+        return;
+      }
+
+      const result = await saveNostrProfile(npubInput.trim(), relayInputs, nostrPreview);
+
+      if (!result.success) {
+        toast.error(t(result.error));
+        return;
+      }
+
+      setProfileVersion((v) => v + 1);
+      toast.success(t("nostrProfileConnected"));
+    });
+  };
+
+  const handleNpubInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setNpubInput(e.target.value);
+
+  const handleRelayChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setRelayInputs((prev) => {
+      // Prevent duplicate relay URLs (ignore empty strings while typing)
+      if (newValue.length > 0 && prev.some((r, i) => i !== index && r === newValue)) {
+        return prev;
+      }
+
+      return prev.map((r, i) => (i === index ? newValue : r));
+    });
+  };
+
+  const handleAddRelay = () => {
+    if (relayInputs.length < 5 && !relayInputs.includes("")) {
+      setRelayInputs((prev) => [...prev, ""]);
+    }
+  };
+
+  const handleRemoveRelay = (index: number) => () => {
+    setRelayInputs((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleDisplayNameOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setDisplayNameInput(e.target.value);
@@ -655,11 +785,14 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
             <hr className="border-border" />
 
             <div>
-              <p className="text-muted-foreground mb-2 text-sm font-medium">{t("avatar")}</p>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-muted-foreground text-sm font-medium">{t("avatar")}</p>
+                {useNostrProfile && <Lock className="text-muted-foreground size-3" />}
+              </div>
               <div className="flex items-center gap-4">
                 <button
                   className="border-border bg-muted group relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border"
-                  disabled={isUploading}
+                  disabled={isUploading || useNostrProfile}
                   onClick={handleAvatarClick}
                   title={t("clickToUpload")}
                   type="button"
@@ -675,13 +808,15 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                   ) : (
                     <Anchor className="text-muted-foreground size-7" strokeWidth={1.25} />
                   )}
-                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                    {isUploading ? (
-                      <Loader2 className="size-5 animate-spin text-white" />
-                    ) : (
-                      <Camera className="size-5 text-white" />
-                    )}
-                  </div>
+                  {!useNostrProfile && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                      {isUploading ? (
+                        <Loader2 className="size-5 animate-spin text-white" />
+                      ) : (
+                        <Camera className="size-5 text-white" />
+                      )}
+                    </div>
+                  )}
                 </button>
                 <input
                   accept="image/*"
@@ -690,7 +825,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                   ref={fileInputRef}
                   type="file"
                 />
-                {avatarUrl != null && (
+                {avatarUrl != null && !useNostrProfile && (
                   <Button disabled={avatarPending} onClick={handleRemoveAvatar} variant="tertiary">
                     {t("removeAvatar")}
                   </Button>
@@ -698,25 +833,118 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
               </div>
             </div>
             <div>
-              <p className="text-muted-foreground mb-2 text-sm font-medium">{t("displayName")}</p>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-muted-foreground text-sm font-medium">{t("displayName")}</p>
+                {useNostrProfile && <Lock className="text-muted-foreground size-3" />}
+              </div>
               <Input
-                disabled={profilePending}
+                disabled={profilePending || useNostrProfile}
                 onChange={handleDisplayNameOnChange}
                 placeholder={user.username}
                 value={displayNameInput}
               />
+              {useNostrProfile && (
+                <p className="text-muted-foreground mt-1 text-xs">{t("managedByNostrProfile")}</p>
+              )}
             </div>
             <div>
-              <p className="text-muted-foreground mb-2 text-sm font-medium">{t("bio")}</p>
-              <Textarea disabled={profilePending} onChange={handleBioOnChange} value={bioInput} />
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-muted-foreground text-sm font-medium">{t("bio")}</p>
+                {useNostrProfile && <Lock className="text-muted-foreground size-3" />}
+              </div>
+              <Textarea disabled={profilePending || useNostrProfile} onChange={handleBioOnChange} value={bioInput} />
+              {useNostrProfile && (
+                <p className="text-muted-foreground mt-1 text-xs">{t("managedByNostrProfile")}</p>
+              )}
             </div>
+
+            <hr className="border-border" />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{t("nostrProfile")}</p>
+                  <p className="text-muted-foreground text-xs">{t("useNostrProfile")}</p>
+                </div>
+                <Switch checked={useNostrProfile} disabled={nostrPending} onCheckedChange={handleNostrToggle} />
+              </div>
+
+              {useNostrProfile && (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-muted-foreground mb-2 text-sm font-medium">{t("npub")}</p>
+                    <div className="relative">
+                      <Input
+                        disabled={nostrPending}
+                        onChange={handleNpubInputOnChange}
+                        placeholder="npub1..."
+                        value={npubInput}
+                      />
+                      {nostrFetching && (
+                        <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                          <Loader2 className="text-muted-foreground size-4 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    {nostrFetching && (
+                      <p className="text-muted-foreground mt-1 text-xs">{t("fetchingNostrProfile")}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-muted-foreground mb-2 text-sm font-medium">{t("relays")}</p>
+                    <div className="space-y-2">
+                      {relayInputs.map((relay, index) => (
+                        <div className="flex gap-2" key={relay}>
+                          <Input
+                            disabled={nostrPending}
+                            onChange={handleRelayChange(index)}
+                            placeholder="wss://..."
+                            value={relay}
+                          />
+                          {relayInputs.length > 1 && (
+                            <IconButton
+                              aria-label={t("removeRelay")}
+                              disabled={nostrPending}
+                              onClick={handleRemoveRelay(index)}
+                            >
+                              <Minus className="size-4" />
+                            </IconButton>
+                          )}
+                        </div>
+                      ))}
+                      {relayInputs.length < 5 && (
+                        <Button disabled={nostrPending} onClick={handleAddRelay} variant="tertiary">
+                          <Plus className="size-3.5" />
+                          {t("addRelay")}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!useNostrProfile && user.useNostrProfile && (
+                <Button disabled={nostrPending} onClick={handleDisconnectNostr} variant="tertiary">
+                  {nostrPending && <Loader2 className="size-3.5 animate-spin" />}
+                  {t("disconnectNostrProfile")}
+                </Button>
+              )}
+            </div>
+
             {emailStep === "edit" && (
               <Button
-                disabled={profilePending || (!usernameUnchanged && usernameAvailability !== "available")}
+                disabled={
+                  profilePending ||
+                  nostrPending ||
+                  nostrFetching ||
+                  (!usernameUnchanged && usernameAvailability !== "available") ||
+                  (useNostrProfile && nostrPreview == null)
+                }
                 onClick={handleProfileSave}
                 variant="secondary"
               >
-                {profilePending && <Loader2 className="size-3.5 animate-spin" />}
+                {(profilePending || nostrPending) && <Loader2 className="size-3.5 animate-spin" />}
                 {t("save")}
               </Button>
             )}

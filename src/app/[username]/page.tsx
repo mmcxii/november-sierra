@@ -8,6 +8,7 @@ import { db } from "@/lib/db/client";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { usersTable } from "@/lib/db/schema/user";
+import { refreshNostrProfile } from "@/lib/nostr-profile";
 import { type ThemeId, isValidThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
 import { and, asc, eq, isNull } from "drizzle-orm";
@@ -28,6 +29,16 @@ async function getPageData(username: string) {
 
   if (user == null) {
     return null;
+  }
+
+  // Fire-and-forget Nostr profile refresh if stale (>24h)
+  if (
+    user.useNostrProfile &&
+    user.nostrNpub != null &&
+    (user.nostrProfileFetchedAt == null ||
+      Date.now() - user.nostrProfileFetchedAt.getTime() > 24 * 60 * 60 * 1000)
+  ) {
+    void refreshNostrProfile(user);
   }
 
   // Fetch Quick Links group (Pro only)
