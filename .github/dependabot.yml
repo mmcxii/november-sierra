@@ -5,11 +5,84 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 10
+    commit-message:
+      prefix: "ANC-132: chore(deps)"
     groups:
-      minor-and-patch:
-        update-types:
-          - minor
-          - patch
+      react-and-next:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+          - "next"
+          - "eslint-config-next"
+          - "babel-plugin-react-compiler"
+      clerk:
+        patterns:
+          - "@clerk/*"
+          - "svix"
+      code-quality:
+        patterns:
+          - "eslint"
+          - "eslint-plugin-*"
+          - "@typescript-eslint/*"
+          - "prettier"
+          - "sortier"
+          - "commitlint"
+          - "husky"
+          - "lint-staged"
+          - "vitest"
+          - "typescript"
+          - "@types/node"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "tw-animate-css"
+          - "tailwind-merge"
+          - "prettier-plugin-tailwindcss"
+      drizzle:
+        patterns:
+          - "drizzle-orm"
+          - "drizzle-kit"
+          - "@neondatabase/*"
+      i18n:
+        patterns:
+          - "i18next"
+          - "react-i18next"
+          - "i18next-*"
+          - "next-i18n-router"
+      uploadthing:
+        patterns:
+          - "uploadthing"
+          - "@uploadthing/*"
+      dnd-kit:
+        patterns:
+          - "@dnd-kit/*"
+      analytics:
+        patterns:
+          - "@vercel/*"
+          - "posthog-js"
+      ui:
+        patterns:
+          - "radix-ui"
+          - "lucide-react"
+          - "class-variance-authority"
+          - "clsx"
+          - "sonner"
+          - "shadcn"
+          - "recharts"
+          - "input-otp"
+          - "@icons-pack/*"
+          - "simple-icons"
+      forms:
+        patterns:
+          - "react-hook-form"
+          - "@hookform/*"
+          - "zod"
+      stripe:
+        patterns:
+          - "stripe"
     reviewers:
       - mmcxii
 
@@ -19,5 +92,7 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ANC-132: chore(deps)"
     reviewers:
       - mmcxii

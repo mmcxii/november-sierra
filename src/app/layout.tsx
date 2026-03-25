@@ -1,8 +1,9 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardThemeProvider } from "@/components/dashboard/theme-provider";
 import { PosthogProvider } from "@/components/posthog";
@@ -12,16 +13,6 @@ import { initTranslations } from "@/lib/i18n/server";
 import { TranslationsProvider } from "@/lib/i18n/translations-provider";
 import { THEME_SCRIPT } from "@/lib/theme-script";
 import { cn } from "@/lib/utils";
-
-const geistSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
 
 export const metadata: Metadata = {
   description: "A single harbor for all your links.",
@@ -54,7 +45,7 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
       <TranslationsProvider locale="en" resources={resources}>
         <PosthogProvider>
           <html lang="en" suppressHydrationWarning>
-            <body className={cn(geistSans.variable, geistMono.variable, "antialiased")}>
+            <body className={cn(GeistSans.variable, GeistMono.variable, "antialiased")}>
               <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} suppressHydrationWarning />
               <DashboardThemeProvider>
                 {children}

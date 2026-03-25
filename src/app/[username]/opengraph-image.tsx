@@ -7,6 +7,7 @@ import { ImageResponse } from "next/og";
 
 export const alt = "User profile on Anchr";
 export const contentType = "image/png";
+export const dynamic = "force-dynamic";
 export const size = { height: 630, width: 1200 };
 
 const GEIST_BOLD_URL = "https://cdn.jsdelivr.net/fontsource/fonts/geist-sans@latest/latin-700-normal.woff";
