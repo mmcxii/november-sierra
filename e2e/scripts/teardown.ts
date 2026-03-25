@@ -9,6 +9,7 @@ import path from "node:path";
 
 const usersTable = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  customDomain: text("custom_domain"),
   id: text("id").primaryKey(),
   username: text("username").unique().notNull(),
 });
@@ -33,7 +34,32 @@ const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
 type SeededUser = { clerkId: string; email: string; role: string };
 
+async function removeVercelDomain(domain: string) {
+  const token = process.env.VERCEL_API_TOKEN;
+  const projectId = process.env.VERCEL_PROJECT_ID;
+  if (!token || !projectId) {
+    return;
+  }
+
+  await fetch(`https://api.vercel.com/v10/projects/${projectId}/domains/${domain}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    method: "DELETE",
+  }).catch(() => {});
+}
+
 async function deleteUserData(db: ReturnType<typeof drizzle>, userId: string) {
+  // Remove custom domain from Vercel before deleting user
+  const [user] = await db
+    .select({ customDomain: usersTable.customDomain })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1)
+    .catch(() => []);
+  if (user?.customDomain) {
+    await removeVercelDomain(user.customDomain);
+    console.log(`[e2e:teardown] Removed Vercel domain ${user.customDomain}`);
+  }
+
   await db
     .delete(clicksTable)
     .where(eq(clicksTable.userId, userId))

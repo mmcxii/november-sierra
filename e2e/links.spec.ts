@@ -158,16 +158,21 @@ test.describe("advanced link features", () => {
     await page.getByRole("checkbox", { name: t.selectAll }).check();
     await page.getByText(/\d+ selected/).waitFor();
     await page.getByRole("button", { name: t.hideSelected }).click();
+    await page.waitForTimeout(3000);
+    await page.reload();
+    await page.getByRole("heading", { name: t.links }).waitFor();
 
     //* Assert
-    await expect(linkA.getByText(t.hidden, { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(linkA.getByText(t.hidden, { exact: true })).toBeVisible();
     await expect(linkB.getByText(t.hidden, { exact: true })).toBeVisible();
 
-    //* Act — re-select all (selection clears after bulk action) and show
-    await page.waitForTimeout(1000);
+    //* Act — select all and show
     await page.getByRole("checkbox", { name: t.selectAll }).check();
     await page.getByText(/\d+ selected/).waitFor();
     await page.getByRole("button", { name: t.showSelected }).click();
+    await page.waitForTimeout(3000);
+    await page.reload();
+    await page.getByRole("heading", { name: t.links }).waitFor();
 
     //* Assert
     await expect(linkA.getByText(t.hidden, { exact: true })).toBeHidden();

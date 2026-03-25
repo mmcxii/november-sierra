@@ -1,8 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test as base } from "@playwright/test";
+import { test } from "./fixtures/auth";
 import { t } from "./fixtures/i18n";
 
 test.describe("route protection", () => {
-  test("redirects unauthenticated users away from /dashboard", async ({ page }) => {
+  base("redirects unauthenticated users away from /dashboard", async ({ page }) => {
     //* Act
     await page.goto("/dashboard");
 
@@ -10,7 +11,7 @@ test.describe("route protection", () => {
     await expect(page).toHaveURL(/redirect_url/);
   });
 
-  test("sign-in page renders functional form with sign-up link", async ({ page }) => {
+  base("sign-in page renders functional form with sign-up link", async ({ page }) => {
     //* Act
     await page.goto("/sign-in");
 
@@ -19,5 +20,13 @@ test.describe("route protection", () => {
     await expect(page.getByLabel(t.password)).toBeVisible();
     await expect(page.getByRole("button", { name: t.continue })).toBeVisible();
     await expect(page.getByRole("link", { name: t.signUp })).toHaveAttribute("href", "/sign-up");
+  });
+
+  test("redirects authenticated users from /sign-in to /dashboard", async ({ proUser: page }) => {
+    //* Act
+    await page.goto("/sign-in");
+
+    //* Assert
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 });

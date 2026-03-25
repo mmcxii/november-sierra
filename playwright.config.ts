@@ -18,6 +18,7 @@ export default defineConfig({
   reporter: [["html", { open: "never" }]],
   retries: process.env.CI != null ? 2 : 0,
   testDir: "./e2e",
+  testIgnore: "**/smoke/**",
   timeout: 60_000,
   use: {
     baseURL: "http://localhost:3000",

@@ -7,6 +7,11 @@
  */
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
 
+export const testDomain = {
+  /** Run-scoped subdomain for custom domain E2E tests. */
+  subdomain: `${RUN_ID}.anchr-e2e-testing.site`,
+};
+
 export const testUsers = {
   admin: {
     email: `e2e-admin-${RUN_ID}@anchr.io`,
