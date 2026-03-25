@@ -55,7 +55,7 @@ export const testAaaPattern = createRule({
         const sourceCode = context.sourceCode;
         const comments = sourceCode.getCommentsInside(body);
 
-        const sectionPattern = /^\*\s*(Arrange|Act|Assert)$/;
+        const sectionPattern = /^\*\s*(Arrange|Act|Assert)(\s|$)/;
         const sections: { line: number; name: SectionName }[] = [];
 
         for (const comment of comments) {

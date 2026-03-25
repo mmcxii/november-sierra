@@ -124,7 +124,7 @@ const eslintConfig = defineConfig([
 
   // Enforce AAA pattern in test files
   {
-    files: ["**/*.test.{ts,tsx}"],
+    files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
     rules: {
       "anchr/test-aaa-pattern": "error",
     },
@@ -132,15 +132,23 @@ const eslintConfig = defineConfig([
 
   // Enable default exports for Next.js file conventions and config files
   {
-    files: ["src/app/**/*.{ts,tsx}", "src/middleware.ts", "./*.config.{ts,mjs,cjs}"],
+    files: ["src/app/**/*.{ts,tsx}", "src/middleware.ts", "./*.config.{ts,mjs,cjs}", "./e2e/**/global.*.ts"],
     rules: {
       "import/no-default-export": "off",
     },
   },
 
+  // Playwright fixtures use `use()` which is not a React hook
+  {
+    files: ["e2e/**/*.ts"],
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+    },
+  },
+
   // Allow console.log in CLI scripts and agents
   {
-    files: [".agents/**", "scripts/**"],
+    files: [".agents/**", "./**/scripts/**"],
     rules: {
       "no-console": "off",
     },

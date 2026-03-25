@@ -197,5 +197,20 @@ it("does multiple things", () => {
 `,
       name: "multiple AAA sequences: Arrange → Act → Assert → Act → Assert",
     },
+    {
+      code: `
+test("works with trailing descriptions", () => {
+  //* Arrange — set up preconditions
+  const x = 1;
+
+  //* Act — perform the action
+  const result = doThing(x);
+
+  //* Assert — verify outcome
+  expect(result).toBe(1);
+});
+`,
+      name: "section headers with trailing descriptions",
+    },
   ],
 });
