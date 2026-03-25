@@ -7,7 +7,6 @@ updates:
     open-pull-requests-limit: 10
     commit-message:
       prefix: "ANC-132: chore(deps)"
-      prefix-development: "ANC-132: chore(deps-dev)"
     groups:
       minor-and-patch:
         update-types:
