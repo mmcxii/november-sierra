@@ -29,6 +29,15 @@ const clicksTable = pgTable("clicks", {
   userId: text("user_id").notNull(),
 });
 
+const referralCodesTable = pgTable("referral_codes", {
+  id: text("id").primaryKey(),
+});
+
+const referralRedemptionsTable = pgTable("referral_redemptions", {
+  codeId: text("code_id").notNull(),
+  id: text("id").primaryKey(),
+});
+
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
 const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
@@ -171,6 +180,16 @@ async function main() {
     }
   } catch {
     // Table query may fail
+  }
+
+  // Clean up seeded referral code and its redemptions
+  const referralCodeId = `e2e-referral-${RUN_ID}`;
+  try {
+    await db.delete(referralRedemptionsTable).where(eq(referralRedemptionsTable.codeId, referralCodeId));
+    await db.delete(referralCodesTable).where(eq(referralCodesTable.id, referralCodeId));
+    console.log(`[e2e:teardown] Deleted referral code ${referralCodeId}`);
+  } catch {
+    // Referral code may not exist
   }
 
   console.log(`[e2e:teardown] Complete (run: ${RUN_ID})`);

@@ -201,7 +201,7 @@ export async function updateProfile(displayName: string, bio: string): Promise<A
     .limit(1);
 
   if (existing?.useNostrProfile) {
-    return { error: "disconnectNostrProfileToEditManually", success: false };
+    return { error: "disconnectYourNostrProfileToEditManually", success: false };
   }
 
   const trimmedDisplayName = displayName.trim();
@@ -239,7 +239,7 @@ export async function removeAvatar(): Promise<ActionResult> {
     .limit(1);
 
   if (existing?.useNostrProfile) {
-    return { error: "disconnectNostrProfileToEditManually", success: false };
+    return { error: "disconnectYourNostrProfileToEditManually", success: false };
   }
 
   const [user] = await db

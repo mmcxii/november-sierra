@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { type SignUpValues, type VerifyEmailValues, signUpSchema, verifyEmailSchema } from "@/lib/schemas/auth";
+import { cn } from "@/lib/utils";
 import { useSignUp } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { useForm } from "react-hook-form";
@@ -21,6 +22,8 @@ export const SignUpForm: React.FC = () => {
   const { t } = useTranslation();
   const { isLoaded, setActive, signUp } = useSignUp();
   const [verifying, setVerifying] = React.useState(false);
+  const [referralCode, setReferralCode] = React.useState("");
+  const [referralExpanded, setReferralExpanded] = React.useState(false);
   const signUpForm = useForm<SignUpValues>({ resolver: standardSchemaResolver(signUpSchema) });
   const verifyForm = useForm<VerifyEmailValues>({ resolver: standardSchemaResolver(verifyEmailSchema) });
 
@@ -53,6 +56,10 @@ export const SignUpForm: React.FC = () => {
     }
 
     try {
+      const trimmed = referralCode.trim();
+      if (trimmed.length > 0) {
+        localStorage.setItem("anchr_referral_code", trimmed);
+      }
       await signUp.create({ emailAddress: data.email, password: data.password });
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setVerifying(true);
@@ -101,11 +108,16 @@ export const SignUpForm: React.FC = () => {
     }
   };
 
+  const handleReferralToggle = () => setReferralExpanded((prev) => !prev);
+
+  const handleReferralCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => setReferralCode(e.target.value);
+
   //* Effects
   React.useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
     if (ref != null) {
-      localStorage.setItem("anchr_referral_code", ref);
+      setReferralCode(ref);
+      setReferralExpanded(true);
     }
   }, []);
 
@@ -222,6 +234,28 @@ export const SignUpForm: React.FC = () => {
             />
             {signUpForm.formState.errors.password != null && (
               <p className="text-xs text-[rgb(var(--m-accent))]">{signUpForm.formState.errors.password.message}</p>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              className="flex items-center gap-1 text-sm text-[rgb(var(--m-muted))] transition-colors hover:text-[rgb(var(--m-text))]"
+              onClick={handleReferralToggle}
+              type="button"
+            >
+              <ChevronDown className={cn("size-3.5 transition-transform", { "-rotate-90": !referralExpanded })} />
+              {t("haveAReferralCode")}
+            </button>
+            {referralExpanded && (
+              <Input
+                autoComplete="off"
+                className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] uppercase placeholder:text-[rgb(var(--m-muted))]/50 placeholder:normal-case focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
+                disabled={signUpForm.formState.isSubmitting}
+                id="referral-code"
+                onChange={handleReferralCodeChange}
+                placeholder="ANCHR-XXXXXX"
+                type="text"
+                value={referralCode}
+              />
             )}
           </div>
           {signUpForm.formState.errors.root != null && (

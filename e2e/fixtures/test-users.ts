@@ -26,3 +26,7 @@ export const testUsers = {
     username: `e2epro${RUN_ID}`,
   },
 } as const;
+
+export const E2E_REFERRAL_CODE = `ANCHR-E2E${RUN_ID.toUpperCase()
+  .replace(/[^A-Z0-9]/g, "")
+  .slice(0, 6)}`;
