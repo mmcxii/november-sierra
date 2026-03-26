@@ -1,3 +1,4 @@
+import { fixupPluginRules } from "@eslint/compat";
 import { type ESLint } from "eslint";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
@@ -13,9 +14,28 @@ import { reactStyleGuide } from "./eslint/react-style-guide.js";
 import { singleComponentPerFile } from "./eslint/single-component-per-file.js";
 import { testAaaPattern } from "./eslint/test-aaa-pattern.js";
 
+// Shim eslint-plugin-react for ESLint 10 compatibility (react plugin still
+// uses the legacy context.getFilename API removed in ESLint 10).
+// TODO: Remove fixupPluginRules once eslint-plugin-react supports ESLint 10 natively.
+function shimPlugins(configs: typeof nextVitals) {
+  return configs.map((config) => {
+    if (config.plugins == null) {
+      return config;
+    }
+    const patched = { ...config.plugins };
+    if (patched.react) {
+      patched.react = fixupPluginRules(patched.react);
+    }
+    if (patched.import) {
+      patched.import = fixupPluginRules(patched.import);
+    }
+    return { ...config, plugins: patched };
+  });
+}
+
 const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
+  ...shimPlugins(nextVitals),
+  ...shimPlugins(nextTs),
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -40,7 +60,7 @@ const eslintConfig = defineConfig([
           "test-aaa-pattern": testAaaPattern,
         },
       } as unknown as ESLint.Plugin,
-      import: pluginImport,
+      import: fixupPluginRules(pluginImport),
     },
     rules: {
       "anchr/no-inline-style": "error",
