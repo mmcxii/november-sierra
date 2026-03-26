@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   description:
     "Anchr brings your scattered profiles, payment handles, and important links into one beautiful, blazing-fast page you actually own.",
-  title: "Finally, a Link Page Worth Sharing",
+  title: "Finally, a Link Hub Worth Sharing",
 };
 
 const MarketingPage: React.FC = async () => {
