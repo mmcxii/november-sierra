@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { createClerkClient } from "@clerk/backend";
 import { neon } from "@neondatabase/serverless";
-import { and, eq, like, lt } from "drizzle-orm";
+import { and, eq, like, lt, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import fs from "node:fs";
@@ -27,6 +27,15 @@ const linkGroupsTable = pgTable("link_groups", {
 const clicksTable = pgTable("clicks", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
+});
+
+const referralCodesTable = pgTable("referral_codes", {
+  id: text("id").primaryKey(),
+});
+
+const referralRedemptionsTable = pgTable("referral_redemptions", {
+  codeId: text("code_id").notNull(),
+  id: text("id").primaryKey(),
 });
 
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
@@ -110,23 +119,41 @@ async function main() {
     fs.unlinkSync(seededUsersPath);
   }
 
-  // Clean up ephemeral users scoped to THIS run only (e.g. onboarding creates e2eob{runId}...)
+  // Clean up ephemeral users from this run, plus webhook-created duplicates.
+  //
+  // When seed creates a Clerk user, the Clerk webhook on the staging server
+  // also fires and inserts a DB row with a short random suffix (e.g. e2epro354).
+  // The seed's ON CONFLICT UPDATE handles its own row, but the webhook creates a
+  // separate row with a different username. These webhook artifacts have short
+  // (<=4 digit) suffixes and don't contain the run ID, so the old run-scoped
+  // query missed them. We now clean up both patterns:
+  //   1. e2e%{RUN_ID}% — ephemeral users from this run (onboarding, signup flows)
+  //   2. e2e(pro|admin|fresh) + short suffix — webhook-created duplicates
   try {
     const ephemeralUsers = await db
-      .select({ id: usersTable.id })
+      .select({ id: usersTable.id, username: usersTable.username })
       .from(usersTable)
       .where(like(usersTable.username, `e2e%${RUN_ID}%`));
 
-    for (const user of ephemeralUsers) {
+    const webhookDuplicates = await db
+      .select({ id: usersTable.id, username: usersTable.username })
+      .from(usersTable)
+      .where(
+        sql`${usersTable.username} ~ '^e2e(pro|admin|fresh)[0-9]{1,4}$'`,
+      );
+
+    const allEphemeral = [...ephemeralUsers, ...webhookDuplicates];
+
+    for (const user of allEphemeral) {
       await deleteUserData(db, user.id);
 
       try {
         await clerk.users.deleteUser(user.id);
       } catch {
-        // Ignore
+        // Ignore — Clerk user may not exist (webhook-created DB rows have no matching Clerk user)
       }
 
-      console.log(`[e2e:teardown] Cleaned up ephemeral user ${user.id}`);
+      console.log(`[e2e:teardown] Cleaned up ephemeral user ${user.username} (${user.id})`);
     }
   } catch {
     // Table query may fail
@@ -153,6 +180,16 @@ async function main() {
     }
   } catch {
     // Table query may fail
+  }
+
+  // Clean up seeded referral code and its redemptions
+  const referralCodeId = `e2e-referral-${RUN_ID}`;
+  try {
+    await db.delete(referralRedemptionsTable).where(eq(referralRedemptionsTable.codeId, referralCodeId));
+    await db.delete(referralCodesTable).where(eq(referralCodesTable.id, referralCodeId));
+    console.log(`[e2e:teardown] Deleted referral code ${referralCodeId}`);
+  } catch {
+    // Referral code may not exist
   }
 
   console.log(`[e2e:teardown] Complete (run: ${RUN_ID})`);

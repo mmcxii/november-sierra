@@ -15,7 +15,9 @@ import { THEME_SCRIPT } from "@/lib/theme-script";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  description: "A single harbor for all your links.",
+  applicationName: "Anchr",
+  description:
+    "Anchr is a link-in-bio tool that brings your scattered profiles, payment handles, and important links into one beautiful, blazing-fast page you actually own.",
   metadataBase: new URL(envSchema.NEXT_PUBLIC_APP_URL),
   openGraph: {
     locale: "en_US",

@@ -2,7 +2,7 @@ import "dotenv/config";
 import { createClerkClient } from "@clerk/backend";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -13,6 +13,17 @@ const usersTable = pgTable("users", {
   proExpiresAt: timestamp("pro_expires_at"),
   tier: text("tier").default("free").notNull(),
   username: text("username").unique().notNull(),
+});
+
+const referralCodesTable = pgTable("referral_codes", {
+  active: boolean("active").default(true).notNull(),
+  code: text("code").unique().notNull(),
+  currentRedemptions: integer("current_redemptions").default(0).notNull(),
+  durationDays: integer("duration_days"),
+  id: text("id").primaryKey(),
+  maxRedemptions: integer("max_redemptions"),
+  note: text("note"),
+  type: text("type").notNull(),
 });
 
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
@@ -102,6 +113,25 @@ async function main() {
   const seededUsersPath = path.join(clerkDir, "seeded-users.json");
   fs.writeFileSync(seededUsersPath, JSON.stringify(seededUsers, null, 2));
   console.log(`[e2e:seed] Wrote ${seededUsers.length} users to ${seededUsersPath} (run: ${RUN_ID})`);
+
+  // Seed a test referral code for sign-up E2E tests
+  const E2E_REFERRAL_CODE = `ANCHR-E2E${RUN_ID.toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 6)}`;
+  await db
+    .insert(referralCodesTable)
+    .values({
+      code: E2E_REFERRAL_CODE,
+      durationDays: 30,
+      id: `e2e-referral-${RUN_ID}`,
+      note: `E2E test referral code (run: ${RUN_ID})`,
+      type: "admin",
+    })
+    .onConflictDoUpdate({
+      set: { active: true, currentRedemptions: 0 },
+      target: referralCodesTable.id,
+    });
+  console.log(`[e2e:seed] Seeded referral code: ${E2E_REFERRAL_CODE}`);
 }
 
 main().catch((err) => {

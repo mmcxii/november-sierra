@@ -1,0 +1,124 @@
+name: "E2E: Post-merge Dependabot"
+
+# Dependabot PRs skip E2E in CI (no secrets access). This workflow runs E2E
+# after a Dependabot commit lands on main. If E2E fails twice (to rule out
+# flakes), it opens a PR to revert the commit so main stays green.
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    # Only run for commits authored by Dependabot
+    if: ${{ github.event.head_commit.author.username == 'dependabot[bot]' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Pull env from Vercel (anchr-stage preview)
+        run: npx vercel env pull .env.local --environment preview --yes --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests (attempt 1)
+        id: e2e_first
+        continue-on-error: true
+        run: pnpm test:e2e
+        env:
+          E2E_USER_PASSWORD: e2e-test-password-ephemeral
+          E2E_RUN_ID: ${{ github.run_id }}-attempt-1
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      - name: Retry E2E tests (attempt 2)
+        id: e2e_retry
+        if: ${{ steps.e2e_first.outcome == 'failure' }}
+        run: pnpm test:e2e
+        env:
+          E2E_USER_PASSWORD: e2e-test-password-ephemeral
+          E2E_RUN_ID: ${{ github.run_id }}-attempt-2
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-dependabot
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results-dependabot
+          path: test-results/
+          retention-days: 30
+
+  revert:
+    name: Revert on E2E failure
+    runs-on: ubuntu-latest
+    needs: e2e
+    if: ${{ failure() }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Create revert branch and PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          SHORT_SHA="${COMMIT_SHA:0:7}"
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          BRANCH="revert-dependabot-${SHORT_SHA}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git revert --no-edit HEAD
+
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "revert: ${COMMIT_MSG}" \
+            --body "$(cat <<EOF
+          ## Automated revert
+
+          E2E tests failed twice after merging [\`${SHORT_SHA}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${COMMIT_SHA}):
+
+          > ${COMMIT_MSG}
+
+          [View failed E2E run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }})
+          EOF
+          )" \
+            --head "$BRANCH" \
+            --base main

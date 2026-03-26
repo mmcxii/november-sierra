@@ -33,7 +33,7 @@ export const Hero: React.FC<HeroProps> = (props) => {
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_auto] lg:gap-20">
           {/* h1 — row 1 on mobile, col 1 row 1 on desktop */}
           <h1 className="text-center text-4xl leading-tight font-bold tracking-tight sm:text-5xl lg:col-start-1 lg:row-start-1 lg:text-left lg:text-6xl">
-            {t("finallyALinkPageWorthSharing")}
+            {t("finallyALinkHubWorthSharing")}
           </h1>
 
           {/* Mockup — row 2 on mobile, col 2 spanning rows 1–2 on desktop */}

@@ -5,6 +5,7 @@ import { initTranslations } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  description: "Terms of Service for Anchr — the link-in-bio tool that helps you own your online presence.",
   title: "Terms of Service",
 };
 
