@@ -1,7 +1,10 @@
 /* eslint-disable anchr/no-inline-style, anchr/no-raw-string-jsx */
+import type { ThemeVariables } from "@/lib/custom-themes";
 import { db } from "@/lib/db/client";
+import { customThemesTable } from "@/lib/db/schema/custom-theme";
 import { usersTable } from "@/lib/db/schema/user";
 import { getTheme } from "@/lib/themes";
+import { deriveOgColorsFromVariables, isCustomThemeId } from "@/lib/utils/custom-theme";
 import { eq } from "drizzle-orm";
 import { ImageResponse } from "next/og";
 
@@ -25,7 +28,31 @@ export default async function UserOpenGraphImage(props: { params: Promise<Params
     return new Response(null, { status: 404 });
   }
 
-  const theme = getTheme(user.pageDarkTheme);
+  // Resolve theme colors — support custom themes with safe fallback
+  let ogColors:
+    | undefined
+    | { anchorColor: string; avatarBg: string; avatarOuterRing: string; nameColor: string; ogBackground: string };
+
+  if (isCustomThemeId(user.pageDarkTheme)) {
+    const [ct] = await db.select().from(customThemesTable).where(eq(customThemesTable.id, user.pageDarkTheme)).limit(1);
+    if (ct != null) {
+      ogColors = deriveOgColorsFromVariables(ct.variables as ThemeVariables);
+    }
+  }
+
+  // Fall back to preset (handles both preset IDs and deleted custom themes)
+  if (ogColors == null) {
+    const preset = getTheme(user.pageDarkTheme);
+    ogColors = {
+      anchorColor: preset.anchorColor,
+      avatarBg: preset.avatarBg,
+      avatarOuterRing: preset.avatarOuterRing,
+      nameColor: preset.nameColor,
+      ogBackground: preset.ogBackground,
+    };
+  }
+
+  const theme = ogColors;
   const bg = theme.ogBackground;
   const displayName = user.displayName ?? user.username;
 

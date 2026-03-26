@@ -4,6 +4,7 @@ import nextTs from "eslint-config-next/typescript";
 import pluginImport from "eslint-plugin-import";
 import { defineConfig, globalIgnores } from "eslint/config";
 import { noDirectDbInComponents } from "./eslint/no-direct-db-in-components.js";
+import { noImplicitReturnArrow } from "./eslint/no-implicit-return-arrow.js";
 import { noInlineFunctionProps } from "./eslint/no-inline-function-props.js";
 import { noInlineStyle } from "./eslint/no-inline-style.js";
 import { noJsxWhitespaceLiteral } from "./eslint/no-jsx-whitespace-literal.js";
@@ -30,6 +31,7 @@ const eslintConfig = defineConfig([
       anchr: {
         rules: {
           "no-direct-db-in-components": noDirectDbInComponents,
+          "no-implicit-return-arrow": noImplicitReturnArrow,
           "no-inline-function-props": noInlineFunctionProps,
           "no-inline-style": noInlineStyle,
           "no-jsx-whitespace-literal": noJsxWhitespaceLiteral,
@@ -87,6 +89,7 @@ const eslintConfig = defineConfig([
   {
     files: ["src/**/*.{ts,tsx}"],
     rules: {
+      "anchr/no-implicit-return-arrow": "warn",
       "anchr/no-inline-function-props": "error",
       "anchr/no-raw-string-jsx": "error",
       "react/no-array-index-key": "error",

@@ -1,16 +1,19 @@
 import { Footer } from "@/components/link-page/footer";
 import { LinkList } from "@/components/link-page/link-list";
 import { ProfileHeader } from "@/components/link-page/profile-header";
-import { ThemeProvider } from "@/components/link-page/theme-provider";
+import { ThemeProvider, type CustomThemeRenderData } from "@/components/link-page/theme-provider";
 import { LinkPageThemeToggle } from "@/components/link-page/theme-toggle";
 import { Container } from "@/components/ui/container";
+import type { ThemeVariables } from "@/lib/custom-themes";
 import { db } from "@/lib/db/client";
+import { customThemesTable } from "@/lib/db/schema/custom-theme";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { usersTable } from "@/lib/db/schema/user";
 import { refreshNostrProfile } from "@/lib/nostr-profile.server";
-import { type ThemeId, isValidThemeId } from "@/lib/themes";
+import { isValidThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
+import { isCustomThemeId } from "@/lib/utils/custom-theme";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -224,15 +227,64 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
   }
 
   const { featuredLink, groups, links, quickLinks, user } = data;
-  const darkThemeId: ThemeId = isValidThemeId(user.pageDarkTheme) ? user.pageDarkTheme : "dark-depths";
-  const lightThemeId: ThemeId = isValidThemeId(user.pageLightTheme) ? user.pageLightTheme : "stateroom";
+  const darkThemeId = isValidThemeId(user.pageDarkTheme) ? user.pageDarkTheme : "dark-depths";
+  const lightThemeId = isValidThemeId(user.pageLightTheme) ? user.pageLightTheme : "stateroom";
+
+  // Resolve custom themes if assigned
+  let darkCustomTheme: undefined | CustomThemeRenderData;
+  let lightCustomTheme: undefined | CustomThemeRenderData;
+
+  if (isCustomThemeId(user.pageDarkTheme)) {
+    const [ct] = await db.select().from(customThemesTable).where(eq(customThemesTable.id, user.pageDarkTheme)).limit(1);
+    if (ct != null) {
+      darkCustomTheme = {
+        backgroundImage: ct.backgroundImage,
+        borderRadius: ct.borderRadius,
+        font: ct.font,
+        isDark: true,
+        overlayColor: ct.overlayColor,
+        overlayOpacity: ct.overlayOpacity,
+        rawCss: ct.rawCss,
+        variables: ct.variables as ThemeVariables,
+      };
+    }
+  }
+
+  if (isCustomThemeId(user.pageLightTheme)) {
+    const [ct] = await db
+      .select()
+      .from(customThemesTable)
+      .where(eq(customThemesTable.id, user.pageLightTheme))
+      .limit(1);
+    if (ct != null) {
+      lightCustomTheme = {
+        backgroundImage: ct.backgroundImage,
+        borderRadius: ct.borderRadius,
+        font: ct.font,
+        isDark: false,
+        overlayColor: ct.overlayColor,
+        overlayOpacity: ct.overlayOpacity,
+        rawCss: ct.rawCss,
+        variables: ct.variables as ThemeVariables,
+      };
+    }
+  }
+
+  const showThemeToggle = user.pageLightEnabled && user.pageDarkEnabled;
 
   const headerList = await headers();
   const customDomain = headerList.get("x-custom-domain");
   const basePath = customDomain != null ? "" : `/${user.username}`;
 
   return (
-    <ThemeProvider darkThemeId={darkThemeId} lightThemeId={lightThemeId}>
+    <ThemeProvider
+      darkCustomTheme={darkCustomTheme}
+      darkEnabled={user.pageDarkEnabled}
+      darkThemeId={darkCustomTheme != null ? "custom" : darkThemeId}
+      lightCustomTheme={lightCustomTheme}
+      lightEnabled={user.pageLightEnabled}
+      lightThemeId={lightCustomTheme != null ? "custom" : lightThemeId}
+    >
       {/* Hairline accent */}
       <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(to_right,transparent,color-mix(in_srgb,var(--anc-theme-hairline)_60%,transparent),transparent)]" />
 
@@ -277,7 +329,10 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
         />
       </div>
       <Container className="relative pb-8">
-        <Footer hideBranding={isProUser(user) && user.hideBranding} themeToggle={<LinkPageThemeToggle />} />
+        <Footer
+          hideBranding={isProUser(user) && user.hideBranding}
+          themeToggle={showThemeToggle ? <LinkPageThemeToggle /> : null}
+        />
       </Container>
     </ThemeProvider>
   );

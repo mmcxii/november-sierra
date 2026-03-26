@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 
 /* Keep in sync with DARK_THEME_IDS in src/lib/themes.ts */
-@custom-variant dark (&:is([data-theme="dark"] *, [data-theme="dark-depths"] *, [data-theme="obsidian"] *));
+@custom-variant dark (&:is([data-theme="dark"] *, [data-theme="dark-depths"] *, [data-theme="obsidian"] *, [data-theme="custom-dark"] *));
 
 .debug {
   border: 1px solid red;

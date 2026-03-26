@@ -12,8 +12,6 @@ import {
   removeCustomDomain,
   saveNostrProfile,
   updateHideBranding,
-  updatePageDarkTheme,
-  updatePageLightTheme,
   updateProfile,
   updateUsername,
   verifyCustomDomain,
@@ -21,9 +19,6 @@ import {
 import { CheckoutCelebration } from "@/components/dashboard/checkout-celebration";
 import { PagePreview } from "@/components/dashboard/page-preview";
 import { PreviewToggle } from "@/components/dashboard/preview-toggle";
-import { ThemePicker } from "@/components/dashboard/theme-picker";
-import { useDashboardTheme } from "@/components/dashboard/theme-provider/context";
-import { ThemeSwatch } from "@/components/dashboard/theme-swatch";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
@@ -34,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { SessionUser } from "@/lib/auth";
 import { DEFAULT_RELAYS, type NostrProfileData } from "@/lib/nostr-profile";
 import { usernameSchema } from "@/lib/schemas/username";
-import { DARK_THEME_ID_LIST, LIGHT_THEME_ID_LIST, THEMES, isDarkTheme, type ThemeId } from "@/lib/themes";
+import { type ThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
 import { useUploadThing } from "@/lib/uploadthing";
 import { useReverification, useSession, useUser } from "@clerk/nextjs";
@@ -61,8 +56,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const { t } = useTranslation();
   const { user: clerkUser } = useUser();
   const { session } = useSession();
-  const { preferredDark, preferredLight, setPreferredDark, setPreferredLight } = useDashboardTheme();
-  const [previewThemes, setPreviewThemes] = React.useState({ dark: pageDarkThemeId, light: pageLightThemeId });
+  const [previewThemes] = React.useState({ dark: pageDarkThemeId, light: pageLightThemeId });
   const [brandingHidden, setBrandingHidden] = React.useState(hideBranding);
   const [brandingPending, startBrandingTransition] = React.useTransition();
   const [billingLoading, setBillingLoading] = React.useState(false);
@@ -230,10 +224,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   }, [reverifyPassword, emailPending]);
 
   //* Handlers
-  const handlePageThemeChange = React.useCallback((themeId: ThemeId) => {
-    setPreviewThemes((prev) => (isDarkTheme(themeId) ? { ...prev, dark: themeId } : { ...prev, light: themeId }));
-  }, []);
-
   const handleBrandingToggle = () => {
     const newValue = !brandingHidden;
     setBrandingHidden(newValue);
@@ -612,16 +602,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
 
   const handleDomainInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setDomainInput(e.target.value);
 
-  const handleDarkThemeSwatchOnClick = React.useCallback(
-    (id: ThemeId) => () => setPreferredDark(id),
-    [setPreferredDark],
-  );
-
-  const handleLightThemeSwatchOnClick = React.useCallback(
-    (id: ThemeId) => () => setPreferredLight(id),
-    [setPreferredLight],
-  );
-
   const handleReferralInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setReferralInput(e.target.value);
 
   const handleRedeemCode = () => {
@@ -942,70 +922,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                 {t("save")}
               </Button>
             )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("dashboardTheme")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-muted-foreground mb-2 text-sm font-medium">{t("darkTheme")}</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {DARK_THEME_ID_LIST.map((id) => (
-                  <ThemeSwatch
-                    isSelected={preferredDark === id}
-                    key={id}
-                    name={THEMES[id].name}
-                    onClick={handleDarkThemeSwatchOnClick(id)}
-                    swatch={THEMES[id].swatch}
-                    variant="dashboard"
-                  />
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-muted-foreground mb-2 text-sm font-medium">{t("lightTheme")}</p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {LIGHT_THEME_ID_LIST.map((id) => (
-                  <ThemeSwatch
-                    isSelected={preferredLight === id}
-                    key={id}
-                    name={THEMES[id].name}
-                    onClick={handleLightThemeSwatchOnClick(id)}
-                    swatch={THEMES[id].swatch}
-                    variant="dashboard"
-                  />
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("pageTheme")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <p className="text-muted-foreground mb-3 text-sm font-medium">{t("darkTheme")}</p>
-              <ThemePicker
-                action={updatePageDarkTheme}
-                currentThemeId={pageDarkThemeId}
-                onThemeChange={handlePageThemeChange}
-                themeIds={DARK_THEME_ID_LIST}
-              />
-            </div>
-            <div>
-              <p className="text-muted-foreground mb-3 text-sm font-medium">{t("lightTheme")}</p>
-              <ThemePicker
-                action={updatePageLightTheme}
-                currentThemeId={pageLightThemeId}
-                onThemeChange={handlePageThemeChange}
-                themeIds={LIGHT_THEME_ID_LIST}
-              />
-            </div>
           </CardContent>
         </Card>
 
