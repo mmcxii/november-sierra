@@ -1,3 +1,4 @@
+import { JsonLd } from "@/components/json-ld";
 import { FadeIn } from "@/components/marketing/fade-in";
 import { Footer } from "@/components/marketing/footer";
 import { PricingCards } from "@/components/marketing/pricing-toggle";
@@ -29,8 +30,22 @@ const FAQ = [
 const PricingPage: React.FC = async () => {
   const { t } = await initTranslations("en-US");
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ.map(({ answer, question }) => ({
+      "@type": "Question",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: t(answer),
+      },
+      name: t(question),
+    })),
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
+      <JsonLd data={faqJsonLd} />
       <SiteHeader />
 
       <Container as="main" className="flex-1 py-16">

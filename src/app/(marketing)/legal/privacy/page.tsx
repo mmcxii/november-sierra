@@ -5,6 +5,7 @@ import { initTranslations } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  description: "Learn how Anchr handles your data — with care, honesty, and respect. We don't sell your data or spam you.",
   title: "Privacy Policy",
 };
 

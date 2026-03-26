@@ -1,3 +1,4 @@
+import { JsonLd } from "@/components/json-ld";
 import { Footer } from "@/components/link-page/footer";
 import { LinkList } from "@/components/link-page/link-list";
 import { ProfileHeader } from "@/components/link-page/profile-header";
@@ -21,6 +22,12 @@ export const revalidate = 60;
 export const dynamicParams = true;
 
 type Params = { username: string };
+
+function getUserPageUrl(user: { customDomain: null | string; customDomainVerified: boolean; username: string }) {
+  return user.customDomain != null && user.customDomainVerified
+    ? `https://${user.customDomain}`
+    : `https://anchr.to/${user.username}`;
+}
 
 async function getPageData(username: string) {
   const users = await db.select().from(usersTable).where(eq(usersTable.username, username.toLowerCase())).limit(1);
@@ -186,10 +193,7 @@ export async function generateMetadata(props: { params: Promise<Params> }): Prom
 
   const { user } = data;
   const name = user.displayName ?? user.username;
-  const pageUrl =
-    user.customDomain != null && user.customDomainVerified
-      ? `https://${user.customDomain}`
-      : `https://anchr.to/${user.username}`;
+  const pageUrl = getUserPageUrl(user);
 
   return {
     description: user.bio ?? `Check out ${name}'s links on Anchr.`,
@@ -231,8 +235,24 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
   const customDomain = headerList.get("x-custom-domain");
   const basePath = customDomain != null ? "" : `/${user.username}`;
 
+  const pageUrl = getUserPageUrl(user);
+
+  const profileJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    mainEntity: {
+      "@type": "Person",
+      alternateName: `@${user.username}`,
+      ...(user.bio != null ? { description: user.bio } : {}),
+      ...(user.avatarUrl != null ? { image: user.avatarUrl } : {}),
+      name: user.displayName ?? user.username,
+      url: pageUrl,
+    },
+  };
+
   return (
     <ThemeProvider darkThemeId={darkThemeId} lightThemeId={lightThemeId}>
+      <JsonLd data={profileJsonLd} />
       {/* Hairline accent */}
       <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(to_right,transparent,color-mix(in_srgb,var(--anc-theme-hairline)_60%,transparent),transparent)]" />
 
