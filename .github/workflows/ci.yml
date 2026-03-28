@@ -11,9 +11,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  ci-required:
+    name: CI Required
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'src/**'
+              - 'e2e/**'
+              - 'scripts/**'
+              - 'drizzle/**'
+              - '**/*.config.*'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'eslint/**'
+              - 'vercel.json'
+              - 'components.json'
+              - '.github/workflows/**'
+
   ci:
     name: Typecheck, Lint, Test
     runs-on: ubuntu-latest
+    needs: ci-required
+    if: needs.ci-required.outputs.code == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -44,10 +71,10 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: ci
+    needs: [ci-required, ci]
     # Dependabot PRs can't access secrets — E2E runs post-merge instead
     # (see e2e-dependabot.yml)
-    if: ${{ github.actor != 'dependabot[bot]' }}
+    if: ${{ github.actor != 'dependabot[bot]' && needs.ci-required.outputs.code == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
