@@ -74,7 +74,7 @@ jobs:
       - name: Push schema changes to staging DB
         # --force skips confirmation prompts for destructive changes (CI is non-interactive)
         run: |
-          npx vercel env pull .env.local --environment preview --yes --token=${{ secrets.VERCEL_TOKEN }}
+          npx vercel env pull .env.local --environment production --yes --token=${{ secrets.VERCEL_TOKEN }}
           pnpm db:push --force
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
