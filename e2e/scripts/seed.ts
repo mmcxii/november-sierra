@@ -115,9 +115,7 @@ async function main() {
   console.log(`[e2e:seed] Wrote ${seededUsers.length} users to ${seededUsersPath} (run: ${RUN_ID})`);
 
   // Seed a test referral code for sign-up E2E tests
-  const E2E_REFERRAL_CODE = `ANCHR-E2E${RUN_ID.toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 6)}`;
+  const E2E_REFERRAL_CODE = `ANCHR-E2E${RUN_ID.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;
   await db
     .insert(referralCodesTable)
     .values({
