@@ -1,6 +1,6 @@
 ---
 name: interview
-description: "Relentlessly interview the user about a plan until reaching shared understanding, resolving design decisions one at a time."
+description: "Use when the user wants to stress-test a plan, get critical feedback on a design, or explicitly says 'interview me' or 'grill me'."
 ---
 
 # Interview
