@@ -96,7 +96,10 @@ export async function completeOnboarding(referralCode?: string): Promise<{ succe
   await db.update(usersTable).set({ onboardingComplete: true, updatedAt: new Date() }).where(eq(usersTable.id, userId));
 
   if (referralCode != null && referralCode.length > 0) {
-    await redeemReferralCode(referralCode);
+    const result = await redeemReferralCode(referralCode);
+    if (!result.success) {
+      console.error(`[completeOnboarding] referral code redemption failed: ${result.error}`);
+    }
   }
 
   return { success: true };

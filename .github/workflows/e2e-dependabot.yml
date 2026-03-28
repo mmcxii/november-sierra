@@ -44,6 +44,32 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
 
+      - name: Compute Neon branch expiration
+        run: echo "NEON_BRANCH_EXPIRES=$(date -u -d '+4 hours' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
+      - name: Create Neon branch for E2E
+        id: neon-branch
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch_name: e2e/dependabot-${{ github.run_id }}
+          username: neondb_owner
+          database: neondb
+          # Safety net: auto-delete if the cleanup step is skipped (e.g. runner crash)
+          expires_at: ${{ env.NEON_BRANCH_EXPIRES }}
+
+      - name: Apply schema to Neon branch
+        # --force skips confirmation prompts for destructive changes (CI is non-interactive)
+        # Source .env.local (from Vercel pull) for envSchema validation, but override DATABASE_URL
+        run: |
+          set -a && source .env.local && set +a
+          export DATABASE_URL="${{ steps.neon-branch.outputs.db_url }}"
+          pnpm db:push --force
+
+      - name: Remove staging DATABASE_URL from .env.local
+        run: sed -i '/^DATABASE_URL=/d' .env.local
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
@@ -52,6 +78,7 @@ jobs:
         continue-on-error: true
         run: pnpm test:e2e
         env:
+          DATABASE_URL: ${{ steps.neon-branch.outputs.db_url_pooled }}
           E2E_USER_PASSWORD: e2e-test-password-ephemeral
           E2E_RUN_ID: ${{ github.run_id }}-attempt-1
           NEXT_PUBLIC_APP_URL: http://localhost:3000
@@ -61,6 +88,7 @@ jobs:
         if: ${{ steps.e2e_first.outcome == 'failure' }}
         run: pnpm test:e2e
         env:
+          DATABASE_URL: ${{ steps.neon-branch.outputs.db_url_pooled }}
           E2E_USER_PASSWORD: e2e-test-password-ephemeral
           E2E_RUN_ID: ${{ github.run_id }}-attempt-2
           NEXT_PUBLIC_APP_URL: http://localhost:3000
@@ -80,6 +108,14 @@ jobs:
           name: test-results-dependabot
           path: test-results/
           retention-days: 30
+
+      - name: Delete Neon branch
+        if: ${{ always() }}
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch: e2e/dependabot-${{ github.run_id }}
 
   revert:
     name: Revert on E2E failure

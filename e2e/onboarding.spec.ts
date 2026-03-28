@@ -1,9 +1,16 @@
+import { execSync } from "node:child_process";
 import { expect, test } from "./fixtures/auth";
 import { t } from "./fixtures/i18n";
 import { E2E_REFERRAL_CODE } from "./fixtures/test-users";
 
 test.describe("onboarding flow", () => {
   test.describe.configure({ mode: "serial" });
+
+  // Reset fresh user state before each retry attempt so serial tests
+  // start from a clean slate (onboardingComplete=false, no redemptions).
+  test.beforeAll(() => {
+    execSync("node --no-warnings e2e/scripts/reset-onboarding.ts", { stdio: "inherit" });
+  });
 
   test("redirects non-onboarded user to /onboarding", async ({ freshUser: page }) => {
     //* Act
