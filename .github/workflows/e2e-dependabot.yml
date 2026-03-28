@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: e2e-dependabot
+  cancel-in-progress: true
+
 jobs:
   e2e:
     name: E2E Tests
