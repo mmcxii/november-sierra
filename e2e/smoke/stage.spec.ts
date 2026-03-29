@@ -1,3 +1,4 @@
+import { expect as baseExpect, test as baseTest } from "@playwright/test";
 import { createLink, deleteLink, expect, test } from "../fixtures/auth";
 import { t } from "../fixtures/i18n";
 import { testDomain, testUsers } from "../fixtures/test-users";
@@ -57,6 +58,39 @@ test.describe("stage deployment smoke tests", () => {
     await deleteLink(page, "Smoke Profile Link");
   });
 
+  test("public profile contains JSON-LD structured data", async ({ proUser: page }) => {
+    //* Arrange — create a link so the profile has content
+    await createLink(page, "JSON-LD Smoke Link", "https://example.com/jsonld-smoke");
+
+    //* Act — visit the public profile
+    await page.goto(`/${testUsers.pro.username}`);
+    await page.getByRole("link", { name: "JSON-LD Smoke Link" }).waitFor();
+
+    //* Assert — JSON-LD script tag is present with @graph structure
+    const jsonLd = await page.evaluate(() => {
+      const script = document.querySelector('script[type="application/ld+json"]');
+      return script ? JSON.parse(script.textContent!) : null;
+    });
+
+    expect(jsonLd).not.toBeNull();
+    expect(jsonLd["@context"]).toBe("https://schema.org");
+    expect(Array.isArray(jsonLd["@graph"])).toBe(true);
+
+    const types = jsonLd["@graph"].map((node: { "@type": string }) => node["@type"]);
+    expect(types).toContain("ProfilePage");
+    expect(types).toContain("ItemList");
+
+    // Verify the ItemList contains our smoke link
+    const itemList = jsonLd["@graph"].find(
+      (node: { "@type": string }) => node["@type"] === "ItemList",
+    );
+    expect(itemList.numberOfItems).toBeGreaterThanOrEqual(1);
+
+    //* Cleanup
+    await page.goto("/dashboard");
+    await deleteLink(page, "JSON-LD Smoke Link");
+  });
+
   test("custom domain serves public profile via real DNS", async ({ proUser: page, browser }) => {
     //* Arrange — add custom domain and create a link
     await page.goto("/dashboard/settings");
@@ -109,5 +143,35 @@ test.describe("stage deployment smoke tests", () => {
     await page.getByRole("heading", { name: t.settings }).waitFor();
     await page.getByRole("button", { name: t.removeDomain }).click();
     await page.getByText(t.domainRemoved).waitFor();
+  });
+});
+
+baseTest.describe("discovery endpoints smoke tests", () => {
+  baseTest("/.well-known/anchr.json returns valid discovery metadata", async ({ request }) => {
+    const response = await request.get("/.well-known/anchr.json");
+
+    baseExpect(response.status()).toBe(200);
+    baseExpect(response.headers()["content-type"]).toContain("application/json");
+
+    const body = await response.json();
+    baseExpect(body.name).toBe("Anchr");
+    baseExpect(body.version).toBe("1.0");
+    baseExpect(body.profiles).toBeDefined();
+    baseExpect(body.profiles.urlPattern).toContain("{username}");
+    baseExpect(body.profiles.sitemap).toContain("/sitemap.xml");
+    baseExpect(body.profiles.structuredData).toContain("JSON-LD");
+  });
+
+  baseTest("/llms.txt returns valid LLM-readable site description", async ({ request }) => {
+    const response = await request.get("/llms.txt");
+
+    baseExpect(response.status()).toBe(200);
+    baseExpect(response.headers()["content-type"]).toContain("text/plain");
+
+    const text = await response.text();
+    baseExpect(text).toContain("# Anchr");
+    baseExpect(text).toContain("{username}");
+    baseExpect(text).toContain("/sitemap.xml");
+    baseExpect(text).toContain("/pricing");
   });
 });
