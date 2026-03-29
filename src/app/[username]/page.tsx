@@ -9,6 +9,7 @@ import { db } from "@/lib/db/client";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { usersTable } from "@/lib/db/schema/user";
+import { buildProfileJsonLd } from "@/lib/json-ld";
 import { refreshNostrProfile } from "@/lib/nostr-profile.server";
 import { type ThemeId, isValidThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
@@ -237,18 +238,14 @@ const UserPage: React.FC<UserPageProps> = async (props) => {
 
   const pageUrl = getUserPageUrl(user);
 
-  const profileJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ProfilePage",
-    mainEntity: {
-      "@type": "Person",
-      alternateName: `@${user.username}`,
-      ...(user.bio != null ? { description: user.bio } : {}),
-      ...(user.avatarUrl != null ? { image: user.avatarUrl } : {}),
-      name: user.displayName ?? user.username,
-      url: pageUrl,
-    },
-  };
+  const profileJsonLd = buildProfileJsonLd({
+    featuredLink,
+    groups,
+    links,
+    pageUrl,
+    quickLinks,
+    user,
+  });
 
   return (
     <ThemeProvider darkThemeId={darkThemeId} lightThemeId={lightThemeId}>

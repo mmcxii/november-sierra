@@ -35,4 +35,37 @@ test.describe("public profile", () => {
     //* Arrange — cleanup
     await deleteLink(page, "Redirect Test");
   });
+
+  test("profile page JSON-LD contains @graph with ProfilePage and ItemList", async ({ proUser: page }) => {
+    //* Arrange — create a link so ItemList is non-empty
+    await createLink(page, "JSON-LD Test Link", "https://github.com/alice");
+
+    //* Act — visit the public profile
+    await page.goto(`/${testUsers.pro.username}`);
+
+    //* Assert — extract and validate JSON-LD
+    const jsonLdContent = await page.locator('script[type="application/ld+json"]').textContent();
+    expect(jsonLdContent).not.toBeNull();
+
+    const jsonLd = JSON.parse(jsonLdContent ?? "");
+    expect(jsonLd["@context"]).toBe("https://schema.org");
+    expect(jsonLd["@graph"]).toBeDefined();
+    expect(Array.isArray(jsonLd["@graph"])).toBe(true);
+
+    const profilePage = jsonLd["@graph"].find((e: Record<string, unknown>) => e["@type"] === "ProfilePage");
+    const itemList = jsonLd["@graph"].find((e: Record<string, unknown>) => e["@type"] === "ItemList");
+
+    expect(profilePage).toBeDefined();
+    expect(profilePage.mainEntity["@type"]).toBe("Person");
+    expect(profilePage.mainEntity.name).toBeTruthy();
+    expect(profilePage.mainEntity.url).toBeTruthy();
+
+    expect(itemList).toBeDefined();
+    expect(itemList.itemListElement.length).toBeGreaterThan(0);
+    expect(itemList.numberOfItems).toBeGreaterThan(0);
+
+    //* Arrange — cleanup
+    await page.goto("/dashboard");
+    await deleteLink(page, "JSON-LD Test Link");
+  });
 });
