@@ -104,6 +104,21 @@ export function detectPlatform(url: string): null | PlatformId {
   return null;
 }
 
+/**
+ * Identity platforms whose URLs are suitable for `Person.sameAs` in JSON-LD.
+ * Payment platforms (paypal, venmo, cashapp, bitcoin, lightning, buymeacoffee, kofi, patreon) are excluded.
+ */
+export const SAME_AS_PLATFORMS: Set<PlatformId> = new Set([
+  "github",
+  "x",
+  "instagram",
+  "linkedin",
+  "youtube",
+  "tiktok",
+  "twitch",
+  "nostr",
+]);
+
 /** Get the brand color pair for a platform, or `undefined` if none. */
 export function getPlatformBrandColor(platformId: string): undefined | { dark: string; light: string } {
   if (!isValidPlatformId(platformId)) {

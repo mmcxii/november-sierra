@@ -1,3 +1,4 @@
+import { JsonLd } from "@/components/json-ld";
 import { Footer } from "@/components/link-page/footer";
 import { LinkList } from "@/components/link-page/link-list";
 import { ProfileHeader } from "@/components/link-page/profile-header";
@@ -9,6 +10,7 @@ import { clicksTable } from "@/lib/db/schema/click";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { usersTable } from "@/lib/db/schema/user";
+import { buildGroupJsonLd } from "@/lib/json-ld";
 import { type ThemeId, isValidThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
 import { and, asc, eq } from "drizzle-orm";
@@ -169,6 +171,15 @@ const SlugPage: React.FC<SlugPageProps> = async (props) => {
   const customDomain = headerList.get("x-custom-domain");
   const basePath = customDomain != null ? "" : `/${user.username}`;
 
+  const profileUrl =
+    user.customDomain != null && user.customDomainVerified
+      ? `https://${user.customDomain}`
+      : `https://anchr.to/${user.username}`;
+  const groupUrl =
+    user.customDomain != null && user.customDomainVerified
+      ? `https://${user.customDomain}/${group.slug}`
+      : `https://anchr.to/${user.username}/${group.slug}`;
+
   // Fetch links in this group
   const groupLinks = await db
     .select({
@@ -184,8 +195,16 @@ const SlugPage: React.FC<SlugPageProps> = async (props) => {
     .where(and(eq(linksTable.userId, user.id), eq(linksTable.groupId, group.id), eq(linksTable.visible, true)))
     .orderBy(asc(linksTable.position));
 
+  const groupJsonLd = buildGroupJsonLd({
+    groupLinks,
+    groupTitle: group.title,
+    groupUrl,
+    profileUrl,
+  });
+
   return (
     <ThemeProvider darkThemeId={darkThemeId} lightThemeId={lightThemeId}>
+      <JsonLd data={groupJsonLd} />
       {/* Hairline accent */}
       <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(to_right,transparent,color-mix(in_srgb,var(--anc-theme-hairline)_60%,transparent),transparent)]" />
 
