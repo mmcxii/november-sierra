@@ -21,7 +21,7 @@ test.describe("API key lifecycle", () => {
 
     //* Assert — raw key is shown
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByText("anc_k_")).toBeVisible();
+    await expect(dialog.getByText("anc_k_")).toBeVisible({ timeout: 15_000 });
     await expect(dialog.getByText(t.thisKeyWillOnlyBeShownOnce)).toBeVisible();
 
     //* Act — close dialog
@@ -47,10 +47,11 @@ test.describe("API key lifecycle", () => {
   test("revokes a key and shows it when toggle is enabled", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/api");
-    await page.getByText(keyName).waitFor();
+    const keyRow = page.locator("tr", { hasText: keyName });
+    await keyRow.waitFor();
 
     //* Act — revoke
-    await page.getByRole("button", { name: t.revoke }).click();
+    await keyRow.getByRole("button", { name: t.revoke }).click();
     const dialog = page.getByRole("dialog");
     await dialog.waitFor({ state: "visible" });
     await dialog.getByRole("button", { name: t.revoke }).click();
@@ -63,7 +64,6 @@ test.describe("API key lifecycle", () => {
     await page.getByLabel(t.showRevokedKeys).check();
 
     //* Assert — revoked key visible with revoked status in its row
-    const keyRow = page.locator("tr", { hasText: keyName });
     await expect(keyRow).toBeVisible();
     await expect(keyRow.getByText(t.revoked, { exact: true })).toBeVisible();
   });
@@ -88,12 +88,12 @@ test.describe("API key free tier limit", () => {
     await page.getByLabel(t.name).fill(freeKeyName);
     await page.getByRole("button", { name: t.create }).click();
 
-    // Wait for either the "Done" button (success) or an error message (transient DB failure),
+    // Wait for either the raw key (success) or an error message (transient DB failure),
     // then retry once if we got an error
     const dialog = page.getByRole("dialog");
-    const doneButton = dialog.getByRole("button", { name: t.done });
+    const rawKeyText = dialog.getByText("anc_k_");
     const errorText = page.getByText(t.somethingWentWrongPleaseTryAgain);
-    await doneButton.or(errorText).waitFor({ state: "visible", timeout: 15_000 });
+    await rawKeyText.or(errorText).waitFor({ state: "visible", timeout: 15_000 });
 
     if (await errorText.isVisible().catch(() => false)) {
       // Transient failure — close dialog, retry key creation
@@ -101,10 +101,11 @@ test.describe("API key free tier limit", () => {
       await page.getByRole("button", { name: t.createKey }).click();
       await page.getByLabel(t.name).fill(freeKeyName);
       await page.getByRole("button", { name: t.create }).click();
-      await doneButton.click();
-    } else {
-      await doneButton.click();
+      await rawKeyText.waitFor({ state: "visible", timeout: 15_000 });
     }
+
+    // Raw key is visible — dialog re-render is complete, safe to click Done
+    await dialog.getByRole("button", { name: t.done }).click();
 
     //* Act — try to create a second key
     await page.getByRole("button", { name: t.createKey }).click();
