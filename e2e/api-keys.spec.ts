@@ -25,11 +25,12 @@ test.describe("API key lifecycle", () => {
     await expect(dialog.getByText(t.thisKeyWillOnlyBeShownOnce)).toBeVisible();
 
     //* Act — close dialog
-    await page.getByRole("button", { name: t.done }).click();
+    await dialog.getByRole("button", { name: t.done }).click();
 
     //* Assert — key appears in table masked, raw key is gone
-    await expect(page.getByText(keyName)).toBeVisible();
-    await expect(page.getByText(t.active)).toBeVisible();
+    const keyRow = page.locator("tr", { hasText: keyName });
+    await expect(keyRow).toBeVisible();
+    await expect(keyRow.getByText(t.active)).toBeVisible();
 
     //* Act — try to create another key with the same name
     await page.getByRole("button", { name: t.createKey }).click();
@@ -89,7 +90,8 @@ test.describe("API key free tier limit", () => {
 
     // Wait for either the "Done" button (success) or an error message (transient DB failure),
     // then retry once if we got an error
-    const doneButton = page.getByRole("button", { name: t.done });
+    const dialog = page.getByRole("dialog");
+    const doneButton = dialog.getByRole("button", { name: t.done });
     const errorText = page.getByText(t.somethingWentWrongPleaseTryAgain);
     await doneButton.or(errorText).waitFor({ state: "visible", timeout: 15_000 });
 
