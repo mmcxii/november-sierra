@@ -79,6 +79,8 @@
   "scripts": {
     "build": "next build",
     "db:backfill-group-slugs": "npx tsx scripts/backfill-group-slugs.ts",
+    "db:check": "drizzle-kit check",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "dev": "next dev & stripe listen --forward-to localhost:3000/api/stripe/webhook",

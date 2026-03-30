@@ -10,6 +10,7 @@ export const linkGroupsTable = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     isQuickLinks: boolean("is_quick_links").default(false).notNull(),
     position: integer("position").notNull(),
+    /** URL-safe identifier for shareable group pages, unique per user. */
     slug: text("slug"),
     title: text("title").notNull(),
     userId: text("user_id")

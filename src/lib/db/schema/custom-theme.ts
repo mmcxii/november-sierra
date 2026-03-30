@@ -1,6 +1,7 @@
 import { integer, jsonb, pgTable, real, text, timestamp, unique } from "drizzle-orm/pg-core";
 import { usersTable } from "./user";
 
+/** User-created custom themes with CSS variables, fonts, and optional raw CSS. */
 export const customThemesTable = pgTable(
   "custom_themes",
   {

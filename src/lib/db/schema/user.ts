@@ -1,5 +1,6 @@
 import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
+/** Core user table — holds profile, auth, subscription, and feature-flag state. */
 export const usersTable = pgTable("users", {
   avatarUrl: text("avatar_url"),
   bio: text("bio"),

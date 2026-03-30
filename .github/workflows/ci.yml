@@ -41,6 +41,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -55,6 +57,24 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Validate schema ↔ migration sync
+        run: |
+          SCHEMA=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'src/lib/db/schema/')
+          MIGRATIONS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'drizzle/*.sql')
+          if [ -n "$SCHEMA" ] && [ -z "$MIGRATIONS" ]; then
+            echo "::error::Schema files changed without a migration. Run 'pnpm drizzle-kit generate'."
+            echo "$SCHEMA"
+            exit 1
+          fi
+          if [ -n "$MIGRATIONS" ] && [ -z "$SCHEMA" ]; then
+            echo "::error::Migration files changed without a schema change."
+            echo "$MIGRATIONS"
+            exit 1
+          fi
+
+      - name: Verify migrations match schema (drizzle-kit check)
+        run: pnpm db:check
 
       - name: Typecheck
         run: pnpm tsc --noEmit
@@ -106,7 +126,7 @@ jobs:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           api_key: ${{ secrets.NEON_API_KEY }}
           branch_name: e2e/ci-${{ github.run_id }}
-          username: neondb_owner
+          role: neondb_owner
           database: neondb
           # Safety net: auto-delete if the cleanup step is skipped (e.g. runner crash)
           expires_at: ${{ env.NEON_BRANCH_EXPIRES }}

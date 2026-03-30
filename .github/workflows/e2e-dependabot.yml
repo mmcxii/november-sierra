@@ -54,7 +54,7 @@ jobs:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           api_key: ${{ secrets.NEON_API_KEY }}
           branch_name: e2e/dependabot-${{ github.run_id }}
-          username: neondb_owner
+          role: neondb_owner
           database: neondb
           # Safety net: auto-delete if the cleanup step is skipped (e.g. runner crash)
           expires_at: ${{ env.NEON_BRANCH_EXPIRES }}

@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: deploy-stage
+  cancel-in-progress: false
+
 jobs:
   ci-required:
     name: CI Required
@@ -71,9 +75,8 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
 
-      - name: Push schema changes to staging DB
-        # --force skips confirmation prompts for destructive changes (CI is non-interactive)
-        run: npx vercel env run -e production --token=${{ secrets.VERCEL_TOKEN }} -- pnpm db:push --force
+      - name: Run database migrations
+        run: npx vercel env run -e production --token=${{ secrets.VERCEL_TOKEN }} -- pnpm db:migrate
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}

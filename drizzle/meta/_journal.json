@@ -42,6 +42,20 @@
       "tag": "0005_add-api-keys-table",
       "version": "7",
       "when": 1774998000000
+    },
+    {
+      "breakpoints": true,
+      "idx": 6,
+      "tag": "0006_add-slug-to-link-groups",
+      "version": "7",
+      "when": 1774869591414
+    },
+    {
+      "breakpoints": true,
+      "idx": 7,
+      "tag": "0007_add-custom-themes",
+      "version": "7",
+      "when": 1774871833520
     }
   ],
   "version": "7"
