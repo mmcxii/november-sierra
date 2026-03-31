@@ -151,6 +151,37 @@ test.describe("stage deployment smoke tests", () => {
   });
 });
 
+baseTest.describe("status endpoints smoke tests", () => {
+  baseTest("health check returns ok", async ({ request }) => {
+    //* Act
+    const response = await request.get("/api/__status__/health");
+
+    //* Assert
+    baseExpect(response.status()).toBe(200);
+
+    const body = await response.json();
+    baseExpect(body.status).toBe("ok");
+  });
+
+  baseTest("release endpoint returns commit and timestamp", async ({ request }) => {
+    //* Act
+    const response = await request.get("/api/__status__/release");
+
+    //* Assert
+    baseExpect(response.status()).toBe(200);
+
+    const body = await response.json();
+    baseExpect(body.commitSha).toBeTruthy();
+    baseExpect(body.deployedAt).toBeTruthy();
+    baseExpect(Number.isNaN(Date.parse(body.deployedAt))).toBe(false);
+
+    const expectedSha = process.env.EXPECTED_COMMIT_SHA;
+    if (expectedSha != null) {
+      baseExpect(body.commitSha).toBe(expectedSha);
+    }
+  });
+});
+
 baseTest.describe("discovery endpoints smoke tests", () => {
   baseTest("/.well-known/anchr.json returns valid discovery metadata", async ({ request }) => {
     const response = await request.get("/.well-known/anchr.json");

@@ -1,0 +1,312 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  ci-required:
+    name: CI Required
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'src/**'
+              - 'e2e/**'
+              - 'scripts/**'
+              - 'drizzle/**'
+              - '**/*.config.*'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'eslint/**'
+              - 'vercel.json'
+              - 'components.json'
+              - '.github/workflows/**'
+
+  deploy-stage:
+    name: Deploy to Stage
+    runs-on: ubuntu-latest
+    needs: ci-required
+    if: needs.ci-required.outputs.code == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+
+      - name: Run database migrations
+        run: npx vercel env run -e production --token=${{ secrets.VERCEL_TOKEN }} -- pnpm db:migrate
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+
+      - name: Deploy to Staging
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+
+  smoke-stage:
+    name: Smoke Tests (Stage)
+    runs-on: ubuntu-latest
+    needs: deploy-stage
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Pull env from Vercel (anchr-stage preview)
+        run: npx vercel env pull .env.local --environment preview --yes --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+
+      - name: Wait for deployment propagation
+        run: |
+          EXPECTED="${{ github.sha }}"
+          URL="https://stage.anchr.to/api/__status__/release"
+          echo "Waiting for $URL to serve commit $EXPECTED..."
+          for i in $(seq 1 18); do
+            SHA=$(curl -sf "$URL" | jq -r '.commitSha // empty' 2>/dev/null || true)
+            if [ "$SHA" = "$EXPECTED" ]; then
+              echo "Deployment propagated after ~$((i * 5))s"
+              exit 0
+            fi
+            echo "Attempt $i/18: got ${SHA:-<empty>}, retrying in 5s..."
+            sleep 5
+          done
+          echo "::error::Deployment did not propagate within 90s (expected $EXPECTED)"
+          exit 1
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run smoke tests against stage
+        run: pnpm test:e2e:smoke
+        env:
+          E2E_USER_PASSWORD: e2e-test-password-ephemeral
+          E2E_RUN_ID: ${{ github.run_id }}
+          SMOKE_BASE_URL: https://stage.anchr.to
+          EXPECTED_COMMIT_SHA: ${{ github.sha }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-test-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-test-results
+          path: test-results-smoke/
+          retention-days: 30
+
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: smoke-stage
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+
+      - name: Run database migrations
+        run: npx vercel env run -e production --token=${{ secrets.VERCEL_TOKEN }} -- pnpm db:migrate
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+
+      - name: Deploy to Production
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+
+  smoke-prod:
+    name: Smoke Tests (Production)
+    runs-on: ubuntu-latest
+    needs: deploy-prod
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Wait for deployment propagation
+        run: |
+          EXPECTED="${{ github.sha }}"
+          URL="https://anchr.to/api/__status__/release"
+          echo "Waiting for $URL to serve commit $EXPECTED..."
+          for i in $(seq 1 18); do
+            SHA=$(curl -sf "$URL" | jq -r '.commitSha // empty' 2>/dev/null || true)
+            if [ "$SHA" = "$EXPECTED" ]; then
+              echo "Deployment propagated after ~$((i * 5))s"
+              exit 0
+            fi
+            echo "Attempt $i/18: got ${SHA:-<empty>}, retrying in 5s..."
+            sleep 5
+          done
+          echo "::error::Deployment did not propagate within 90s (expected $EXPECTED)"
+          exit 1
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run smoke tests against production
+        run: pnpm test:e2e:smoke:prod
+        env:
+          SMOKE_BASE_URL: https://anchr.to
+          EXPECTED_COMMIT_SHA: ${{ github.sha }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-test-prod-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-test-prod-results
+          path: test-results-smoke-prod/
+          retention-days: 30
+
+  rollback-prod:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    needs: [deploy-prod, smoke-prod]
+    if: always() && needs.deploy-prod.result == 'success' && needs.smoke-prod.result == 'failure'
+    steps:
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Rollback production deployment
+        run: vercel rollback --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
