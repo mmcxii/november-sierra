@@ -34,7 +34,7 @@ test.describe("stage deployment smoke tests", () => {
     await page.goto("/dashboard/api");
 
     //* Assert
-    await expect(page.getByRole("heading", { name: t.api })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.api })).toBeVisible();
   });
 
   test("link CRUD works end-to-end", async ({ proUser: page }) => {
