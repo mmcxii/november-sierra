@@ -155,7 +155,7 @@ jobs:
           EXPECTED_COMMIT_SHA: ${{ github.sha }}
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: smoke-test-report
@@ -163,7 +163,7 @@ jobs:
           retention-days: 30
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: smoke-test-results
@@ -281,7 +281,7 @@ jobs:
           EXPECTED_COMMIT_SHA: ${{ github.sha }}
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: smoke-test-prod-report
@@ -289,7 +289,7 @@ jobs:
           retention-days: 30
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: smoke-test-prod-results
