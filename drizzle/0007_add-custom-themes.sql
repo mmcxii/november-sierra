@@ -19,5 +19,5 @@ ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "page_dark_enabled" boolean DEFAULT
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "page_light_enabled" boolean DEFAULT true NOT NULL;--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "custom_themes" ADD CONSTRAINT "custom_themes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION WHEN duplicate_object OR duplicate_table THEN NULL;
 END $$;
