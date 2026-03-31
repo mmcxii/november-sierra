@@ -25,9 +25,9 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "pnpm next dev",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    command: process.env.CI != null ? "pnpm build && pnpm start" : "pnpm next dev",
+    reuseExistingServer: process.env.CI == null,
+    timeout: process.env.CI != null ? 300_000 : 120_000,
     url: "http://localhost:3000",
   },
   workers: 1,

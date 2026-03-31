@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "pnpm install --frozen-lockfile",
+            "statusMessage": "Installing dependencies...",
+            "timeout": 120,
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  }
+}

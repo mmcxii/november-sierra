@@ -3,7 +3,10 @@ import { envSchema } from "./src/lib/env";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  env: envSchema,
+  env: {
+    ...envSchema,
+    BUILD_TIMESTAMP: new Date().toISOString(),
+  },
   images: {
     remotePatterns: [
       { hostname: "img.clerk.com" },
