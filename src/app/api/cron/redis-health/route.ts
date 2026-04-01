@@ -1,8 +1,9 @@
 import { envSchema } from "@/lib/env";
+import { siteConfig } from "@/lib/site-config";
 import { Redis } from "@upstash/redis";
 import { NextResponse } from "next/server";
 
-const HEALTH_KEY = "health:ping";
+const HEALTH_KEY = `health:ping:${siteConfig.environment}`;
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
     await redis.set(HEALTH_KEY, timestamp, { ex: 60 });
     const value = await redis.get(HEALTH_KEY);
 
-    if (value !== timestamp) {
+    if (String(value) !== timestamp) {
       return NextResponse.json({ latencyMs: Date.now() - start, status: "error" }, { status: 503 });
     }
 
