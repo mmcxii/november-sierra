@@ -13,6 +13,14 @@ import { testDomain, testUsers } from "../fixtures/test-users";
  */
 
 test.describe("stage deployment smoke tests", () => {
+  test("developers page loads", async ({ page }) => {
+    //* Act
+    await page.goto("/developers");
+
+    //* Assert
+    await expect(page.getByRole("heading", { name: t.builtForTheAiAgentEra })).toBeVisible();
+  });
+
   test("app boots and serves the landing page", async ({ page }) => {
     //* Act
     await page.goto("/");

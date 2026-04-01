@@ -27,6 +27,7 @@ import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/comp
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { SessionUser } from "@/lib/auth";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { DEFAULT_RELAYS, type NostrProfileData } from "@/lib/nostr-profile";
 import { usernameSchema } from "@/lib/schemas/username";
 import { type ThemeId } from "@/lib/themes";
@@ -194,7 +195,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
         }
       } else {
         setNostrPreview(null);
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
       }
     }, 600);
 
@@ -233,7 +234,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
 
       if (!result.success) {
         setBrandingHidden(!newValue);
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
       }
     });
   };
@@ -262,7 +263,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
       const result = await removeAvatar();
 
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
 
@@ -284,7 +285,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
         const usernameResult = await updateUsername(usernameInput);
 
         if (!usernameResult.success) {
-          toast.error(t(usernameResult.error));
+          toast.error(t(usernameResult.error as TranslationKey));
           return;
         }
       }
@@ -292,7 +293,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
       const result = await updateProfile(displayNameInput, bioInput);
 
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
 
@@ -327,7 +328,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
       const result = await disconnectNostrProfile();
 
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
 
@@ -348,7 +349,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
       const result = await saveNostrProfile(npubInput.trim(), relayInputs, nostrPreview);
 
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
 
@@ -559,7 +560,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
         }
         return;
       }
-      toast.error(t(result.error));
+      toast.error(t(result.error as TranslationKey));
     } catch {
       toast.error(t("somethingWentWrongPleaseTryAgain"));
     } finally {
@@ -571,7 +572,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     startDomainTransition(async () => {
       const result = await addCustomDomain(domainInput);
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
       setDomainInput("");
@@ -582,7 +583,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     startDomainTransition(async () => {
       const result = await verifyCustomDomain();
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
       toast.success(t("domainConnected"));
@@ -593,7 +594,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     startDomainTransition(async () => {
       const result = await removeCustomDomain();
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
       toast.success(t("domainRemoved"));
@@ -608,7 +609,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     startReferralTransition(async () => {
       const result = await redeemReferralCode(referralInput);
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
       setReferralInput("");

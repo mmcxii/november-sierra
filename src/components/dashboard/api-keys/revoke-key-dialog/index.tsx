@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { Loader2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -38,7 +39,7 @@ export const RevokeKeyDialog: React.FC<RevokeKeyDialogProps> = (props) => {
     setIsRevoking(false);
 
     if (!result.success) {
-      toast.error(t(result.error ?? "somethingWentWrongPleaseTryAgain"));
+      toast.error(t((result.error ?? "somethingWentWrongPleaseTryAgain") as TranslationKey));
       return;
     }
 

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { ChevronDown, ChevronRight, Copy, EllipsisVertical, Loader2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -72,7 +73,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
       });
 
       if (!result.success) {
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
         return;
       }
 
@@ -95,7 +96,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
     void action(code.id)
       .then((result) => {
         if (!result.success) {
-          toast.error(t(result.error));
+          toast.error(t(result.error as TranslationKey));
           return;
         }
         toast.success(t(toastKey));
@@ -109,7 +110,7 @@ export const AdminContent: React.FC<AdminContentProps> = (props) => {
     void deleteAdminCode(code.id)
       .then((result) => {
         if (!result.success) {
-          toast.error(t(result.error));
+          toast.error(t(result.error as TranslationKey));
           return;
         }
         toast.success(t("referralCodesDeleted"));

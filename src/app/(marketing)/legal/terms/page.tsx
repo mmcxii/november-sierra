@@ -63,7 +63,7 @@ const TermsPage: React.FC = async () => {
             Last updated March 3, 2026
           </p>
           {/* eslint-disable-next-line anchr/no-raw-string-jsx -- legal page, static content */}
-          <h1 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Terms of Service</h1>
+          <h2 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Terms of Service</h2>
           {/* eslint-disable-next-line anchr/no-raw-string-jsx -- legal page, static content */}
           <p className="text-anc-steel/70 text-lg leading-relaxed">
             These terms govern your use of Anchr. By using our Service, you agree to these terms — please read them
