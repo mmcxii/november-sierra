@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { isValidApiKeyName } from "@/lib/api-keys";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { Check, Copy, Loader2, TriangleAlert } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -100,7 +101,7 @@ export const CreateKeyDialog: React.FC<CreateKeyDialogProps> = (props) => {
     setIsCreating(false);
 
     if (!result.success) {
-      setError(t(result.error ?? "somethingWentWrongPleaseTryAgain"));
+      setError(t((result.error ?? "somethingWentWrongPleaseTryAgain") as TranslationKey));
       return;
     }
 

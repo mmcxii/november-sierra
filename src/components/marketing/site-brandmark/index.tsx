@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { SIZE_MAP } from "./constants";
 
 export type SiteBrandmarkProps = {
+  as?: React.ElementType;
   className?: string;
   dividerClassName?: string;
   logoProps?: Omit<SiteLogoProps, "size">;
@@ -12,15 +13,15 @@ export type SiteBrandmarkProps = {
 };
 
 export const SiteBrandmark: React.FC<SiteBrandmarkProps> = (props) => {
-  const { className, dividerClassName, logoProps, size = "sm", wordmarkClassName } = props;
+  const { as: Component = "span", className, dividerClassName, logoProps, size = "sm", wordmarkClassName } = props;
 
   const s = SIZE_MAP[size];
 
   return (
-    <span className={cn("inline-flex items-center gap-3", className)}>
+    <Component className={cn("inline-flex items-center gap-3", className)}>
       <SiteLogo size={s.logo} {...logoProps} />
-      <div className={cn("m-accent-divider-25 w-px", s.divider, dividerClassName)} />
+      <div aria-hidden="true" className={cn("m-accent-divider-25 w-px", s.divider, dividerClassName)} />
       <SiteWordmark className={wordmarkClassName} size={s.wordmark} />
-    </span>
+    </Component>
   );
 };

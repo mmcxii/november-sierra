@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { type NostrClientId, NOSTR_CLIENTS, buildNostrProfileUrl, detectNostrClient, isNpub } from "@/lib/nostr";
 import { type LinkValues, linkSchema } from "@/lib/schemas/link";
 import { ensureProtocol } from "@/lib/utils/url";
@@ -103,7 +104,7 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
   };
 
   const handleActionError = (error: undefined | string): void => {
-    const key = error ?? "somethingWentWrongPleaseTryAgain";
+    const key = (error ?? "somethingWentWrongPleaseTryAgain") as TranslationKey;
 
     if (key === URL_UNREACHABLE_KEY) {
       setError("url", { message: t(key) });
@@ -221,7 +222,9 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
           }}
           {...titleRegisterRest}
         />
-        {errors.title?.message != null && <p className="text-destructive text-xs">{t(errors.title.message)}</p>}
+        {errors.title?.message != null && (
+          <p className="text-destructive text-xs">{t(errors.title.message as TranslationKey)}</p>
+        )}
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="link-url">{t("url")}</Label>
@@ -290,7 +293,9 @@ export const LinkForm: React.FC<LinkFormProps> = (props) => {
             {...register("slug")}
           />
         </div>
-        {errors.slug?.message != null && <p className="text-destructive text-xs">{t(errors.slug.message)}</p>}
+        {errors.slug?.message != null && (
+          <p className="text-destructive text-xs">{t(errors.slug.message as TranslationKey)}</p>
+        )}
       </div>
       {groups.length > 0 && (
         <div className="flex flex-col gap-2">

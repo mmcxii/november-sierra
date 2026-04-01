@@ -2,6 +2,7 @@
 
 import type { ActionResult } from "@/app/(dashboard)/dashboard/settings/actions";
 import { ThemeSwatch } from "@/components/dashboard/theme-swatch";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { type ThemeId, THEMES } from "@/lib/themes";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -38,7 +39,7 @@ export const ThemePicker: React.FC<ThemePickerProps> = (props) => {
 
       if (!result.success) {
         setSelectedTheme(previousTheme);
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
       } else {
         onThemeChange?.(themeId);
       }

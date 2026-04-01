@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PRESET_THEME_VARIABLES, THEME_NAME_MAX_LENGTH, type ThemeVariables } from "@/lib/custom-themes";
 import type { customThemesTable } from "@/lib/db/schema/custom-theme";
 import type { usersTable } from "@/lib/db/schema/user";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { isProUser } from "@/lib/tier";
 import { generateThemeName, variablesToInlineStyle } from "@/lib/utils/custom-theme";
 import { ExternalLink, Eye, Loader2, Lock, Save } from "lucide-react";
@@ -149,7 +150,7 @@ export const ThemeStudioContent: React.FC<ThemeStudioContentProps> = (props) => 
       if (mode === "create") {
         const result = await createCustomTheme(data);
         if (!result.success) {
-          toast.error(t(result.error));
+          toast.error(t(result.error as TranslationKey));
           return;
         }
         toast.success(t("themeCreated"));
@@ -162,7 +163,7 @@ export const ThemeStudioContent: React.FC<ThemeStudioContentProps> = (props) => 
       } else if (themeId != null) {
         const result = await updateCustomTheme(themeId, data);
         if (!result.success) {
-          toast.error(t(result.error));
+          toast.error(t(result.error as TranslationKey));
           return;
         }
         toast.success(t("themeUpdated"));
@@ -193,14 +194,14 @@ export const ThemeStudioContent: React.FC<ThemeStudioContentProps> = (props) => 
         if (mode === "create") {
           const result = await createCustomTheme(data);
           if (!result.success) {
-            toast.error(t(result.error));
+            toast.error(t(result.error as TranslationKey));
             return;
           }
           savedThemeId = result.themeId;
         } else if (themeId != null) {
           const result = await updateCustomTheme(themeId, data);
           if (!result.success) {
-            toast.error(t(result.error));
+            toast.error(t(result.error as TranslationKey));
             return;
           }
           savedThemeId = themeId;
@@ -214,14 +215,14 @@ export const ThemeStudioContent: React.FC<ThemeStudioContentProps> = (props) => 
         if (slot === "dark" || slot === "both") {
           const darkResult = await assignThemeToSlot("pageDarkTheme", savedThemeId);
           if (!darkResult.success) {
-            toast.error(t(darkResult.error));
+            toast.error(t(darkResult.error as TranslationKey));
             return;
           }
         }
         if (slot === "light" || slot === "both") {
           const lightResult = await assignThemeToSlot("pageLightTheme", savedThemeId);
           if (!lightResult.success) {
-            toast.error(t(lightResult.error));
+            toast.error(t(lightResult.error as TranslationKey));
             return;
           }
         }

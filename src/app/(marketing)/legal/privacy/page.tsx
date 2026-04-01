@@ -5,7 +5,8 @@ import { initTranslations } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  description: "Learn how Anchr handles your data — with care, honesty, and respect. We don't sell your data or spam you.",
+  description:
+    "Learn how Anchr handles your data — with care, honesty, and respect. We don't sell your data or spam you.",
   title: "Privacy Policy",
 };
 
@@ -55,7 +56,7 @@ const PrivacyPage: React.FC = async () => {
             Last updated March 22, 2026
           </p>
           {/* eslint-disable-next-line anchr/no-raw-string-jsx -- legal page, static content */}
-          <h1 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Privacy Policy</h1>
+          <h2 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Privacy Policy</h2>
           {/* eslint-disable-next-line anchr/no-raw-string-jsx -- legal page, static content */}
           <p className="text-anc-steel/70 text-lg leading-relaxed">
             We built Anchr to help people own their presence online. That extends to how we handle your data — with

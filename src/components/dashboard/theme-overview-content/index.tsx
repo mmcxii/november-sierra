@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import type { ThemeVariables } from "@/lib/custom-themes";
 import type { customThemesTable } from "@/lib/db/schema/custom-theme";
 import type { usersTable } from "@/lib/db/schema/user";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { DARK_THEME_ID_LIST, LIGHT_THEME_ID_LIST, THEMES, type ThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
 import { deriveSwatchFromVariables } from "@/lib/utils/custom-theme";
@@ -61,7 +62,7 @@ export const ThemeOverviewContent: React.FC<ThemeOverviewContentProps> = (props)
       const result = await updateThemeToggles(checked, darkEnabled);
       if (!result.success) {
         setLightEnabled(!checked);
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
       }
     });
   };
@@ -76,7 +77,7 @@ export const ThemeOverviewContent: React.FC<ThemeOverviewContentProps> = (props)
       const result = await updateThemeToggles(lightEnabled, checked);
       if (!result.success) {
         setDarkEnabled(!checked);
-        toast.error(t(result.error));
+        toast.error(t(result.error as TranslationKey));
       }
     });
   };
@@ -85,7 +86,7 @@ export const ThemeOverviewContent: React.FC<ThemeOverviewContentProps> = (props)
     setDeletingId(themeId);
     const result = await deleteCustomTheme(themeId);
     if (!result.success) {
-      toast.error(t(result.error));
+      toast.error(t(result.error as TranslationKey));
     } else {
       toast.success(t("themeDeleted"));
       router.refresh();

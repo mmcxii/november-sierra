@@ -3,6 +3,7 @@ import { Cta } from "@/components/marketing/cta";
 import { Features } from "@/components/marketing/features";
 import { Footer } from "@/components/marketing/footer";
 import { Hero } from "@/components/marketing/hero";
+import { SiteHeader } from "@/components/marketing/site-header";
 import { envSchema } from "@/lib/env";
 import { initTranslations } from "@/lib/i18n/server";
 import type { Metadata } from "next";
@@ -38,6 +39,7 @@ const MarketingPage: React.FC = async () => {
     <>
       <JsonLd data={websiteJsonLd} />
       <JsonLd data={organizationJsonLd} />
+      <SiteHeader />
       <Hero t={t} />
       <Features />
       <Cta t={t} />

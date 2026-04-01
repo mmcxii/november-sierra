@@ -65,6 +65,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
       <header className="bg-sidebar border-sidebar-border flex items-center justify-between border-b px-4 py-3 lg:hidden">
         <Link href="/dashboard" onClick={closeMobile}>
           <SiteBrandmark
+            as="h1"
             dividerClassName="bg-anc-deep-navy/18 dark:bg-anc-gold/25"
             size="xs"
             wordmarkClassName="text-anc-deep-navy dark:text-anc-gold"
@@ -96,6 +97,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
         <div className="flex h-14 items-center px-4">
           <Link className="inline-flex items-center" href="/dashboard" onClick={closeMobile}>
             <SiteBrandmark
+              as="h1"
               dividerClassName="bg-anc-deep-navy/18 dark:bg-anc-gold/25"
               size="xs"
               wordmarkClassName="text-anc-deep-navy dark:text-anc-gold"

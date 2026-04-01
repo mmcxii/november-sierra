@@ -2,6 +2,7 @@ import { checkUsernameAvailability, updateUsername } from "@/app/onboarding/acti
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { type UsernameValues, usernameSchema } from "@/lib/schemas/username";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Check, Loader2, X } from "lucide-react";
@@ -40,7 +41,7 @@ export const UsernameStep: React.FC<UsernameStepProps> = (props) => {
     if (result.success != null) {
       onComplete();
     } else if (result.error != null) {
-      form.setError("root", { message: t(result.error) });
+      form.setError("root", { message: t(result.error as TranslationKey) });
     }
   };
 
