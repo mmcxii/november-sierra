@@ -120,8 +120,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Pull env from Vercel (anchr-stage preview)
-        run: npx vercel env pull .env.local --environment preview --yes --token ${{ secrets.VERCEL_TOKEN }}
+      - name: Pull env from Vercel (anchr-stage production)
+        run: npx vercel env pull .env.local --environment production --yes --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
@@ -254,6 +254,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Pull env from Vercel (anchr production)
+        run: npx vercel env pull .env.local --environment production --yes --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
 
       - name: Wait for deployment propagation
         run: |

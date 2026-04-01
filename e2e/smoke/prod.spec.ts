@@ -19,6 +19,28 @@ test.describe("production deployment smoke tests", () => {
     expect(body.status).toBe("ok");
   });
 
+  test("redis health cron rejects unauthenticated requests", async ({ request }) => {
+    //* Act
+    const response = await request.get("/api/cron/redis-health");
+
+    //* Assert
+    expect(response.status()).toBe(401);
+  });
+
+  test("redis health cron returns ok with valid secret", async ({ request }) => {
+    //* Act
+    const response = await request.get("/api/cron/redis-health", {
+      headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+    });
+
+    //* Assert
+    expect(response.status()).toBe(200);
+
+    const body = await response.json();
+    expect(body.status).toBe("ok");
+    expect(body.latencyMs).toBeLessThan(500);
+  });
+
   test("release endpoint returns commit and timestamp", async ({ request }) => {
     //* Act
     const response = await request.get("/api/status/release");
