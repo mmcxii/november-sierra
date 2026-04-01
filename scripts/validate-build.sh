@@ -29,6 +29,7 @@ export UPSTASH_REDIS_REST_URL="https://mock.upstash.io"
 export UPSTASH_REDIS_REST_TOKEN="mock"
 export VERCEL_API_TOKEN="mock"
 export VERCEL_PROJECT_ID="mock"
+export CRON_SECRET="mock"
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 echo "▸ Building project…"
