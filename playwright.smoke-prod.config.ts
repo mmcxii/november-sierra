@@ -1,10 +1,8 @@
-import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 
 /**
  * Smoke test config for post-deploy verification against live production.
  * No webServer — tests run against the deployed anchr.to.
- * No globalSetup/globalTeardown — no test users, no DB writes.
  * Read-only only — verifies the deployment landed and key endpoints respond.
  */
 export default defineConfig({
@@ -12,6 +10,7 @@ export default defineConfig({
     timeout: 15_000,
   },
   fullyParallel: false,
+  globalSetup: "./e2e/global.setup-prod.ts",
   outputDir: "test-results-smoke-prod",
   projects: [
     {
