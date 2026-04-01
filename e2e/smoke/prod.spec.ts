@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { expect, test } from "@playwright/test";
 
 /**

@@ -10,6 +10,7 @@ export default defineConfig({
     timeout: 15_000,
   },
   fullyParallel: false,
+  globalSetup: "./e2e/global.setup-prod.ts",
   outputDir: "test-results-smoke-prod",
   projects: [
     {
