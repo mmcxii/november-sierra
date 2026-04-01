@@ -106,6 +106,20 @@ test.describe("production deployment smoke tests", () => {
     expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
+  test("API v1 responses include rate limit headers", async ({ request }) => {
+    //* Act
+    const response = await request.get("/api/v1/openapi.json");
+
+    //* Assert
+    const headers = response.headers();
+    expect(headers["x-ratelimit-limit"]).toBeDefined();
+    expect(headers["x-ratelimit-remaining"]).toBeDefined();
+    expect(headers["x-ratelimit-reset"]).toBeDefined();
+    expect(Number(headers["x-ratelimit-limit"])).toBe(60);
+    expect(Number(headers["x-ratelimit-remaining"])).toBeGreaterThanOrEqual(0);
+    expect(Number(headers["x-ratelimit-reset"])).toBeGreaterThanOrEqual(0);
+  });
+
   test("OPTIONS /api/v1/me returns CORS preflight headers", async ({ request }) => {
     //* Act
     const response = await request.fetch("/api/v1/me", { method: "OPTIONS" });

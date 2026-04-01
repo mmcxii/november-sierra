@@ -163,6 +163,28 @@ baseTest.describe("status endpoints smoke tests", () => {
     baseExpect(body.status).toBe("ok");
   });
 
+  baseTest("redis health cron rejects unauthenticated requests", async ({ request }) => {
+    //* Act
+    const response = await request.get("/api/cron/redis-health");
+
+    //* Assert
+    baseExpect(response.status()).toBe(401);
+  });
+
+  baseTest("redis health cron returns ok with valid secret", async ({ request }) => {
+    //* Act
+    const response = await request.get("/api/cron/redis-health", {
+      headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+    });
+
+    //* Assert
+    baseExpect(response.status()).toBe(200);
+
+    const body = await response.json();
+    baseExpect(body.status).toBe("ok");
+    baseExpect(body.latencyMs).toBeLessThan(500);
+  });
+
   baseTest("release endpoint returns commit and timestamp", async ({ request }) => {
     //* Act
     const response = await request.get("/api/status/release");
@@ -276,6 +298,20 @@ baseTest.describe("public API smoke tests", () => {
 
     const body = await response.json();
     baseExpect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  baseTest("API v1 responses include rate limit headers", async ({ request }) => {
+    //* Act
+    const response = await request.get(`/api/v1/users/${testUsers.pro.username}`);
+
+    //* Assert
+    const headers = response.headers();
+    baseExpect(headers["x-ratelimit-limit"]).toBeDefined();
+    baseExpect(headers["x-ratelimit-remaining"]).toBeDefined();
+    baseExpect(headers["x-ratelimit-reset"]).toBeDefined();
+    baseExpect(Number(headers["x-ratelimit-limit"])).toBe(60);
+    baseExpect(Number(headers["x-ratelimit-remaining"])).toBeGreaterThanOrEqual(0);
+    baseExpect(Number(headers["x-ratelimit-reset"])).toBeGreaterThanOrEqual(0);
   });
 
   baseTest("OPTIONS /api/v1/me returns CORS preflight headers", async ({ request }) => {

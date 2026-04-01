@@ -1,9 +1,11 @@
+import { rateLimitRequest } from "@/lib/api/rate-limit";
 import { defaultLocale } from "@/lib/i18n/config";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/onboarding(.*)"]);
+const isApiV1Route = createRouteMatcher(["/api/v1(.*)"]);
 
 // ─── Custom Domain Cache ─────────────────────────────────────────────────────
 
@@ -57,6 +59,23 @@ async function resolveCustomDomain(host: string): Promise<null | string> {
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
 export default clerkMiddleware(async (auth, req) => {
+  // ─── Rate Limiting (API v1 only) ────────────────────────────────────────────
+  if (isApiV1Route(req)) {
+    const { headers: rateLimitHeaders, limited, response } = await rateLimitRequest(req);
+
+    if (limited && response != null) {
+      return response;
+    }
+
+    // Attach rate limit headers — they'll be merged into the final response
+    const next = NextResponse.next();
+    for (const [key, value] of Object.entries(rateLimitHeaders)) {
+      next.headers.set(key, value);
+    }
+    next.headers.set("x-next-i18n-router-locale", defaultLocale);
+    return next;
+  }
+
   const host = req.headers.get("host") ?? "";
   const appHosts = getAppHosts();
   const isAppHost = appHosts.size === 0 || appHosts.has(host);
