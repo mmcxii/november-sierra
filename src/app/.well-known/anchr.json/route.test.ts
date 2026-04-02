@@ -18,7 +18,8 @@ describe("GET /.well-known/anchr.json", () => {
       api: {
         authentication: "Bearer token via API key (Authorization: Bearer anc_k_...)",
         baseUrl: `${TEST_BASE_URL}/api/v1`,
-        docs: `${TEST_BASE_URL}/api/v1/openapi.json`,
+        docs: `${TEST_BASE_URL}/docs`,
+        openApiSpec: `${TEST_BASE_URL}/api/v1/openapi.json`,
       },
       description: "Link-in-bio platform for the AI agent era",
       mcp: {
