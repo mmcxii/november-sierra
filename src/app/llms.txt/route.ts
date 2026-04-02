@@ -20,6 +20,8 @@ Profiles can also be accessed via custom domains (e.g., \`https://alice.com\`).
 
 Anchr provides a public REST API at \`${baseUrl}/api/v1\`. Authenticate with an API key via \`Authorization: Bearer anc_k_...\`.
 
+- [Interactive API Docs](${baseUrl}/docs): Full interactive documentation with code examples and "Try it" functionality
+
 - \`GET /api/v1/me\` — Authenticated user profile
 - \`GET /api/v1/users/{username}\` — Public user profile with links and groups
 - \`GET /api/v1/links\` — List, create, update, delete links

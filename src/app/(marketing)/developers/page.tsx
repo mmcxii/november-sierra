@@ -1,10 +1,12 @@
 import { CodeTabs } from "@/components/marketing/code-tabs";
+import { CODE_SOURCES, LANG_MAP, TABS, type TabId } from "@/components/marketing/code-tabs/constants";
 import { FadeIn } from "@/components/marketing/fade-in";
 import { Footer } from "@/components/marketing/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { TryApi } from "@/components/marketing/try-api";
 import { Container } from "@/components/ui/container";
 import { initTranslations } from "@/lib/i18n/server";
+import { highlight } from "@/lib/shiki";
 import { Check, Minus, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -30,6 +32,12 @@ export const metadata: Metadata = {
 
 const DevelopersPage: React.FC = async () => {
   const { t } = await initTranslations("en-US");
+
+  // Highlight code examples at the server level
+  const highlightedHtml = {} as Record<TabId, string>;
+  for (const tab of TABS) {
+    highlightedHtml[tab] = await highlight(CODE_SOURCES[tab], LANG_MAP[tab] as Parameters<typeof highlight>[1]);
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -67,7 +75,7 @@ const DevelopersPage: React.FC = async () => {
         <FadeIn delay={200}>
           <section className="mb-24">
             <h3 className="mb-8 text-2xl font-bold tracking-tight">{t("codeExamples")}</h3>
-            <CodeTabs />
+            <CodeTabs highlightedHtml={highlightedHtml} />
           </section>
         </FadeIn>
 
