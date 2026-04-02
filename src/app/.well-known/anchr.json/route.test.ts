@@ -21,6 +21,11 @@ describe("GET /.well-known/anchr.json", () => {
         docs: `${TEST_BASE_URL}/api/v1/openapi.json`,
       },
       description: "Link-in-bio platform for the AI agent era",
+      mcp: {
+        hosted: `${TEST_BASE_URL}/api/v1/mcp`,
+        npm: "@anthropic/anchr-mcp",
+        transport: "streamable-http",
+      },
       name: "Anchr",
       profiles: {
         sitemap: `${TEST_BASE_URL}/sitemap.xml`,

@@ -26,6 +26,39 @@ Anchr provides a public REST API at \`${baseUrl}/api/v1\`. Authenticate with an 
 - \`GET /api/v1/groups\` — List, create, update, delete groups (Pro)
 - \`GET /api/v1/analytics\` — Click analytics summary (Pro)
 - \`GET /api/v1/openapi.json\` — Full OpenAPI specification
+
+## MCP Server
+
+Anchr exposes a hosted [Model Context Protocol](https://modelcontextprotocol.io) server for Pro users at \`${baseUrl}/api/v1/mcp\`.
+
+- **Transport**: Streamable HTTP (stateless)
+- **Auth**: API key via \`Authorization: Bearer anc_k_...\`
+- **npm package**: \`@anthropic/anchr-mcp\` (coming soon)
+
+### Tools
+
+| Tool | Description |
+|---|---|
+| get_profile | Get your Anchr profile |
+| update_profile | Update display name and bio |
+| update_theme | Change page theme |
+| list_links | List all links |
+| create_link | Create a new link |
+| update_link | Update an existing link |
+| delete_link | Delete a link |
+| reorder_links | Reorder links |
+| toggle_link_visibility | Show or hide a link |
+| toggle_featured_link | Feature or unfeature a link |
+| list_groups | List link groups (Pro) |
+| create_group | Create a link group (Pro) |
+| update_group | Update a link group (Pro) |
+| delete_group | Delete a link group (Pro) |
+| get_analytics | Click analytics summary (Pro) |
+| get_link_analytics | Per-link click analytics (Pro) |
+| get_referrer_analytics | Referrer analytics (Pro) |
+| get_device_analytics | Device analytics (Pro) |
+| get_click_history | Click history over time (Pro) |
+| lookup_profile | Look up any public Anchr profile |
 `;
 
   return new Response(text, {

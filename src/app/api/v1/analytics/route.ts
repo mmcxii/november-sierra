@@ -1,63 +1,19 @@
-import { requireApiAuth, requirePro } from "@/lib/api/require-auth";
-import { apiOptions, apiSuccess } from "@/lib/api/response";
-import { db } from "@/lib/db/client";
-import { clicksTable } from "@/lib/db/schema/click";
-import { linksTable } from "@/lib/db/schema/link";
-import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { requireApiAuth } from "@/lib/api/require-auth";
+import { apiError, apiOptions, apiSuccess } from "@/lib/api/response";
+import { getAnalytics } from "@/lib/mcp/services/analytics";
 import { parseDateRange } from "../_utils";
 
 export async function GET(request: Request) {
   const auth = await requireApiAuth(request);
-
   if (auth.user == null) {
     return auth.response;
   }
-
-  const { user } = auth;
-
-  const proError = requirePro(user);
-  if (proError != null) {
-    return proError;
-  }
-
   const { end, start } = parseDateRange(new URL(request.url));
-
-  const dateConditions = [eq(clicksTable.userId, user.id)];
-  if (start != null) {
-    dateConditions.push(gte(clicksTable.createdAt, start));
+  const result = await getAnalytics(auth.user, { end: end?.toISOString(), start: start?.toISOString() });
+  if (result.error != null) {
+    return apiError(result.error.code, result.error.message, result.error.status);
   }
-  if (end != null) {
-    dateConditions.push(lte(clicksTable.createdAt, end));
-  }
-
-  const conditions = and(...dateConditions);
-
-  const [clickResult, topLinkResult, topCountryResult] = await Promise.all([
-    db.select({ totalClicks: count() }).from(clicksTable).where(conditions),
-
-    db
-      .select({ clicks: count(), title: linksTable.title })
-      .from(clicksTable)
-      .innerJoin(linksTable, eq(clicksTable.linkId, linksTable.id))
-      .where(conditions)
-      .groupBy(linksTable.title)
-      .orderBy(desc(count()))
-      .limit(1),
-
-    db
-      .select({ clicks: count(), country: clicksTable.country })
-      .from(clicksTable)
-      .where(and(conditions, sql`${clicksTable.country} is not null`))
-      .groupBy(clicksTable.country)
-      .orderBy(desc(count()))
-      .limit(1),
-  ]);
-
-  return apiSuccess({
-    topCountry: topCountryResult[0]?.country ?? null,
-    topLink: topLinkResult[0]?.title ?? null,
-    totalClicks: clickResult[0]?.totalClicks ?? 0,
-  });
+  return apiSuccess(result.data);
 }
 
 export function OPTIONS() {

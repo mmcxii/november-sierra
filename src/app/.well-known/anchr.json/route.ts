@@ -11,6 +11,11 @@ export function GET() {
         docs: `${baseUrl}/api/v1/openapi.json`,
       },
       description: "Link-in-bio platform for the AI agent era",
+      mcp: {
+        hosted: `${baseUrl}/api/v1/mcp`,
+        npm: "@anthropic/anchr-mcp",
+        transport: "streamable-http",
+      },
       name: "Anchr",
       profiles: {
         sitemap: `${baseUrl}/sitemap.xml`,
