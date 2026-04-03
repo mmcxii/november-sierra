@@ -8,7 +8,8 @@ export function GET() {
       api: {
         authentication: "Bearer token via API key (Authorization: Bearer anc_k_...)",
         baseUrl: `${baseUrl}/api/v1`,
-        docs: `${baseUrl}/api/v1/openapi.json`,
+        docs: `${baseUrl}/docs`,
+        openApiSpec: `${baseUrl}/api/v1/openapi.json`,
       },
       description: "Link-in-bio platform for the AI agent era",
       mcp: {

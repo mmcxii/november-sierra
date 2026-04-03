@@ -83,7 +83,10 @@ test.describe("production deployment smoke tests", () => {
     expect(body.profiles.urlPattern).toContain("{username}");
     expect(body.api).toBeDefined();
     expect(body.api.baseUrl).toContain("/api/v1");
-    expect(body.api.docs).toContain("/api/v1/openapi.json");
+    expect(body.api.docs).toContain("/docs");
+    expect(body.api.openApiSpec).toContain("/api/v1/openapi.json");
+    expect(body.mcp).toBeDefined();
+    expect(body.mcp.hosted).toContain("/api/v1/mcp");
   });
 
   test("/llms.txt returns valid LLM-readable site description", async ({ request }) => {
@@ -150,5 +153,63 @@ test.describe("production deployment smoke tests", () => {
     expect(response.status()).toBe(204);
     expect(response.headers()["access-control-allow-origin"]).toBe("*");
     expect(response.headers()["access-control-allow-methods"]).toContain("GET");
+  });
+});
+
+test.describe("MCP server smoke tests", () => {
+  test("POST /api/v1/mcp without auth returns 401", async ({ request }) => {
+    //* Act
+    const response = await request.post("/api/v1/mcp", {
+      data: {
+        id: 1,
+        jsonrpc: "2.0",
+        method: "initialize",
+        params: {
+          capabilities: {},
+          clientInfo: { name: "smoke-test", version: "1.0.0" },
+          protocolVersion: "2025-03-26",
+        },
+      },
+      headers: { "Content-Type": "application/json" },
+    });
+
+    //* Assert
+    expect(response.status()).toBe(401);
+
+    const body = await response.json();
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  test("POST /api/v1/mcp with invalid key returns 401", async ({ request }) => {
+    //* Act
+    const response = await request.post("/api/v1/mcp", {
+      data: {
+        id: 1,
+        jsonrpc: "2.0",
+        method: "initialize",
+        params: {
+          capabilities: {},
+          clientInfo: { name: "smoke-test", version: "1.0.0" },
+          protocolVersion: "2025-03-26",
+        },
+      },
+      headers: {
+        Authorization: "Bearer anc_k_invalidkeyinvalidkeyinvalidkeyinvalid",
+        "Content-Type": "application/json",
+      },
+    });
+
+    //* Assert
+    expect(response.status()).toBe(401);
+  });
+
+  test("OPTIONS /api/v1/mcp returns CORS preflight headers", async ({ request }) => {
+    //* Act
+    const response = await request.fetch("/api/v1/mcp", { method: "OPTIONS" });
+
+    //* Assert
+    expect(response.status()).toBe(204);
+    expect(response.headers()["access-control-allow-origin"]).toBe("*");
+    expect(response.headers()["access-control-allow-methods"]).toContain("POST");
   });
 });

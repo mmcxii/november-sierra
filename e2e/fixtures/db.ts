@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
+import { createHash } from "crypto";
 import { count, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { boolean, integer, jsonb, pgTable, real, text, timestamp } from "drizzle-orm/pg-core";
@@ -13,6 +14,18 @@ const usersTable = pgTable("users", {
   proExpiresAt: timestamp("pro_expires_at"),
   tier: text("tier").default("free").notNull(),
   username: text("username").unique().notNull(),
+});
+
+const apiKeysTable = pgTable("api_keys", {
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  id: text("id").primaryKey(),
+  keyHash: text("key_hash").notNull(),
+  keyPrefix: text("key_prefix").notNull(),
+  keySuffix: text("key_suffix").notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+  name: text("name").notNull(),
+  revokedAt: timestamp("revoked_at"),
+  userId: text("user_id").notNull(),
 });
 
 const customThemesTable = pgTable("custom_themes", {
@@ -178,4 +191,50 @@ export async function insertCustomTheme(
   });
 
   return id;
+}
+
+/**
+ * Create a test API key directly in the database and return the raw key.
+ * The raw key is `anc_k_` + 32 random alphanumeric characters.
+ */
+export async function createTestApiKey(username: string): Promise<string> {
+  const db = getDb();
+  const [user] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username));
+  if (user == null) {
+    throw new Error(`User "${username}" not found`);
+  }
+
+  const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  let rawKey = "anc_k_";
+  for (let i = 0; i < 32; i++) {
+    rawKey += alphanumeric[bytes[i] % alphanumeric.length];
+  }
+
+  const keyHash = createHash("sha256").update(rawKey).digest("hex");
+  const id = crypto.randomUUID();
+
+  await db.insert(apiKeysTable).values({
+    id,
+    keyHash,
+    keyPrefix: rawKey.slice(0, 10),
+    keySuffix: rawKey.slice(-4),
+    name: `E2E MCP smoke test (${username})`,
+    userId: user.id,
+  });
+
+  return rawKey;
+}
+
+/**
+ * Delete all API keys for a test user.
+ */
+export async function deleteTestApiKeys(username: string): Promise<void> {
+  const db = getDb();
+  const [user] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username));
+  if (user == null) {
+    return;
+  }
+  await db.execute(sql`DELETE FROM api_keys WHERE user_id = ${user.id} AND name LIKE 'E2E MCP%'`);
 }
