@@ -228,8 +228,11 @@ baseTest.describe("discovery endpoints smoke tests", () => {
     baseExpect(body.profiles.structuredData).toContain("JSON-LD");
     baseExpect(body.api).toBeDefined();
     baseExpect(body.api.baseUrl).toContain("/api/v1");
-    baseExpect(body.api.docs).toContain("/api/v1/openapi.json");
+    baseExpect(body.api.docs).toContain("/docs");
+    baseExpect(body.api.openApiSpec).toContain("/api/v1/openapi.json");
     baseExpect(body.api.authentication).toContain("Bearer");
+    baseExpect(body.mcp).toBeDefined();
+    baseExpect(body.mcp.hosted).toContain("/api/v1/mcp");
   });
 
   baseTest("/llms.txt returns valid LLM-readable site description", async ({ request }) => {

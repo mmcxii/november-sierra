@@ -83,7 +83,10 @@ test.describe("production deployment smoke tests", () => {
     expect(body.profiles.urlPattern).toContain("{username}");
     expect(body.api).toBeDefined();
     expect(body.api.baseUrl).toContain("/api/v1");
-    expect(body.api.docs).toContain("/api/v1/openapi.json");
+    expect(body.api.docs).toContain("/docs");
+    expect(body.api.openApiSpec).toContain("/api/v1/openapi.json");
+    expect(body.mcp).toBeDefined();
+    expect(body.mcp.hosted).toContain("/api/v1/mcp");
   });
 
   test("/llms.txt returns valid LLM-readable site description", async ({ request }) => {
