@@ -63,15 +63,15 @@ export const MobileMenu: React.FC = () => {
       <div
         aria-hidden={!open}
         className={cn(
-          "fixed inset-0 z-[55] flex items-center justify-center bg-(--m-page-bg) transition-all duration-300 ease-in-out sm:hidden",
+          "fixed inset-0 z-[55] flex items-center justify-center bg-(--m-page-bg) transition-opacity duration-300 ease-in-out sm:hidden",
           {
-            "pointer-events-none -translate-y-full opacity-0": !open,
-            "translate-y-0 opacity-100": open,
+            "opacity-100": open,
+            "pointer-events-none opacity-0": !open,
           },
         )}
       >
         <nav className="flex flex-col items-center gap-8">
-          {NAV_LINKS.map((link) => (
+          {NAV_LINKS.filter((link) => link.href !== "/").map((link) => (
             <Link
               className="text-2xl font-medium transition-opacity hover:opacity-70"
               href={link.href}
