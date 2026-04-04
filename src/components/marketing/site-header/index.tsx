@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/container";
 import { initTranslations } from "@/lib/i18n/server";
 import Link from "next/link";
 import { NAV_LINKS } from "./constants";
+import { MobileMenu } from "./mobile-menu";
 
 export const SiteHeader: React.FC = async () => {
   const { t } = await initTranslations("en-US");
@@ -30,6 +31,7 @@ export const SiteHeader: React.FC = async () => {
         >
           {t("signUp")}
         </Link>
+        <MobileMenu />
       </nav>
     </Container>
   );

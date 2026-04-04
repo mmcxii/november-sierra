@@ -2,15 +2,15 @@
 
 import { AnalyticsPreview } from "@/components/marketing/analytics-preview";
 import { FadeIn } from "@/components/marketing/fade-in";
-import { RedirectHubUrlPreview } from "@/components/marketing/redirect-hub-url-preview";
 import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/utils";
-import { Anchor, ArrowUpRight, BarChart3, ChevronRight, Globe, Palette, Zap } from "lucide-react";
+import { Anchor, BarChart3, ChevronRight, Code, Globe, Heart, Palette } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BeautifulThemesVisual } from "./beautiful-themes-visual";
-import { BlazingFastVisual } from "./blazing-fast-visual";
 import { cardBase, cardClasses, cardHoverClass } from "./card-styles";
+import { DeveloperApiVisual } from "./developer-api-visual";
 import { IconHeader } from "./icon-header";
+import { OpenSourceVisual } from "./open-source-visual";
 
 export const Features: React.FC = () => {
   const { t } = useTranslation();
@@ -23,31 +23,19 @@ export const Features: React.FC = () => {
         </h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Blazing Fast — top-left */}
+          {/* Beautiful Themes — top-left */}
           <FadeIn className="sm:col-start-1 sm:row-start-1" delay={0}>
-            <div className={cn(cardBase, cardClasses, cardHoverClass, "h-full p-6")}>
-              <div className="m-accent-gradient-bg absolute inset-x-0 top-0 h-px" />
-              <IconHeader icon={Zap} title={t("blazingFast")} />
-              <p className="m-muted-70 text-sm leading-relaxed">
-                {t("noWaitingRoomBetweenYouAndYourAudienceYourPageLoadsTheMomentTheyArrive")}
-              </p>
-              <BlazingFastVisual />
-            </div>
-          </FadeIn>
-
-          {/* Beautiful Themes — bottom-left */}
-          <FadeIn className="sm:col-start-1 sm:row-start-2" delay={100}>
             <div className={cn(cardBase, cardClasses, cardHoverClass, "h-full p-6")}>
               <div className="m-accent-gradient-bg absolute inset-x-0 top-0 h-px" />
               <IconHeader icon={Palette} title={t("beautifulThemes")} />
               <p className="m-muted-70 text-sm leading-relaxed">
-                {t("aPageThatLooksAsIntentionalAsWhatYouCreateDesignsThatFeelHandcraftedNeverTemplated")}
+                {t("themesDesignedToLookGreatOutOfTheBoxAndAFullStudioForThoseWhoWantEveryDetailToMatchTheirBrand")}
               </p>
               <BeautifulThemesVisual />
             </div>
           </FadeIn>
 
-          {/* Actionable Analytics — right column, spans both rows */}
+          {/* Actionable Analytics — right column, spans both rows (hero) */}
           <FadeIn className="sm:col-start-2 sm:row-span-2 sm:row-start-1" delay={50}>
             <div className={cn(cardBase, cardClasses, cardHoverClass, "h-full p-7")}>
               <div className="m-accent-gradient-bg absolute inset-x-0 top-0 h-px" />
@@ -59,15 +47,25 @@ export const Features: React.FC = () => {
             </div>
           </FadeIn>
 
-          {/* Redirect Hub — bottom-left */}
+          {/* Developer API — below themes, left column */}
+          <FadeIn className="sm:col-start-1 sm:row-start-2" delay={100}>
+            <div className={cn(cardBase, cardClasses, cardHoverClass, "h-full p-6")}>
+              <div className="m-accent-gradient-bg absolute inset-x-0 top-0 h-px" />
+              <IconHeader icon={Code} title={t("developerApi")} />
+              <p className="m-muted-70 text-sm leading-relaxed">
+                {t("restApiWebhooksAndMcpBuildOnYourLinkHubWithCodeScriptsOrAiAgents")}
+              </p>
+              <DeveloperApiVisual />
+            </div>
+          </FadeIn>
+
+          {/* Open Source — bottom-left */}
           <FadeIn className="sm:col-start-1 sm:row-start-3" delay={150}>
             <div className={cn(cardBase, cardClasses, cardHoverClass, "h-full p-6")}>
               <div className="m-accent-gradient-bg absolute inset-x-0 top-0 h-px" />
-              <IconHeader icon={ArrowUpRight} title={t("redirectHub")} />
-              <p className="m-muted-70 mb-4 text-sm leading-relaxed">
-                {t("routeFollowersDirectlyToAnyPlatformWithASingleShortLinkNoProfileVisitRequired")}
-              </p>
-              <RedirectHubUrlPreview />
+              <IconHeader icon={Heart} title={t("openSource")} />
+              <p className="m-muted-70 text-sm leading-relaxed">{t("openSourceBecauseTrustIsEarned")}</p>
+              <OpenSourceVisual />
             </div>
           </FadeIn>
 
