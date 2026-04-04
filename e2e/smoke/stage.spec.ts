@@ -452,7 +452,7 @@ baseTest.describe("MCP server smoke tests", () => {
       //* Act — create a link via MCP
       const created = await mcp.callTool("create_link", {
         title: "MCP Smoke Link",
-        url: "https://example.com/mcp-smoke",
+        url: "https://example.com",
       });
 
       //* Assert — link was created with expected fields
@@ -569,7 +569,7 @@ async function createMcpHelper(request: RequestLike, username: string = testUser
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function callTool(name: string, args: unknown): Promise<any> {
     const result = await callToolRaw(name, args);
-    baseExpect(result.isError).toBeFalsy();
+    baseExpect(result.isError, `${name} returned error: ${result.content?.[0]?.text}`).toBeFalsy();
     return JSON.parse(result.content[0].text);
   }
 
