@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { HamburgerIcon } from "./hamburger-icon";
 
 export const MobileMenu: React.FC = () => {
   const { t } = useTranslation();
@@ -38,25 +39,7 @@ export const MobileMenu: React.FC = () => {
         className="relative z-[60] flex size-9 items-center justify-center sm:hidden"
         onClick={handleToggle}
       >
-        <div className="flex h-4 w-5 flex-col justify-between">
-          <span
-            className={cn(
-              "block h-[1.5px] w-full origin-center rounded-full bg-current transition-all duration-300 ease-in-out",
-              { "translate-y-[7px] rotate-45": open },
-            )}
-          />
-          <span
-            className={cn("block h-[1.5px] w-full rounded-full bg-current transition-all duration-300 ease-in-out", {
-              "opacity-0": open,
-            })}
-          />
-          <span
-            className={cn(
-              "block h-[1.5px] w-full origin-center rounded-full bg-current transition-all duration-300 ease-in-out",
-              { "-translate-y-[7px] -rotate-45": open },
-            )}
-          />
-        </div>
+        <HamburgerIcon open={open} />
       </button>
 
       {/* Full-screen overlay */}

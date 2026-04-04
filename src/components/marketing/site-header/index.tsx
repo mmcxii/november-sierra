@@ -9,7 +9,7 @@ export const SiteHeader: React.FC = async () => {
   const { t } = await initTranslations("en-US");
 
   return (
-    <Container as="header" className="relative z-10 flex items-center justify-between py-6">
+    <Container as="header" className="relative z-[51] flex items-center justify-between py-6">
       <Link className="group inline-flex items-center" href="/">
         <SiteBrandmark as="h1" className="transition-opacity group-hover:opacity-75" size="sm" />
       </Link>
