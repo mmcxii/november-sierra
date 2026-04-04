@@ -536,6 +536,7 @@ type RequestLike = {
 async function createMcpHelper(request: RequestLike, username: string = testUsers.pro.username) {
   const rawKey = await createTestApiKey(username);
   const headers = {
+    Accept: "application/json, text/event-stream",
     Authorization: `Bearer ${rawKey}`,
     "Content-Type": "application/json",
   };
