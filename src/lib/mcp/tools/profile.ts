@@ -1,8 +1,8 @@
 import type { ApiKeyUser } from "@/lib/api/auth";
+import { getProfile, updateProfile, updateTheme } from "@/lib/services/profile";
 import { DARK_THEME_ID_LIST, LIGHT_THEME_ID_LIST, THEME_IDS } from "@/lib/themes";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getProfile, updateProfile, updateTheme } from "../services/profile";
 import { toToolResult } from "../tool-result";
 
 export function registerProfileTools(server: McpServer, user: ApiKeyUser): void {

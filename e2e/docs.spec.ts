@@ -8,14 +8,14 @@ test.describe("docs page", () => {
     await page.goto("/docs");
 
     //* Assert
-    await expect(page.getByRole("heading", { name: t.apiDocumentation })).toBeVisible();
-    await expect(page.getByRole("heading", { name: t.overview })).toBeVisible();
-    await expect(page.getByRole("heading", { name: t.authentication })).toBeVisible();
-    await expect(page.getByRole("heading", { name: t.rateLimits })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Links" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Groups" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Analytics" })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.apiDocumentation })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.overview })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.authentication })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.rateLimits })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: "Profile" })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: "Links" })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: "Groups" })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: "Analytics" })).toBeVisible();
   });
 
   test("sidebar navigation is visible on desktop", async ({ page }) => {

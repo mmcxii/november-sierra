@@ -95,7 +95,7 @@ test.describe("onboarding flow", () => {
     }
     await page.waitForURL(/\/dashboard/);
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Assert — referral code was redeemed and Pro access was granted
     await expect(page.getByRole("button", { name: t.manageBilling })).toBeVisible();

@@ -1,7 +1,4 @@
 import type { ApiKeyUser } from "@/lib/api/auth";
-import { FREE_LINK_LIMIT } from "@/lib/tier";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 import {
   createLink,
   deleteLink,
@@ -10,7 +7,10 @@ import {
   toggleFeaturedLink,
   toggleLinkVisibility,
   updateLink,
-} from "../services/link";
+} from "@/lib/services/link";
+import { FREE_LINK_LIMIT } from "@/lib/tier";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import { toToolResult } from "../tool-result";
 
 export function registerLinkTools(server: McpServer, user: ApiKeyUser): void {

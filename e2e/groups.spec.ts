@@ -6,7 +6,7 @@ test.describe("link group management", () => {
 
   test("creates a link group", async ({ proUser: page }) => {
     //* Arrange
-    await page.getByRole("heading", { name: t.links }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.links }).waitFor();
 
     //* Act
     await page.getByRole("button", { name: t.addLinkGroup }).click();
@@ -37,7 +37,7 @@ test.describe("link group management", () => {
   test("toggles group visibility", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard");
-    await page.getByRole("heading", { name: t.links }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.links }).waitFor();
 
     //* Act — hide the group via the eye icon next to "Test Group"
     // Quick Links also has a "Hide link" button, so we need the second one

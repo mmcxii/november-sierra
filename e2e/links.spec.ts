@@ -6,7 +6,7 @@ test.describe("link CRUD", () => {
 
   test("creates a new link", async ({ proUser: page }) => {
     //* Arrange
-    await page.getByRole("heading", { name: t.links }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.links }).waitFor();
 
     //* Act
     await page.getByRole("button", { exact: true, name: t.addLink }).click();
@@ -160,7 +160,7 @@ test.describe("advanced link features", () => {
     await page.getByRole("button", { name: t.hideSelected }).click();
     await page.waitForTimeout(3000);
     await page.reload();
-    await page.getByRole("heading", { name: t.links }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.links }).waitFor();
 
     //* Assert
     await expect(linkA.getByText(t.hidden, { exact: true })).toBeVisible();
@@ -172,7 +172,7 @@ test.describe("advanced link features", () => {
     await page.getByRole("button", { name: t.showSelected }).click();
     await page.waitForTimeout(3000);
     await page.reload();
-    await page.getByRole("heading", { name: t.links }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.links }).waitFor();
 
     //* Assert
     await expect(linkA.getByText(t.hidden, { exact: true })).toBeHidden();

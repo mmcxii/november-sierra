@@ -6,7 +6,7 @@ import { usersTable } from "@/lib/db/schema/user";
 import { envSchema } from "@/lib/env";
 import { isProUser } from "@/lib/tier";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
-import { serviceError, serviceSuccess, type ServiceResult } from "../types";
+import { serviceError, serviceSuccess, type ServiceResult } from "./types";
 
 type PublicLink = {
   id: string;

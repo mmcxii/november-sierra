@@ -1,5 +1,5 @@
 import { apiError, apiOptions, apiSuccess } from "@/lib/api/response";
-import { lookupProfile } from "@/lib/mcp/services/discovery";
+import { lookupProfile } from "@/lib/services/discovery";
 
 type RouteParams = { params: Promise<{ username: string }> };
 

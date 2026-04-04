@@ -19,7 +19,7 @@ test.describe("stage deployment smoke tests", () => {
     await page.goto("/developers");
 
     //* Assert
-    await expect(page.getByRole("heading", { name: t.builtForTheAiAgentEra })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.builtForTheAiAgentEra })).toBeVisible();
   });
 
   test("app boots and serves the landing page", async ({ page }) => {
@@ -35,7 +35,7 @@ test.describe("stage deployment smoke tests", () => {
     await page.goto("/dashboard");
 
     //* Assert
-    await expect(page.getByRole("heading", { name: t.links })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.links })).toBeVisible();
   });
 
   test("API keys page loads", async ({ proUser: page }) => {
@@ -108,7 +108,7 @@ test.describe("stage deployment smoke tests", () => {
   test("custom domain serves public profile via real DNS", async ({ browser, proUser: page }) => {
     //* Arrange — add custom domain and create a link
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     // Clean up any leftover domain from a previous run
     const removeButton = page.getByRole("button", { name: t.removeDomain });
@@ -125,7 +125,7 @@ test.describe("stage deployment smoke tests", () => {
     await page.getByRole("button", { name: t.addDomain }).click();
     await page.waitForTimeout(2000);
     await page.reload();
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
     await page.getByRole("button", { name: t.verifyDns }).waitFor();
 
     // Verify DNS (may need a retry if SSL is still provisioning)
@@ -154,7 +154,7 @@ test.describe("stage deployment smoke tests", () => {
     //* Arrange — cleanup
     await deleteLink(page, "Custom Domain Smoke");
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
     await page.getByRole("button", { name: t.removeDomain }).click();
     await page.getByText(t.domainRemoved).waitFor();
   });

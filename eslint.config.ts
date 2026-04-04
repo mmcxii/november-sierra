@@ -10,6 +10,7 @@ import { noInlineFunctionProps } from "./eslint/no-inline-function-props.js";
 import { noInlineStyle } from "./eslint/no-inline-style.js";
 import { noJsxWhitespaceLiteral } from "./eslint/no-jsx-whitespace-literal.js";
 import { noRawStringJsx } from "./eslint/no-raw-string-jsx.js";
+import { playwrightExactHeading } from "./eslint/playwright-exact-heading.js";
 import { preferNullishCheck } from "./eslint/prefer-nullish-check.js";
 import { reactStyleGuide } from "./eslint/react-style-guide.js";
 import { singleComponentPerFile } from "./eslint/single-component-per-file.js";
@@ -56,6 +57,7 @@ const eslintConfig = defineConfig([
           "no-inline-style": noInlineStyle,
           "no-jsx-whitespace-literal": noJsxWhitespaceLiteral,
           "no-raw-string-jsx": noRawStringJsx,
+          "playwright-exact-heading": playwrightExactHeading,
           "prefer-nullish-check": preferNullishCheck,
           "react-style-guide": reactStyleGuide,
           "single-component-per-file": singleComponentPerFile,
@@ -165,6 +167,7 @@ const eslintConfig = defineConfig([
   {
     files: ["e2e/**/*.ts"],
     rules: {
+      "anchr/playwright-exact-heading": "error",
       "react-hooks/rules-of-hooks": "off",
     },
   },

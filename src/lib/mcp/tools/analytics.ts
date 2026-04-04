@@ -1,13 +1,13 @@
 import type { ApiKeyUser } from "@/lib/api/auth";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 import {
   getAnalytics,
   getClickHistory,
   getDeviceAnalytics,
   getLinkAnalytics,
   getReferrerAnalytics,
-} from "../services/analytics";
+} from "@/lib/services/analytics";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import { toToolResult } from "../tool-result";
 
 const dateRangeSchema = {

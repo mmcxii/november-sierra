@@ -2,7 +2,7 @@ import { API_ERROR_CODES } from "@/lib/api/errors";
 import { requireApiAuth } from "@/lib/api/require-auth";
 import { apiError, apiOptions, apiSuccess } from "@/lib/api/response";
 import { updateProfileSchema } from "@/lib/api/schemas/profile";
-import { getProfile, updateProfile, updateTheme } from "@/lib/mcp/services/profile";
+import { getProfile, updateProfile, updateTheme } from "@/lib/services/profile";
 
 export async function GET(request: Request) {
   const auth = await requireApiAuth(request);

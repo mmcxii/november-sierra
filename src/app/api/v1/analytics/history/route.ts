@@ -1,6 +1,6 @@
 import { requireApiAuth } from "@/lib/api/require-auth";
 import { apiError, apiOptions, apiSuccess } from "@/lib/api/response";
-import { getClickHistory } from "@/lib/mcp/services/analytics";
+import { getClickHistory } from "@/lib/services/analytics";
 import { parseDateRange } from "../../_utils";
 
 export async function GET(request: Request) {

@@ -11,7 +11,7 @@ test.describe("Theme Studio — Free User", () => {
     await resetCustomThemes(testUsers.admin.username);
     await setUserTier(testUsers.admin.username, "free");
     await page.goto("/dashboard/theme");
-    await page.getByRole("heading", { name: t.theme }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.theme }).waitFor();
 
     //* Act — navigate to studio and save a theme
     await page.getByRole("link", { name: t.createTheme }).click();
@@ -112,7 +112,7 @@ test.describe("Theme Studio — Light/Dark Toggles", () => {
     await resetCustomThemes(testUsers.pro.username);
     await setUserTier(testUsers.pro.username, "pro");
     await page.goto("/dashboard/theme");
-    await page.getByRole("heading", { name: t.theme }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.theme }).waitFor();
 
     //* Act — disable dark mode
     const darkSwitch = page.getByText(t.enableDarkTheme).locator("..").getByRole("switch");
@@ -127,7 +127,7 @@ test.describe("Theme Studio — Light/Dark Toggles", () => {
 
     //* Cleanup — re-enable dark mode
     await page.goto("/dashboard/theme");
-    await page.getByRole("heading", { name: t.theme }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.theme }).waitFor();
     await page.getByText(t.enableDarkTheme).locator("..").getByRole("switch").click();
     await page.waitForTimeout(1_000);
   });
@@ -137,7 +137,7 @@ test.describe("Theme Studio — Light/Dark Toggles", () => {
     await resetCustomThemes(testUsers.pro.username);
     await setUserTier(testUsers.pro.username, "pro");
     await page.goto("/dashboard/theme");
-    await page.getByRole("heading", { name: t.theme }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.theme }).waitFor();
 
     //* Act — disable light, then attempt to disable dark
     const lightSwitch = page.getByText(t.enableLightTheme).locator("..").getByRole("switch");
@@ -187,7 +187,7 @@ test.describe("Theme Studio — Deletion", () => {
 
     //* Act — navigate to theme overview and delete the theme
     await page.goto("/dashboard/theme");
-    await page.getByRole("heading", { name: t.theme }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.theme }).waitFor();
     await page.getByTitle(t.deleteTheme).first().click();
 
     //* Assert — deletion toast appears, public page falls back to a stock preset

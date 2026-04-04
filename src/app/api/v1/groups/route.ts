@@ -2,7 +2,9 @@ import { API_ERROR_CODES } from "@/lib/api/errors";
 import { requireApiAuth } from "@/lib/api/require-auth";
 import { apiError, apiOptions, apiSuccess } from "@/lib/api/response";
 import { createGroupSchema } from "@/lib/api/schemas/group";
-import { createGroup, listGroups } from "@/lib/mcp/services/group";
+import { createGroup, listGroups } from "@/lib/services/group";
+import { dispatchWebhookEvent } from "@/lib/services/webhook";
+import { after } from "next/server";
 
 export async function GET(request: Request) {
   const auth = await requireApiAuth(request);
@@ -36,6 +38,13 @@ export async function POST(request: Request) {
   if (result.error != null) {
     return apiError(result.error.code, result.error.message, result.error.status);
   }
+  after(() =>
+    dispatchWebhookEvent({
+      data: result.data as unknown as Record<string, unknown>,
+      event: "group.created",
+      userId: auth.user.id,
+    }),
+  );
   return apiSuccess(result.data, 201);
 }
 

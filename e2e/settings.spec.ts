@@ -6,7 +6,7 @@ test.describe("settings", () => {
   test("updates display name and bio with confirmation toast", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Act
     const displayNameInput = page.getByPlaceholder(testUsers.pro.username, {
@@ -38,7 +38,7 @@ test.describe("settings", () => {
   test("toggles branding visibility", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Act — hide
     await page.getByRole("button", { name: t.hideBranding }).click();
@@ -57,7 +57,7 @@ test.describe("settings", () => {
   test("free-tier user sees upgrade prompts for Pro features", async ({ freeUser: page }) => {
     //* Act
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Assert
     await expect(page.getByText(t.upgradeToProToUseACustomDomain)).toBeVisible();
@@ -67,7 +67,7 @@ test.describe("settings", () => {
   test("Pro user has manage billing button and referral code input", async ({ proUser: page }) => {
     //* Act
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Assert
     await expect(page.getByRole("button", { name: t.manageBilling })).toBeVisible();

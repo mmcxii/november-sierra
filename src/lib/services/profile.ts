@@ -10,7 +10,7 @@ import { isValidThemeId } from "@/lib/themes";
 import type { Tier } from "@/lib/tier";
 import { count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { serviceError, serviceSuccess, type ServiceResult } from "../types";
+import { serviceError, serviceSuccess, type ServiceResult } from "./types";
 
 export type ProfileResponse = {
   avatarUrl: null | string;

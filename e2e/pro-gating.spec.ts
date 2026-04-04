@@ -5,7 +5,7 @@ import { testUsers } from "./fixtures/test-users";
 test.describe("Pro feature gating", () => {
   test("free user does not see Add link group button", async ({ freeUser: page }) => {
     //* Act
-    await page.getByRole("heading", { name: t.links }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.links }).waitFor();
 
     //* Assert — Add link exists but Add link group does not
     await expect(page.getByRole("button", { exact: true, name: t.addLink })).toBeVisible();

@@ -1,7 +1,7 @@
 import type { ApiKeyUser } from "@/lib/api/auth";
+import { createGroup, deleteGroup, listGroups, updateGroup } from "@/lib/services/group";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { createGroup, deleteGroup, listGroups, updateGroup } from "../services/group";
 import { toToolResult } from "../tool-result";
 
 export function registerGroupTools(server: McpServer, user: ApiKeyUser): void {

@@ -480,6 +480,137 @@ export function generateOpenApiSpec(baseUrl: string) {
     tags: ["Analytics"],
   });
 
+  // ─── Webhooks ───────────────────────────────────────────────────────────────
+
+  const webhookEventEnum = z.enum([
+    "link.created",
+    "link.updated",
+    "link.deleted",
+    "group.created",
+    "group.updated",
+    "group.deleted",
+  ]);
+
+  registry.registerPath({
+    method: "get",
+    operationId: "listWebhooks",
+    path: "/api/v1/webhooks",
+    responses: {
+      200: { description: "List of user's webhooks" },
+      401: { description: "Unauthorized" },
+    },
+    security: bearerAuth,
+    summary: "List all webhooks",
+    tags: ["Webhooks"],
+  });
+
+  registry.registerPath({
+    method: "post",
+    operationId: "createWebhook",
+    path: "/api/v1/webhooks",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              events: z.array(webhookEventEnum).min(1),
+              url: z.string().url(),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      201: { description: "Created webhook (includes signing secret — shown once)" },
+      400: { description: "Validation error" },
+      401: { description: "Unauthorized" },
+      403: { description: "Webhook limit reached" },
+    },
+    security: bearerAuth,
+    summary: "Create a webhook",
+    tags: ["Webhooks"],
+  });
+
+  registry.registerPath({
+    method: "patch",
+    operationId: "updateWebhook",
+    path: "/api/v1/webhooks/{id}",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              active: z.boolean().optional(),
+              events: z.array(webhookEventEnum).min(1).optional(),
+              url: z.string().url().optional(),
+            }),
+          },
+        },
+      },
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Updated webhook" },
+      400: { description: "Validation error" },
+      401: { description: "Unauthorized" },
+      404: { description: "Webhook not found" },
+    },
+    security: bearerAuth,
+    summary: "Update a webhook",
+    tags: ["Webhooks"],
+  });
+
+  registry.registerPath({
+    method: "delete",
+    operationId: "deleteWebhook",
+    path: "/api/v1/webhooks/{id}",
+    request: {
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Webhook deleted" },
+      401: { description: "Unauthorized" },
+      404: { description: "Webhook not found" },
+    },
+    security: bearerAuth,
+    summary: "Delete a webhook",
+    tags: ["Webhooks"],
+  });
+
+  registry.registerPath({
+    method: "get",
+    operationId: "listWebhookDeliveries",
+    path: "/api/v1/webhooks/{id}/deliveries",
+    request: {
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Recent delivery log (7-day retention)" },
+      401: { description: "Unauthorized" },
+      404: { description: "Webhook not found" },
+    },
+    security: bearerAuth,
+    summary: "List webhook deliveries",
+    tags: ["Webhooks"],
+  });
+
+  registry.registerPath({
+    method: "post",
+    operationId: "testWebhook",
+    path: "/api/v1/webhooks/{id}/test",
+    request: {
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Test event sent" },
+      401: { description: "Unauthorized" },
+      404: { description: "Webhook not found" },
+    },
+    security: bearerAuth,
+    summary: "Send a test webhook event",
+    tags: ["Webhooks"],
+  });
+
   // ─── OpenAPI ────────────────────────────────────────────────────────────────
 
   registry.registerPath({

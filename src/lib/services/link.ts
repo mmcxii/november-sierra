@@ -11,7 +11,7 @@ import { FREE_LINK_LIMIT } from "@/lib/tier";
 import { ensureProtocol, generateSlug, isSafeUrl, urlResolves } from "@/lib/utils/url";
 import { and, asc, count, eq, inArray, not, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { serviceError, serviceSuccess, type ServiceResult } from "../types";
+import { serviceError, serviceSuccess, type ServiceResult } from "./types";
 
 export type LinkResponse = {
   copyValue: null | string;

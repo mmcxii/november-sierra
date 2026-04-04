@@ -2,7 +2,7 @@ import { API_ERROR_CODES } from "@/lib/api/errors";
 import { requireApiAuth } from "@/lib/api/require-auth";
 import { apiError, apiOptions, apiSuccess } from "@/lib/api/response";
 import { reorderLinksSchema } from "@/lib/api/schemas/link";
-import { reorderLinks } from "@/lib/mcp/services/link";
+import { reorderLinks } from "@/lib/services/link";
 
 export async function PATCH(request: Request) {
   const auth = await requireApiAuth(request);

@@ -1,7 +1,9 @@
 {
   "crons": [
     { "path": "/api/cron/redis-health", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/refresh-nostr-profiles", "schedule": "0 6 * * *" }
+    { "path": "/api/cron/refresh-nostr-profiles", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/webhook-retries", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/webhook-cleanup", "schedule": "0 8 * * *" }
   ],
   "git": {
     "deploymentEnabled": false

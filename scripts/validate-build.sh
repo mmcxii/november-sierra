@@ -30,6 +30,7 @@ export UPSTASH_REDIS_REST_TOKEN="mock"
 export VERCEL_API_TOKEN="mock"
 export VERCEL_PROJECT_ID="mock"
 export CRON_SECRET="mock"
+export WEBHOOK_SIGNING_ENCRYPTION_KEY="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 echo "▸ Building project…"

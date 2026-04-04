@@ -8,7 +8,7 @@ test.describe("custom domain", () => {
   test("adds a custom domain and shows DNS instructions", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     // If a domain is already configured from a previous run, remove it first
     const removeButton = page.getByRole("button", { name: t.removeDomain });
@@ -25,7 +25,7 @@ test.describe("custom domain", () => {
     await page.getByRole("button", { name: t.addDomain }).click();
     await page.waitForTimeout(2000);
     await page.reload();
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Assert — DNS instructions appear
     await expect(page.getByText(t.addThisCnameRecordToYourDnsProvider)).toBeVisible();
@@ -38,7 +38,7 @@ test.describe("custom domain", () => {
   test("verifies DNS and reaches connected or pending state", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Act
     await page.getByRole("button", { name: t.verifyDns }).click();
@@ -74,21 +74,13 @@ test.describe("custom domain", () => {
 
   test("custom domain redirects link slugs", async ({ proUser: page }) => {
     //* Arrange — create a link with a known slug
-    await createLink(
-      page,
-      "Domain Redirect Link",
-      "https://example.com",
-      "e2e-domain-redirect",
-    );
+    await createLink(page, "Domain Redirect Link", "https://example.com", "e2e-domain-redirect");
 
     //* Act — request the slug path via the custom domain Host header
-    const response = await page.request.get(
-      "http://localhost:3000/e2e-domain-redirect",
-      {
-        headers: { Host: testDomain.subdomain },
-        maxRedirects: 0,
-      },
-    );
+    const response = await page.request.get("http://localhost:3000/e2e-domain-redirect", {
+      headers: { Host: testDomain.subdomain },
+      maxRedirects: 0,
+    });
 
     //* Assert — the middleware rewrites to /{username}/{slug} which returns a redirect
     expect(response.status()).toBeGreaterThanOrEqual(300);
@@ -102,7 +94,7 @@ test.describe("custom domain", () => {
   test("removes the custom domain", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Act
     await page.getByRole("button", { name: t.removeDomain }).click();

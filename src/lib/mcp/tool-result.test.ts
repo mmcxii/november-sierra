@@ -1,6 +1,6 @@
+import { serviceError, serviceSuccess } from "@/lib/services/types";
 import { describe, expect, it } from "vitest";
 import { toToolResult } from "./tool-result";
-import { serviceError, serviceSuccess } from "./types";
 
 describe("toToolResult", () => {
   it("converts successful result to MCP tool result", () => {

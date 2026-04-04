@@ -1,6 +1,6 @@
 import { requireApiAuth } from "@/lib/api/require-auth";
 import { apiError, apiOptions, apiSuccess } from "@/lib/api/response";
-import { toggleFeaturedLink } from "@/lib/mcp/services/link";
+import { toggleFeaturedLink } from "@/lib/services/link";
 
 type RouteParams = { params: Promise<{ id: string }> };
 

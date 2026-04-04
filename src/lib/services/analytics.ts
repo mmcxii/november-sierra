@@ -3,8 +3,8 @@ import { db } from "@/lib/db/client";
 import { clicksTable } from "@/lib/db/schema/click";
 import { linksTable } from "@/lib/db/schema/link";
 import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
-import { serviceSuccess, type ServiceResult } from "../types";
 import { requirePro } from "./require-pro";
+import { serviceSuccess, type ServiceResult } from "./types";
 
 export type DateRange = { end?: null | string; start?: null | string };
 

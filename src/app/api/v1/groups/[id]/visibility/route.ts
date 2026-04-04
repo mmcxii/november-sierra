@@ -1,6 +1,6 @@
 import { requireApiAuth } from "@/lib/api/require-auth";
 import { apiError, apiOptions, apiSuccess } from "@/lib/api/response";
-import { toggleGroupVisibility } from "@/lib/mcp/services/group";
+import { toggleGroupVisibility } from "@/lib/services/group";
 
 type RouteParams = { params: Promise<{ id: string }> };
 

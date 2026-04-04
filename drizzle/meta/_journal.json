@@ -56,6 +56,13 @@
       "tag": "0007_add-custom-themes",
       "version": "7",
       "when": 1774871833520
+    },
+    {
+      "breakpoints": true,
+      "idx": 8,
+      "tag": "0008_rapid_nicolaos",
+      "version": "7",
+      "when": 1775316135801
     }
   ],
   "version": "7"

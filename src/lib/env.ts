@@ -39,6 +39,7 @@ export const envSchema = createEnv({
     VERCEL_API_TOKEN: process.env.VERCEL_API_TOKEN,
     VERCEL_PROJECT_ID: process.env.VERCEL_PROJECT_ID,
     VERCEL_TEAM_ID: process.env.VERCEL_TEAM_ID,
+    WEBHOOK_SIGNING_ENCRYPTION_KEY: process.env.WEBHOOK_SIGNING_ENCRYPTION_KEY,
   },
   server: {
     ADMIN_USER_ID: z.string().optional(),
@@ -56,5 +57,6 @@ export const envSchema = createEnv({
     VERCEL_API_TOKEN: z.string(),
     VERCEL_PROJECT_ID: z.string(),
     VERCEL_TEAM_ID: z.string().optional(),
+    WEBHOOK_SIGNING_ENCRYPTION_KEY: z.string().length(64),
   },
 });

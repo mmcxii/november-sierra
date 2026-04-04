@@ -7,8 +7,8 @@ import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { and, asc, eq, inArray, not, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { serviceError, serviceSuccess, type ServiceResult } from "../types";
 import { requirePro } from "./require-pro";
+import { serviceError, serviceSuccess, type ServiceResult } from "./types";
 
 export type GroupResponse = {
   createdAt: Date;

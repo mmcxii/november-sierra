@@ -11,10 +11,7 @@ test.describe("analytics", () => {
     await expect(page.getByText(t.noClickDataYet)).toBeVisible();
   });
 
-  test("records click via link redirect and shows analytics data", async ({
-    browser,
-    proUser: page,
-  }) => {
+  test("records click via link redirect and shows analytics data", async ({ browser, proUser: page }) => {
     //* Arrange — create a link with a known slug
     await createLink(page, "Analytics Test", "https://example.com", "e2e-analytics");
 
@@ -38,14 +35,13 @@ test.describe("analytics", () => {
 
       const totalClicks = page.getByText(t.totalClicks);
       const errorHeading = page.getByRole("heading", {
+        exact: true,
         name: t.somethingWentWrong,
       });
 
       const outcome = await Promise.race([
         totalClicks.waitFor({ timeout: 10_000 }).then(() => "data" as const),
-        errorHeading
-          .waitFor({ timeout: 10_000 })
-          .then(() => "error" as const),
+        errorHeading.waitFor({ timeout: 10_000 }).then(() => "error" as const),
         page
           .getByText(t.noClickDataYet)
           .waitFor({ timeout: 10_000 })

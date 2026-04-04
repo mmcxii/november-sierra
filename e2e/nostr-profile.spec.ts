@@ -7,7 +7,7 @@ test.describe("nostr profile", () => {
   test("nostr toggle reveals npub input and relay configuration", async ({ adminUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Act — toggle nostr on
     await page.getByRole("switch").click();
@@ -27,7 +27,7 @@ test.describe("nostr profile", () => {
   test("toggling nostr on locks display name, bio, and avatar", async ({ adminUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Act — toggle nostr on
     await page.getByRole("switch").click();
@@ -45,7 +45,7 @@ test.describe("nostr profile", () => {
   test("save button is disabled when nostr is toggled on without a preview", async ({ adminUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Act — toggle nostr on without entering an npub
     await page.getByRole("switch").click();
@@ -60,7 +60,7 @@ test.describe("nostr profile", () => {
   test("relay management: add and remove relays", async ({ adminUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
     await page.getByRole("switch").click();
     const relayInputs = page.locator('input[placeholder="wss://..."]');
 
@@ -86,7 +86,7 @@ test.describe("nostr profile", () => {
   test("toggling nostr off hides nostr fields", async ({ adminUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
-    await page.getByRole("heading", { name: t.settings }).waitFor();
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Act — toggle on, wait for fields, then toggle off
     await page.getByRole("switch").click();

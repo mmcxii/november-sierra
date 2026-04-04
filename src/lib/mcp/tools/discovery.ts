@@ -1,6 +1,6 @@
+import { lookupProfile } from "@/lib/services/discovery";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { lookupProfile } from "../services/discovery";
 import { toToolResult } from "../tool-result";
 
 export function registerDiscoveryTools(server: McpServer): void {

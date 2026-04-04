@@ -7,11 +7,13 @@ test.describe("developers page", () => {
     await page.goto("/developers");
 
     //* Assert
-    await expect(page.getByRole("heading", { name: t.builtForTheAiAgentEra })).toBeVisible();
-    await expect(page.getByRole("heading", { name: t.keyCapabilities })).toBeVisible();
-    await expect(page.getByRole("heading", { name: t.codeExamples })).toBeVisible();
-    await expect(page.getByRole("heading", { name: t.otherLinkInBioToolsWerentBuiltForTheAiEra })).toBeVisible();
-    await expect(page.getByRole("heading", { name: t.getYourApiKey })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.builtForTheAiAgentEra })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.keyCapabilities })).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.codeExamples })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { exact: true, name: t.otherLinkInBioToolsWerentBuiltForTheAiEra }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { exact: true, name: t.getYourApiKey })).toBeVisible();
   });
 
   test("try it button fetches a real public profile", async ({ page }) => {

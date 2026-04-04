@@ -1,5 +1,5 @@
+import type { ServiceResult } from "@/lib/services/types";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { ServiceResult } from "./types";
 
 export function toToolResult(result: ServiceResult<unknown>): CallToolResult {
   if (result.error != null) {
