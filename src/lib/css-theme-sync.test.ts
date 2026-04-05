@@ -17,13 +17,13 @@ describe("generateCssScaffold", () => {
     const result = generateCssScaffold(darkDepths);
 
     //* Assert
-    expect(result).toContain("/* === Theme Variables (synced with UI) === */");
-    expect(result).toContain("/* === End Theme Variables === */");
+    expect(result).toContain("/* === Theme Values === */");
+    expect(result).toContain("/* === End Theme Values === */");
     expect(result).toContain("/* Page */");
     expect(result).toContain("/* Card */");
     expect(result).toContain("/* Avatar */");
-    expect(result).toContain("/* Featured */");
-    expect(result).toContain("/* Link icons */");
+    expect(result).toContain("/* Featured link */");
+    expect(result).toContain("/* Links */");
     expect(result).toContain("/* Display name */");
     expect(result).toContain(`--anc-theme-anchor-color: ${darkDepths["anchor-color"]};`);
     expect(result).toContain(`--anc-theme-name-color: ${darkDepths["name-color"]};`);
@@ -69,11 +69,11 @@ describe("generateCssScaffold", () => {
     const result = generateCssScaffold(darkDepths);
 
     //* Assert
-    expect(result).toContain("/* .anchr-page { } */");
-    expect(result).toContain("/* .anchr-avatar { } */");
-    expect(result).toContain("/* .anchr-link { } */");
-    expect(result).toContain("/* .anchr-footer { } */");
-    expect(result).toContain("/* .anchr-overlay { } */");
+    expect(result).toContain(".anchr-page { }  — full page background");
+    expect(result).toContain(".anchr-avatar { }  — inner avatar circle");
+    expect(result).toContain(".anchr-link { }  — link card");
+    expect(result).toContain(".anchr-footer { }  — page footer");
+    expect(result).toContain(".anchr-overlay { }  — background image overlay");
   });
 
   it("omits font section when font is null", () => {
@@ -150,11 +150,11 @@ describe("parseCssToThemeState", () => {
     //* Arrange
     const css = `
 .anchr-link { color: red; }
-/* === Theme Variables (synced with UI) === */
+/* === Theme Values === */
 .anchr-page {
   --anc-theme-name-color: #ff0000;
 }
-/* === End Theme Variables === */
+/* === End Theme Values === */
 .anchr-avatar { border: 1px solid blue; }
 `;
 
@@ -179,11 +179,11 @@ describe("parseCssToThemeState", () => {
 
   it("handles gradient values correctly", () => {
     //* Arrange
-    const css = `/* === Theme Variables (synced with UI) === */
+    const css = `/* === Theme Values === */
 .anchr-page {
   --anc-theme-card-bg: linear-gradient(160deg, #111e2e 0%, #080f1c 55%, #050b14 100%);
 }
-/* === End Theme Variables === */`;
+/* === End Theme Values === */`;
 
     //* Act
     const result = parseCssToThemeState(css);
@@ -194,11 +194,11 @@ describe("parseCssToThemeState", () => {
 
   it("passes through invalid values as-is", () => {
     //* Arrange
-    const css = `/* === Theme Variables (synced with UI) === */
+    const css = `/* === Theme Values === */
 .anchr-page {
   --anc-theme-name-color: ref;
 }
-/* === End Theme Variables === */`;
+/* === End Theme Values === */`;
 
     //* Act
     const result = parseCssToThemeState(css);
@@ -248,11 +248,11 @@ describe("updateVariableInCss", () => {
 
   it("appends variable if missing from block", () => {
     //* Arrange
-    const css = `/* === Theme Variables (synced with UI) === */
+    const css = `/* === Theme Values === */
 .anchr-page {
   --anc-theme-anchor-color: #d4b896;
 }
-/* === End Theme Variables === */`;
+/* === End Theme Values === */`;
 
     //* Act
     const result = updateVariableInCss(css, "name-color", "#ffffff");

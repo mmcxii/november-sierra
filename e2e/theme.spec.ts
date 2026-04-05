@@ -270,7 +270,7 @@ test.describe("Theme Studio — CSS Editor Sync", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- browser context; monaco global
       () => (window as any).monaco?.editor?.getModels()?.[0]?.getValue() ?? "",
     );
-    expect(editorContent).toContain("Theme Variables (synced with UI)");
+    expect(editorContent).toContain("Theme Values");
     expect(editorContent).toContain("--anc-theme-anchor-color");
     expect(editorContent).toContain("--anc-theme-name-color");
     expect(editorContent).toContain(".anchr-page");

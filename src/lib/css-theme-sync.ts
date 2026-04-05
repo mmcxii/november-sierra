@@ -3,39 +3,39 @@ import { THEME_VARIABLE_PREFIX, type ThemeVariableKey, type ThemeVariables } fro
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const SYNC_START = "/* === Theme Variables (synced with UI) === */";
-const SYNC_END = "/* === End Theme Variables === */";
+const SYNC_START = "/* === Theme Values === */";
+const SYNC_END = "/* === End Theme Values === */";
 
-/** All available .anchr- classes that users can target with custom CSS. */
-const ANCHR_CLASSES = [
-  ".anchr-page",
-  ".anchr-hairline",
-  ".anchr-glow",
-  ".anchr-wave",
-  ".anchr-profile-header",
-  ".anchr-avatar-ring",
-  ".anchr-avatar",
-  ".anchr-avatar-img",
-  ".anchr-display-name",
-  ".anchr-bio",
-  ".anchr-quick-links",
-  ".anchr-quick-link",
-  ".anchr-quick-link-icon",
-  ".anchr-link-list",
-  ".anchr-featured-link",
-  ".anchr-featured-link-icon-bg",
-  ".anchr-featured-link-icon",
-  ".anchr-featured-link-text",
-  ".anchr-link",
-  ".anchr-link-icon-bg",
-  ".anchr-link-icon",
-  ".anchr-link-text",
-  ".anchr-copy-btn",
-  ".anchr-group-header",
-  ".anchr-footer",
-  ".anchr-brand",
-  ".anchr-theme-toggle",
-  ".anchr-overlay",
+/** All available .anchr- classes with plain-language descriptions. */
+const ANCHR_CLASSES: readonly { cls: string; desc: string }[] = [
+  { cls: ".anchr-page", desc: "full page background" },
+  { cls: ".anchr-hairline", desc: "top accent line" },
+  { cls: ".anchr-glow", desc: "radial glow effect" },
+  { cls: ".anchr-wave", desc: "wave texture pattern" },
+  { cls: ".anchr-profile-header", desc: "profile section wrapper" },
+  { cls: ".anchr-avatar-ring", desc: "outer avatar ring" },
+  { cls: ".anchr-avatar", desc: "inner avatar circle" },
+  { cls: ".anchr-avatar-img", desc: "profile picture" },
+  { cls: ".anchr-display-name", desc: "profile name heading" },
+  { cls: ".anchr-bio", desc: "bio text" },
+  { cls: ".anchr-quick-links", desc: "quick links row" },
+  { cls: ".anchr-quick-link", desc: "quick link button" },
+  { cls: ".anchr-quick-link-icon", desc: "quick link icon" },
+  { cls: ".anchr-link-list", desc: "links container" },
+  { cls: ".anchr-featured-link", desc: "featured link card" },
+  { cls: ".anchr-featured-link-icon-bg", desc: "featured link icon background" },
+  { cls: ".anchr-featured-link-icon", desc: "featured link icon" },
+  { cls: ".anchr-featured-link-text", desc: "featured link title" },
+  { cls: ".anchr-link", desc: "link card" },
+  { cls: ".anchr-link-icon-bg", desc: "link icon background" },
+  { cls: ".anchr-link-icon", desc: "link icon" },
+  { cls: ".anchr-link-text", desc: "link title" },
+  { cls: ".anchr-copy-btn", desc: "copy button" },
+  { cls: ".anchr-group-header", desc: "link group heading" },
+  { cls: ".anchr-footer", desc: "page footer" },
+  { cls: ".anchr-brand", desc: "Anchr branding" },
+  { cls: ".anchr-theme-toggle", desc: "light/dark toggle" },
+  { cls: ".anchr-overlay", desc: "background image overlay" },
 ] as const;
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -65,9 +65,17 @@ export function generateCssScaffold(variables: ThemeVariables, pro: ThemeProProp
   lines.push(SYNC_START);
   lines.push(".anchr-page {");
 
-  // Group variables by section (matching constants.ts groupings)
+  // Group variables by section
+  const sectionLabels: Record<string, string> = {
+    Accent: "Branding",
+    "Display name": "Display name",
+    Featured: "Featured link",
+    "Link icons": "Links",
+  };
+
   for (const section of SECTIONS) {
-    lines.push(`  /* ${section.title} */`);
+    const label = sectionLabels[section.title] ?? section.title;
+    lines.push(`  /* ${label} */`);
     for (const field of section.fields) {
       const key = field.key as ThemeVariableKey;
       lines.push(`  ${THEME_VARIABLE_PREFIX}${key}: ${variables[key]};`);
@@ -111,10 +119,10 @@ export function generateCssScaffold(variables: ThemeVariables, pro: ThemeProProp
   lines.push("}");
   lines.push(SYNC_END);
   lines.push("");
-  lines.push("/* Custom styles — target any .anchr- class */");
+  lines.push("/* Add your own styles below — uncomment any line to get started */");
 
-  for (const cls of ANCHR_CLASSES) {
-    lines.push(`/* ${cls} { } */`);
+  for (const { cls, desc } of ANCHR_CLASSES) {
+    lines.push(`/* ${cls} { }  — ${desc} */`);
   }
 
   return lines.join("\n");
