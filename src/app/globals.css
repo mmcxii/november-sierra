@@ -732,6 +732,30 @@
   transform: translateY(0);
 }
 
+/* ── Mobile menu overlay ─────────────────────────────────────────────── */
+
+.m-mobile-overlay {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out;
+}
+
+.m-mobile-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.m-mobile-overlay-link {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+}
+
+.m-mobile-overlay.is-open .m-mobile-overlay-link {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .m-sonar-ring {
   border: 2px solid rgb(var(--m-accent) / 0.4);
 }
