@@ -60,6 +60,16 @@ test.describe("account deletion", () => {
     await expect(deleteButton).toBeEnabled();
   });
 
+  test("shows danger zone for free users", async ({ freeUser: page }) => {
+    //* Act
+    await page.goto("/dashboard/settings");
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
+
+    //* Assert
+    await expect(page.getByText(t.dangerZone)).toBeVisible();
+    await expect(page.getByRole("button", { name: t.deleteAccount })).toBeVisible();
+  });
+
   test("cancel button closes the dialog at summary step", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");

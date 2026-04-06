@@ -13,6 +13,7 @@ import { envSchema } from "@/lib/env";
 import { isNpub } from "@/lib/nostr";
 import { isValidRelayUrl, MAX_RELAYS, type NostrProfileData } from "@/lib/nostr-profile";
 import { fetchNostrProfile } from "@/lib/nostr-profile.server";
+import { deleteAccount, getAccountDeletionSummary } from "@/lib/services/account-deletion";
 import { stripe } from "@/lib/stripe";
 import { isDarkTheme, isValidThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
@@ -612,7 +613,6 @@ export async function fetchAccountDeletionSummary() {
     return null;
   }
 
-  const { getAccountDeletionSummary } = await import("@/lib/services/account-deletion");
   return getAccountDeletionSummary(userId);
 }
 
@@ -623,7 +623,6 @@ export async function deleteMyAccount(): Promise<ActionResult> {
     return { error: "somethingWentWrongPleaseTryAgain", success: false };
   }
 
-  const { deleteAccount } = await import("@/lib/services/account-deletion");
   const result = await deleteAccount(userId);
 
   if (!result.success) {

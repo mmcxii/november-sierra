@@ -91,14 +91,14 @@ async function collectUploadthingFileKeys(userId: string): Promise<string[]> {
 }
 
 /** Extract UploadThing file key from a UFS URL. */
-function extractFileKey(url: string): null | string {
+export function extractFileKey(url: string): null | string {
   try {
     const parsed = new URL(url);
     // UFS URLs look like: https://utfs.io/f/<fileKey> or https://<app>.ufs.sh/f/<fileKey>
     const segments = parsed.pathname.split("/");
     const fIndex = segments.indexOf("f");
     if (fIndex !== -1 && fIndex + 1 < segments.length) {
-      return segments[fIndex + 1] ?? null;
+      return segments[fIndex + 1] || null;
     }
     return null;
   } catch {
@@ -205,22 +205,18 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
   const uploadthingCleaned = await deleteUploadthingFiles(uploadthingFileKeys);
 
   // 5. Insert deletion log (before DB cascade wipes user data)
-  const needsLog = !stripeCleaned || !vercelCleaned || !uploadthingCleaned || true; // Always insert so we can track Clerk cleanup
-
-  if (needsLog) {
-    await db.insert(accountDeletionLogsTable).values({
-      clerkCleaned: false, // Will be set after Clerk deletion
-      clerkUserId: userId,
-      customDomain: !vercelCleaned ? user.customDomain : null,
-      stripeCleaned,
-      stripeCustomerId: !stripeCleaned ? user.stripeCustomerId : null,
-      stripeSubscriptionId: !stripeCleaned ? user.stripeSubscriptionId : null,
-      uploadthingCleaned,
-      uploadthingFileKeys: !uploadthingCleaned ? uploadthingFileKeys : null,
-      username: user.username,
-      vercelCleaned,
-    });
-  }
+  await db.insert(accountDeletionLogsTable).values({
+    clerkCleaned: false, // Will be set after Clerk deletion
+    clerkUserId: userId,
+    customDomain: !vercelCleaned ? user.customDomain : null,
+    stripeCleaned,
+    stripeCustomerId: !stripeCleaned ? user.stripeCustomerId : null,
+    stripeSubscriptionId: !stripeCleaned ? user.stripeSubscriptionId : null,
+    uploadthingCleaned,
+    uploadthingFileKeys: !uploadthingCleaned ? uploadthingFileKeys : null,
+    username: user.username,
+    vercelCleaned,
+  });
 
   // 6. Delete user from DB (CASCADE handles all child tables)
   await db.delete(usersTable).where(eq(usersTable.id, userId));

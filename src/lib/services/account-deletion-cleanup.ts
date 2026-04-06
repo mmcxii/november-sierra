@@ -24,6 +24,7 @@ export async function retryDeletionCleanup(): Promise<CleanupResult> {
   const pending = await db.select().from(accountDeletionLogsTable);
 
   const result: CleanupResult = { alerted: 0, failed: 0, resolved: 0, retried: 0 };
+  const failuresToReport: { clerkUserId: string; status: Record<string, boolean>; username: string }[] = [];
 
   for (const log of pending) {
     result.retried++;
@@ -98,13 +99,11 @@ export async function retryDeletionCleanup(): Promise<CleanupResult> {
         })
         .where(eq(accountDeletionLogsTable.id, log.id));
 
-      if (newAttempts >= MAX_ATTEMPTS) {
-        // Fire PostHog event for admin alerting
-        await reportCleanupFailure(log.username, log.clerkUserId, {
-          clerkCleaned,
-          stripeCleaned,
-          uploadthingCleaned,
-          vercelCleaned,
+      if (newAttempts === MAX_ATTEMPTS) {
+        failuresToReport.push({
+          clerkUserId: log.clerkUserId,
+          status: { clerkCleaned, stripeCleaned, uploadthingCleaned, vercelCleaned },
+          username: log.username,
         });
         result.alerted++;
       }
@@ -113,13 +112,15 @@ export async function retryDeletionCleanup(): Promise<CleanupResult> {
     }
   }
 
+  if (failuresToReport.length > 0) {
+    await reportCleanupFailures(failuresToReport);
+  }
+
   return result;
 }
 
-async function reportCleanupFailure(
-  username: string,
-  clerkUserId: string,
-  status: Record<string, boolean>,
+async function reportCleanupFailures(
+  failures: { clerkUserId: string; status: Record<string, boolean>; username: string }[],
 ): Promise<void> {
   try {
     // Dynamic import to avoid pulling PostHog into non-browser bundles
@@ -128,15 +129,17 @@ async function reportCleanupFailure(
       host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     });
 
-    posthog.capture({
-      distinctId: "system",
-      event: "account_deletion_cleanup_failed",
-      properties: {
-        clerkUserId,
-        status,
-        username,
-      },
-    });
+    for (const failure of failures) {
+      posthog.capture({
+        distinctId: "system",
+        event: "account_deletion_cleanup_failed",
+        properties: {
+          clerkUserId: failure.clerkUserId,
+          status: failure.status,
+          username: failure.username,
+        },
+      });
+    }
 
     await posthog.shutdown();
   } catch (error) {
