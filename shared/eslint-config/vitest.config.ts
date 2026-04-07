@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 
 const vitestConfig = defineConfig({
   test: {
-    include: ["scripts/**/*.test.ts"],
+    include: ["rules/**/*.test.ts"],
     testTimeout: 15000,
   },
 });

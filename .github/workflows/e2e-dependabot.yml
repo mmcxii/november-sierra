@@ -26,8 +26,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -39,6 +37,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Pull env from Vercel (anchr-stage preview)
+        working-directory: anchr/website
         run: npx vercel env pull .env.local --environment preview --yes --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -62,20 +61,24 @@ jobs:
       - name: Apply schema to Neon branch
         # --force skips confirmation prompts for destructive changes (CI is non-interactive)
         # Source .env.local (from Vercel pull) for envSchema validation, but override DATABASE_URL
+        working-directory: anchr/website
         run: |
           set -a && source .env.local && set +a
           export DATABASE_URL="${{ steps.neon-branch.outputs.db_url }}"
           pnpm db:push --force
 
       - name: Remove staging DATABASE_URL from .env.local
+        working-directory: anchr/website
         run: sed -i '/^DATABASE_URL=/d' .env.local
 
       - name: Install Playwright browsers
+        working-directory: anchr/website
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run E2E tests (attempt 1)
         id: e2e_first
         continue-on-error: true
+        working-directory: anchr/website
         run: pnpm test:e2e
         env:
           DATABASE_URL: ${{ steps.neon-branch.outputs.db_url_pooled }}
@@ -87,6 +90,7 @@ jobs:
       - name: Retry E2E tests (attempt 2)
         id: e2e_retry
         if: ${{ steps.e2e_first.outcome == 'failure' }}
+        working-directory: anchr/website
         run: pnpm test:e2e
         env:
           DATABASE_URL: ${{ steps.neon-branch.outputs.db_url_pooled }}
@@ -100,7 +104,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: playwright-report-dependabot
-          path: playwright-report/
+          path: anchr/website/playwright-report/
           retention-days: 30
 
       - name: Upload test results
@@ -108,7 +112,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: test-results-dependabot
-          path: test-results/
+          path: anchr/website/test-results/
           retention-days: 30
 
       - name: Delete Neon branch

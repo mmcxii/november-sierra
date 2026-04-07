@@ -1,8 +1,11 @@
 {
   "*.json": ["sortier --write", "prettier --write"],
   "*.md": ["prettier --write"],
-  "*.{ts,tsx,js,cjs,mjs}": ["eslint --fix", "sortier --write", "prettier --write"],
-  "drizzle/*.sql": ["node --no-warnings scripts/validate-schema-migrations.ts"],
-  "src/lib/db/schema/**/*.ts": ["node --no-warnings scripts/validate-schema-migrations.ts"],
-  "src/lib/i18n/locales/*.json": ["node --no-warnings scripts/validate-i18n-keys.ts"]
+  "*.{ts,tsx,js,cjs,mjs}": ["sortier --write", "prettier --write"],
+  "anchr/website/**/*.{ts,tsx,js,cjs,mjs}": [
+    "bash -c 'cd anchr/website && ../../node_modules/.bin/eslint --fix \"$@\"' --"
+  ],
+  "anchr/website/drizzle/*.sql": ["node --no-warnings scripts/validate-schema-migrations.ts anchr/website"],
+  "anchr/website/src/lib/db/schema/**/*.ts": ["node --no-warnings scripts/validate-schema-migrations.ts anchr/website"],
+  "anchr/website/src/lib/i18n/locales/*.json": ["node --no-warnings scripts/validate-i18n-keys.ts anchr/website"]
 }

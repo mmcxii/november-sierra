@@ -11,9 +11,10 @@
  * Escape hatch: add `-- allow-destructive` anywhere in the migration file to skip all checks.
  *
  * Usage:
- *   node --no-warnings scripts/lint-migrations.ts [file1.sql file2.sql ...]
+ *   node --no-warnings scripts/lint-migrations.ts <workspace-root> [file1.sql file2.sql ...]
+ *   Example: node --no-warnings scripts/lint-migrations.ts anchr/website
  *
- * When called without arguments, scans all files in drizzle/*.sql.
+ * When called without file arguments, scans all files in <workspace-root>/drizzle/*.sql.
  */
 
 import { readFileSync, readdirSync } from "node:fs";
@@ -72,12 +73,12 @@ const rules: Rule[] = [
   },
 ];
 
-function getMigrationFiles(args: string[]): string[] {
+function getMigrationFiles(workspaceRoot: string, args: string[]): string[] {
   if (args.length > 0) {
     return args.map((f) => resolve(f));
   }
 
-  const drizzleDir = join(process.cwd(), "drizzle");
+  const drizzleDir = join(workspaceRoot, "drizzle");
   return readdirSync(drizzleDir)
     .filter((f) => f.endsWith(".sql"))
     .map((f) => join(drizzleDir, f));
@@ -112,8 +113,16 @@ function lintFile(filePath: string): { blocks: string[]; warns: string[] } {
   return { blocks, warns };
 }
 
+const workspaceRoot = process.argv[2];
+
+if (!workspaceRoot) {
+  console.error("Usage: node scripts/lint-migrations.ts <workspace-root> [file1.sql ...]");
+  console.error("Example: node scripts/lint-migrations.ts anchr/website");
+  process.exit(1);
+}
+
 const isGitHubActions = process.env.CI != null;
-const files = getMigrationFiles(process.argv.slice(2));
+const files = getMigrationFiles(workspaceRoot, process.argv.slice(3));
 
 let hasBlocks = false;
 
