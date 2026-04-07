@@ -1,30 +1,49 @@
-# Anchr
+# November Sierra
 
-A link-in-bio and profile page platform built with Next.js, Clerk, Neon, and Stripe.
+Monorepo for November Sierra products and shared tooling.
 
-## Tech Stack
+## Structure
 
-- **Framework:** Next.js 16 (App Router, React 19)
-- **Auth:** Clerk
-- **Database:** Neon (PostgreSQL) + Drizzle ORM
-- **Payments:** Stripe
-- **Hosting:** Vercel
-- **Styling:** Tailwind CSS v4 + shadcn/ui
+```
+├── anchr/
+│   ├── website/        @november-sierra/anchr-website    AGPL-3.0
+│   └── docs/           Anchr brand guidelines
+├── shared/
+│   └── eslint-config/  @november-sierra/eslint-config    MIT
+├── november-sierra/    (future: company website)
+└── scripts/            Shared validation and build scripts
+```
 
 ## Development
 
 ```bash
 pnpm install
-pnpm dev
+
+# Start the Anchr dev server
+turbo dev --filter=@november-sierra/anchr-website
+
+# Run all checks
+turbo build lint typecheck test
+
+# Run checks for a specific product
+turbo build --filter=./anchr/*
 ```
 
 ## Testing
 
 ```bash
-pnpm test          # unit tests (vitest)
-pnpm test:e2e      # e2e tests (playwright)
+turbo test             # unit tests (all workspaces)
+turbo test:e2e         # e2e tests
 ```
 
-## License
+## Licensing
 
-[AGPL-3.0-or-later](./LICENSE)
+This repository contains packages under different licenses:
+
+| Directory          | License           |
+| ------------------ | ----------------- |
+| `anchr/`           | AGPL-3.0-or-later |
+| `shared/`          | MIT               |
+| `november-sierra/` | MIT               |
+
+Each workspace package has its own `LICENSE` file. See [CONTRIBUTING.md](./CONTRIBUTING.md) for license boundary guidance.

@@ -2,33 +2,42 @@
  * Validates that schema changes are accompanied by migration changes and vice versa.
  *
  * Checks staged files (git diff --cached) to ensure:
- * - If any file in src/lib/db/schema/ changed, at least one file in drizzle/ also changed
- * - If any migration file in drizzle/ changed, at least one file in src/lib/db/schema/ also changed
+ * - If any file in <workspace>/src/lib/db/schema/ changed, at least one file in <workspace>/drizzle/ also changed
+ * - If any migration file in <workspace>/drizzle/ changed, at least one file in <workspace>/src/lib/db/schema/ also changed
+ *
+ * Usage:
+ *   node --no-warnings scripts/validate-schema-migrations.ts <workspace-root>
+ *   Example: node --no-warnings scripts/validate-schema-migrations.ts anchr/website
  *
  * Exit code 0 = valid, 1 = mismatch found.
  */
 
 import { execSync } from "node:child_process";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-export const SCHEMA_DIR = "src/lib/db/schema/";
-export const MIGRATIONS_DIR = "drizzle/";
-
-// Files to ignore in the migrations directory (not actual migration content)
-export const IGNORED_MIGRATION_PATTERNS = [/^drizzle\/meta\//, /^drizzle\/.*\.json$/];
-
 // ─── Core logic (exported for testing) ───────────────────────────────────────
 
-export function isMigrationFile(file: string): boolean {
-  if (!file.startsWith(MIGRATIONS_DIR)) {
-    return false;
-  }
-  return !IGNORED_MIGRATION_PATTERNS.some((pattern) => pattern.test(file));
+export function schemaDir(workspaceRoot: string): string {
+  return `${workspaceRoot}/src/lib/db/schema/`;
 }
 
-export function isSchemaFile(file: string): boolean {
-  return file.startsWith(SCHEMA_DIR);
+export function migrationsDir(workspaceRoot: string): string {
+  return `${workspaceRoot}/drizzle/`;
+}
+
+// Files to ignore in the migrations directory (not actual migration content)
+export function ignoredMigrationPatterns(workspaceRoot: string): RegExp[] {
+  return [new RegExp(`^${workspaceRoot}/drizzle/meta/`), new RegExp(`^${workspaceRoot}/drizzle/.*\\.json$`)];
+}
+
+export function isMigrationFile(file: string, workspaceRoot: string): boolean {
+  if (!file.startsWith(migrationsDir(workspaceRoot))) {
+    return false;
+  }
+  return !ignoredMigrationPatterns(workspaceRoot).some((pattern) => pattern.test(file));
+}
+
+export function isSchemaFile(file: string, workspaceRoot: string): boolean {
+  return file.startsWith(schemaDir(workspaceRoot));
 }
 
 export type ValidationResult =
@@ -36,9 +45,9 @@ export type ValidationResult =
   | { error: "schema-without-migration"; schemaFiles: string[]; valid: false }
   | { migrationCount: number; schemaCount: number; valid: true };
 
-export function validateSchemaMigrationSync(files: string[]): ValidationResult {
-  const schemaFiles = files.filter(isSchemaFile);
-  const migrationFiles = files.filter(isMigrationFile);
+export function validateSchemaMigrationSync(files: string[], workspaceRoot: string): ValidationResult {
+  const schemaFiles = files.filter((f) => isSchemaFile(f, workspaceRoot));
+  const migrationFiles = files.filter((f) => isMigrationFile(f, workspaceRoot));
 
   if (schemaFiles.length > 0 && migrationFiles.length === 0) {
     return { error: "schema-without-migration", schemaFiles, valid: false };
@@ -56,11 +65,19 @@ export function validateSchemaMigrationSync(files: string[]): ValidationResult {
 const isDirectExecution = process.argv[1]?.endsWith("validate-schema-migrations.ts") ?? false;
 
 if (isDirectExecution) {
+  const workspaceRoot = process.argv[2];
+
+  if (!workspaceRoot) {
+    console.error("Usage: node scripts/validate-schema-migrations.ts <workspace-root>");
+    console.error("Example: node scripts/validate-schema-migrations.ts anchr/website");
+    process.exit(1);
+  }
+
   const output = execSync("git diff --cached --name-only --diff-filter=ACMR", {
     encoding: "utf-8",
   });
   const staged = output.trim().split("\n").filter(Boolean);
-  const result = validateSchemaMigrationSync(staged);
+  const result = validateSchemaMigrationSync(staged, workspaceRoot);
 
   if (!result.valid) {
     if (result.error === "schema-without-migration") {

@@ -1,8 +1,14 @@
+import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 const vitestConfig = defineConfig({
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   test: {
-    include: ["scripts/**/*.test.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
     testTimeout: 15000,
   },
 });

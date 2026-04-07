@@ -6,7 +6,7 @@ updates:
       interval: daily
     open-pull-requests-limit: 10
     commit-message:
-      prefix: "ANC-132: chore(deps)"
+      prefix: "NS-3: chore(deps)"
     groups:
       react-and-next:
         patterns:
@@ -93,6 +93,6 @@ updates:
       day: monday
     open-pull-requests-limit: 5
     commit-message:
-      prefix: "ANC-132: chore(deps)"
+      prefix: "NS-3: chore(deps)"
     reviewers:
       - mmcxii

@@ -14,12 +14,15 @@
  *   - Must have the exact same set of keys as en-US.json (no missing, no extra)
  *   - {{variable}} interpolation tokens must match en-US.json
  *
+ * Usage:
+ *   node --no-warnings scripts/validate-i18n-keys.ts <workspace-root>
+ *   Example: node --no-warnings scripts/validate-i18n-keys.ts anchr/website
+ *
  * Exit code 0 = all valid, 1 = errors found.
  */
 
 import { readFileSync, readdirSync } from "node:fs";
-import { basename, dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { basename, resolve } from "node:path";
 
 // ─── Core logic (exported for testing) ───────────────────────────────────────
 
@@ -96,8 +99,15 @@ export function extractTokens(value: string): string[] {
 const isDirectExecution = process.argv[1]?.endsWith("validate-i18n-keys.ts") ?? false;
 
 if (isDirectExecution) {
-  const __dirname = dirname(fileURLToPath(import.meta.url));
-  const localesDir = resolve(__dirname, "../src/lib/i18n/locales");
+  const workspaceRoot = process.argv[2];
+
+  if (!workspaceRoot) {
+    console.error("Usage: node scripts/validate-i18n-keys.ts <workspace-root>");
+    console.error("Example: node scripts/validate-i18n-keys.ts anchr/website");
+    process.exit(1);
+  }
+
+  const localesDir = resolve(workspaceRoot, "src/lib/i18n/locales");
   const enUsPath = resolve(localesDir, "en-US.json");
 
   const enUs: Record<string, string> = JSON.parse(readFileSync(enUsPath, "utf-8"));
