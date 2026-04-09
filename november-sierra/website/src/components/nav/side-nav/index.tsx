@@ -9,7 +9,14 @@ import { Moon, Sun } from "lucide-react";
 export const SideNav: React.FC = () => {
   //* State
   const activeSection = useActiveSection();
-  const { theme, toggleTheme } = useTheme();
+  const { mounted, theme, toggleTheme } = useTheme();
+
+  //* Variables
+  const isForest = theme === "forest";
+  const themeIcon = isForest ? <Sun size={14} /> : <Moon size={14} />;
+  const themeIconMobile = isForest ? <Sun size={16} /> : <Moon size={16} />;
+  const themeLabel = isForest ? "Light" : "Dark";
+  const themeAriaLabel = `Switch to ${isForest ? "fog" : "forest"} theme`;
 
   return (
     <>
@@ -39,19 +46,20 @@ export const SideNav: React.FC = () => {
             );
           })}
 
-          <div className="bg-ns-border my-2 h-px" />
-
-          <button
-            aria-label={`Switch to ${theme === "forest" ? "fog" : "forest"} theme`}
-            className="nav-link text-ns-nav-text flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-200"
-            onClick={toggleTheme}
-            type="button"
-          >
-            <span className="flex h-1.5 w-1.5 items-center justify-center">
-              {theme === "forest" ? <Sun size={14} /> : <Moon size={14} />}
-            </span>
-            {theme === "forest" ? "Light" : "Dark"}
-          </button>
+          {mounted && (
+            <>
+              <div className="bg-ns-border my-2 h-px" />
+              <button
+                aria-label={themeAriaLabel}
+                className="nav-link text-ns-nav-text flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-200"
+                onClick={toggleTheme}
+                type="button"
+              >
+                <span className="flex h-1.5 w-1.5 items-center justify-center">{themeIcon}</span>
+                {themeLabel}
+              </button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -78,16 +86,19 @@ export const SideNav: React.FC = () => {
             );
           })}
 
-          <div className="bg-ns-border mx-1 h-4 w-px" />
-
-          <button
-            aria-label={`Switch to ${theme === "forest" ? "fog" : "forest"} theme`}
-            className="text-ns-nav-text rounded-full p-1 transition-colors duration-200"
-            onClick={toggleTheme}
-            type="button"
-          >
-            {theme === "forest" ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+          {mounted && (
+            <>
+              <div className="bg-ns-border mx-1 h-4 w-px" />
+              <button
+                aria-label={themeAriaLabel}
+                className="text-ns-nav-text rounded-full p-1 transition-colors duration-200"
+                onClick={toggleTheme}
+                type="button"
+              >
+                {themeIconMobile}
+              </button>
+            </>
+          )}
         </div>
       </nav>
     </>

@@ -5,6 +5,7 @@ import * as React from "react";
 export type Theme = "fog" | "forest";
 
 type UseThemeReturn = {
+  mounted: boolean;
   theme: Theme;
   setTheme: (next: Theme) => void;
   toggleTheme: () => void;
@@ -12,12 +13,8 @@ type UseThemeReturn = {
 
 export function useTheme(): UseThemeReturn {
   //* State
-  const [theme, setThemeState] = React.useState<Theme>(() => {
-    if (typeof window === "undefined") {
-      return "forest";
-    }
-    return localStorage.getItem("ns-theme") === "fog" ? "fog" : "forest";
-  });
+  const [theme, setThemeState] = React.useState<Theme>("forest");
+  const [mounted, setMounted] = React.useState(false);
 
   //* Handlers
   const setTheme = React.useCallback((next: Theme) => {
@@ -45,5 +42,14 @@ export function useTheme(): UseThemeReturn {
     });
   }, []);
 
-  return { setTheme, theme, toggleTheme };
+  //* Effects
+  React.useEffect(() => {
+    const stored = localStorage.getItem("ns-theme");
+    if (stored === "fog") {
+      setThemeState("fog");
+    }
+    setMounted(true);
+  }, []);
+
+  return { mounted, setTheme, theme, toggleTheme };
 }

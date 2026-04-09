@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       anchr-website: ${{ steps.filter.outputs.anchr-website }}
+      ns-website: ${{ steps.filter.outputs.ns-website }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v4
@@ -28,9 +29,18 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'turbo.json'
               - '.github/workflows/**'
+            ns-website:
+              - 'november-sierra/website/**'
+              - 'shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+              - '.github/workflows/**'
 
-  deploy-stage:
-    name: Deploy to Stage
+  # ── Anchr Website: Stage → Smoke → Production → Smoke → Rollback ──────────
+
+  deploy-stage-anchr-website:
+    name: Deploy to Stage (Anchr)
     runs-on: ubuntu-latest
     needs: ci-required
     if: needs.ci-required.outputs.anchr-website == 'true'
@@ -70,30 +80,30 @@ jobs:
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_STAGE }}
 
       - name: Run database migrations
         run: vercel env run -e production --token=${{ secrets.VERCEL_TOKEN }} -- pnpm --filter @november-sierra/anchr-website db:migrate
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_STAGE }}
 
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_STAGE }}
 
       - name: Deploy to Staging
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_STAGE }}
 
-  smoke-stage:
-    name: Smoke Tests (Stage)
+  smoke-stage-anchr-website:
+    name: Smoke Tests — Stage (Anchr)
     runs-on: ubuntu-latest
-    needs: deploy-stage
+    needs: deploy-stage-anchr-website
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -115,7 +125,7 @@ jobs:
         run: npx vercel env pull .env.local --environment production --yes --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGE }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_STAGE }}
 
       - name: Wait for deployment propagation
         run: |
@@ -163,10 +173,10 @@ jobs:
           path: anchr/website/test-results-smoke/
           retention-days: 30
 
-  deploy-prod:
-    name: Deploy to Production
+  deploy-prod-anchr-website:
+    name: Deploy to Production (Anchr)
     runs-on: ubuntu-latest
-    needs: smoke-stage
+    needs: smoke-stage-anchr-website
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout code
@@ -204,30 +214,30 @@ jobs:
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_PROD }}
 
       - name: Run database migrations
         run: vercel env run -e production --token=${{ secrets.VERCEL_TOKEN }} -- pnpm --filter @november-sierra/anchr-website db:migrate
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_PROD }}
 
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_PROD }}
 
       - name: Deploy to Production
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_PROD }}
 
-  smoke-prod:
-    name: Smoke Tests (Production)
+  smoke-prod-anchr-website:
+    name: Smoke Tests — Production (Anchr)
     runs-on: ubuntu-latest
-    needs: deploy-prod
+    needs: deploy-prod-anchr-website
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -249,7 +259,7 @@ jobs:
         run: npx vercel env pull .env.local --environment production --yes --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_PROD }}
 
       - name: Wait for deployment propagation
         run: |
@@ -295,11 +305,11 @@ jobs:
           path: anchr/website/test-results-smoke-prod/
           retention-days: 30
 
-  rollback-prod:
-    name: Rollback Production
+  rollback-prod-anchr-website:
+    name: Rollback Production (Anchr)
     runs-on: ubuntu-latest
-    needs: [deploy-prod, smoke-prod]
-    if: always() && needs.deploy-prod.result == 'success' && needs.smoke-prod.result == 'failure'
+    needs: [deploy-prod-anchr-website, smoke-prod-anchr-website]
+    if: always() && needs.deploy-prod-anchr-website.result == 'success' && needs.smoke-prod-anchr-website.result == 'failure'
     steps:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
@@ -308,4 +318,143 @@ jobs:
         run: vercel rollback --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ANCHR_WEBSITE_PROD }}
+
+  # ── NS Website: Deploy to Production → Smoke → Rollback ─────────────────
+
+  deploy-prod-ns-website:
+    name: Deploy to Production (NS Website)
+    runs-on: ubuntu-latest
+    needs: ci-required
+    if: needs.ci-required.outputs.ns-website == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_NS_WEBSITE }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_NS_WEBSITE }}
+
+      - name: Deploy to Production
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_NS_WEBSITE }}
+
+  smoke-prod-ns-website:
+    name: Smoke Tests — Production (NS Website)
+    runs-on: ubuntu-latest
+    needs: deploy-prod-ns-website
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Wait for deployment propagation
+        run: |
+          EXPECTED="${{ github.sha }}"
+          URL="https://novembersierra.dev/api/status/release"
+          echo "Waiting for $URL to serve commit $EXPECTED..."
+          for i in $(seq 1 18); do
+            SHA=$(curl -sf "$URL" | jq -r '.commitSha // empty' 2>/dev/null || true)
+            if [ "$SHA" = "$EXPECTED" ]; then
+              echo "Deployment propagated after ~$((i * 5))s"
+              exit 0
+            fi
+            echo "Attempt $i/18: got ${SHA:-<empty>}, retrying in 5s..."
+            sleep 5
+          done
+          echo "::error::Deployment did not propagate within 90s (expected $EXPECTED)"
+          exit 1
+
+      - name: Install Playwright browsers
+        working-directory: november-sierra/website
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run smoke tests against production
+        working-directory: november-sierra/website
+        run: pnpm test:e2e
+        env:
+          SMOKE_BASE_URL: https://novembersierra.dev
+          NEXT_PUBLIC_APP_URL: "https://novembersierra.dev"
+          RESEND_API_KEY: "re_mock"
+          CONTACT_EMAIL_TO: "mock@example.com"
+          CONTACT_EMAIL_FROM: "mock@example.com"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: ns-website-smoke-test-prod-report
+          path: november-sierra/website/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: ns-website-smoke-test-prod-results
+          path: november-sierra/website/test-results/
+          retention-days: 30
+
+  rollback-prod-ns-website:
+    name: Rollback Production (NS Website)
+    runs-on: ubuntu-latest
+    needs: [deploy-prod-ns-website, smoke-prod-ns-website]
+    if: always() && needs.deploy-prod-ns-website.result == 'success' && needs.smoke-prod-ns-website.result == 'failure'
+    steps:
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Rollback production deployment
+        run: vercel rollback --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_NS_WEBSITE }}
