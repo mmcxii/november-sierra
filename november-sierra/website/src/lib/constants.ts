@@ -6,7 +6,7 @@ export const ANIMATION_PHASES = ["ns", "bars", "full-name", "tagline", "complete
 
 export const TOPICS = ["Your products", "Working together", "Something else"] as const;
 
-export const ANCHR_OG_IMAGE = "https://anchr.to/ns/opengraph-image";
+export const ANCHR_OG_IMAGE = "https://anchr.to/opengraph-image";
 
 export const ANCHR_URL = "https://anchr.to";
 
