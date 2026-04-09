@@ -3,6 +3,7 @@
 import { useSectionReveal } from "@/hooks/use-section-reveal";
 import { ANCHR_OG_IMAGE, ANCHR_URL } from "@/lib/constants";
 import { ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 export const Products: React.FC = () => {
   //* Refs
@@ -20,12 +21,12 @@ export const Products: React.FC = () => {
           target="_blank"
         >
           <div className="overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               alt="Anchr — Your harbor for every connection"
               className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              loading="lazy"
+              height={630}
               src={ANCHR_OG_IMAGE}
+              width={1200}
             />
           </div>
 
