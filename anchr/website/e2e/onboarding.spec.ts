@@ -81,18 +81,23 @@ test.describe("onboarding flow", () => {
   //
   // The sign-up form UI (referral code input, toggle, ?ref= pre-fill) is
   // tested separately in e2e/auth.spec.ts.
-  test("theme step redeems referral code, completes onboarding, and grants Pro", async ({ freshUser: page }) => {
+  test("theme step redeems referral code, shows pro celebration, and grants Pro", async ({ freshUser: page }) => {
     await page.goto("/onboarding?step=theme");
     await page.getByText(t.pickATheme).waitFor();
     await page.evaluate((code) => localStorage.setItem("anchr_referral_code", code), E2E_REFERRAL_CODE);
 
     //* Act
     await page.getByRole("button", { name: t.continue }).click();
-    await page.waitForURL(/\/(onboarding|dashboard)/);
-    const goToDashboard = page.getByRole("link", { name: t.goToDashboard });
-    if (await goToDashboard.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await goToDashboard.click();
-    }
+
+    //* Assert — pro celebration overlay appears on top of theme step
+    const celebration = page.getByRole("dialog", { name: t.youreAnchored });
+    await expect(celebration).toBeVisible();
+    await expect(celebration.getByText(t.welcomeAboardProYoureReadyToChartYourOwnCourse)).toBeVisible();
+    // Seeded referral code is admin-type with durationDays=30
+    await expect(celebration.getByText("30")).toBeVisible();
+
+    //* Act — dismiss celebration → navigates to dashboard
+    await celebration.getByRole("button", { name: t.continue }).click();
     await page.waitForURL(/\/dashboard/);
     await page.goto("/dashboard/settings");
     await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();

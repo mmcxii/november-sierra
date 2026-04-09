@@ -77,6 +77,9 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const [referralInput, setReferralInput] = React.useState("");
   const [referralPending, startReferralTransition] = React.useTransition();
   const [userReferralCode, setUserReferralCode] = React.useState<null | string>(null);
+  const [celebrationReferral, setCelebrationReferral] = React.useState<
+    undefined | { durationDays: null | number; referrerName: null | string }
+  >();
   // Nostr profile state
   const [useNostrProfile, setUseNostrProfile] = React.useState(user.useNostrProfile);
   const [npubInput, setNpubInput] = React.useState(user.nostrNpub ?? "");
@@ -615,7 +618,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
         return;
       }
       setReferralInput("");
-      toast.success(t("referralCodeRedeemed"));
+      setCelebrationReferral({ durationDays: result.durationDays, referrerName: result.referrerName });
+      setCelebrationOpen(true);
     });
   };
 
@@ -1126,7 +1130,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
           <PagePreview previewKey={previewKey} user={user} />
         </div>
       </aside>
-      <CheckoutCelebration onOpenChange={setCelebrationOpen} open={celebrationOpen} />
+      <CheckoutCelebration onOpenChange={setCelebrationOpen} open={celebrationOpen} referral={celebrationReferral} />
     </div>
   );
 };

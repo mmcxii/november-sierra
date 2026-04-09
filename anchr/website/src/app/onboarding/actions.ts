@@ -1,6 +1,5 @@
 "use server";
 
-import { redeemReferralCode } from "@/app/(dashboard)/dashboard/settings/actions";
 import { db } from "@/lib/db/client";
 import { generateUniqueSlug } from "@/lib/db/queries/link";
 import {
@@ -86,7 +85,12 @@ export async function addFirstLink(title: string, url: string): Promise<AddLinkR
   return { success: true };
 }
 
-export async function completeOnboarding(referralCode?: string): Promise<{ success: boolean }> {
+export type CompleteOnboardingResult = {
+  referral?: { durationDays: null | number; referrerName: null | string };
+  success: boolean;
+};
+
+export async function completeOnboarding(): Promise<{ success: boolean }> {
   const { userId } = await auth();
 
   if (userId == null) {
@@ -94,13 +98,6 @@ export async function completeOnboarding(referralCode?: string): Promise<{ succe
   }
 
   await db.update(usersTable).set({ onboardingComplete: true, updatedAt: new Date() }).where(eq(usersTable.id, userId));
-
-  if (referralCode != null && referralCode.length > 0) {
-    const result = await redeemReferralCode(referralCode);
-    if (!result.success) {
-      console.error(`[completeOnboarding] referral code redemption failed: ${result.error}`);
-    }
-  }
 
   return { success: true };
 }

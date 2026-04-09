@@ -27,6 +27,10 @@ import { revalidatePath } from "next/cache";
 
 export type ActionResult = { error: string; success: false } | { success: true; url?: string };
 
+type RedeemReferralCodeResult =
+  | { durationDays: null | number; referrerName: null | string; success: true }
+  | { error: string; success: false };
+
 // ─── Username Actions ───────────────────────────────────────────────────────
 
 export type { CheckUsernameResult } from "@/lib/db/queries/username";
@@ -493,7 +497,7 @@ export async function removeCustomDomain(): Promise<ActionResult> {
 
 // ─── Referral Code Actions ──────────────────────────────────────────────────
 
-export async function redeemReferralCode(code: string): Promise<ActionResult> {
+export async function redeemReferralCode(code: string): Promise<RedeemReferralCodeResult> {
   const { userId } = await auth();
 
   if (userId == null) {
@@ -597,7 +601,18 @@ export async function redeemReferralCode(code: string): Promise<ActionResult> {
 
   revalidatePath("/dashboard/settings");
 
-  return { success: true };
+  // Resolve referrer display name for user-type codes
+  let referrerName: null | string = null;
+  if (referralCode.type === "user" && referralCode.creatorId != null) {
+    const [creator] = await db
+      .select({ displayName: usersTable.displayName, username: usersTable.username })
+      .from(usersTable)
+      .where(eq(usersTable.id, referralCode.creatorId))
+      .limit(1);
+    referrerName = creator?.displayName ?? creator?.username ?? null;
+  }
+
+  return { durationDays: referralCode.durationDays, referrerName, success: true };
 }
 
 export type ReferralCodeResult = { code: string; success: true } | { error: string; success: false };

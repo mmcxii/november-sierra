@@ -5,12 +5,18 @@
  * each retry of the serial test block. Without this, a retry would see
  * onboardingComplete=true (from the previous attempt's completeOnboarding
  * call) and the referral code already redeemed.
+ *
+ * The fresh user's username gets mutated by the username-step test, so we
+ * look up the user by its stable Clerk ID (written to seeded-users.json by
+ * e2e:seed) instead of by username.
  */
 import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -36,6 +42,8 @@ const linksTable = pgTable("links", {
   userId: text("user_id").notNull(),
 });
 
+type SeededUser = { clerkId: string; email: string; role: string };
+
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
 
 async function main() {
@@ -46,37 +54,40 @@ async function main() {
     return;
   }
 
-  const db = drizzle(neon(databaseUrl));
-
-  // Find the fresh user by username pattern
-  const [freshUser] = await db
-    .select({ id: usersTable.id })
-    .from(usersTable)
-    .where(eq(usersTable.username, `e2efresh${RUN_ID}`))
-    .limit(1);
-
-  if (freshUser == null) {
-    console.log("[e2e:reset-onboarding] Fresh user not found, skipping");
+  const seededUsersPath = path.join(__dirname, "..", ".clerk", "seeded-users.json");
+  if (!fs.existsSync(seededUsersPath)) {
+    console.log("[e2e:reset-onboarding] seeded-users.json not found, skipping");
     return;
   }
 
-  // Reset user state
+  const seededUsers = JSON.parse(fs.readFileSync(seededUsersPath, "utf8")) as SeededUser[];
+  const freshSeededUser = seededUsers.find((u) => u.role === "fresh");
+  if (freshSeededUser == null) {
+    console.log("[e2e:reset-onboarding] Fresh user not in seeded-users.json, skipping");
+    return;
+  }
+
+  const db = drizzle(neon(databaseUrl));
+  const freshUserId = freshSeededUser.clerkId;
+
+  // Reset user state — also restore the original username in case it was changed
+  // by the username-step test
   await db
     .update(usersTable)
-    .set({ onboardingComplete: false, proExpiresAt: null, tier: "free" })
-    .where(eq(usersTable.id, freshUser.id));
+    .set({ onboardingComplete: false, proExpiresAt: null, tier: "free", username: `e2efresh${RUN_ID}` })
+    .where(eq(usersTable.id, freshUserId));
 
   // Delete any referral redemptions by this user
-  await db.delete(referralRedemptionsTable).where(eq(referralRedemptionsTable.userId, freshUser.id));
+  await db.delete(referralRedemptionsTable).where(eq(referralRedemptionsTable.userId, freshUserId));
 
   // Reset the referral code's redemption counter
   const referralCodeId = `e2e-referral-${RUN_ID}`;
   await db.update(referralCodesTable).set({ currentRedemptions: 0 }).where(eq(referralCodesTable.id, referralCodeId));
 
   // Delete any links added during onboarding
-  await db.delete(linksTable).where(eq(linksTable.userId, freshUser.id));
+  await db.delete(linksTable).where(eq(linksTable.userId, freshUserId));
 
-  console.log(`[e2e:reset-onboarding] Reset fresh user ${freshUser.id} (run: ${RUN_ID})`);
+  console.log(`[e2e:reset-onboarding] Reset fresh user ${freshUserId} (run: ${RUN_ID})`);
 }
 
 main().catch((err) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { updatePageDarkTheme, updatePageLightTheme } from "@/app/(dashboard)/dashboard/settings/actions";
-import { completeOnboarding } from "@/app/onboarding/actions";
+import { type CompleteOnboardingResult } from "@/app/onboarding/actions";
 import { ThemeSwatch } from "@/components/dashboard/theme-swatch";
 import { Button } from "@/components/ui/button";
 import { DARK_THEME_ID_LIST, LIGHT_THEME_ID_LIST, THEMES, type ThemeId } from "@/lib/themes";
@@ -9,10 +9,11 @@ import { Loader2, Palette } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { finishOnboarding } from "./utils";
 
 export type ThemeStepProps = {
-  onComplete: () => void;
-  onSkip: () => void;
+  onComplete: (referral?: CompleteOnboardingResult["referral"]) => void;
+  onSkip: (referral?: CompleteOnboardingResult["referral"]) => void;
 };
 
 export const ThemeStep: React.FC<ThemeStepProps> = (props) => {
@@ -37,9 +38,8 @@ export const ThemeStep: React.FC<ThemeStepProps> = (props) => {
         return;
       }
       const referralCode = localStorage.getItem("anchr_referral_code") ?? undefined;
-      await completeOnboarding(referralCode);
       localStorage.removeItem("anchr_referral_code");
-      onComplete();
+      await finishOnboarding(referralCode, onComplete);
     } catch {
       toast.error(t("somethingWentWrongPleaseTryAgain"));
     } finally {
@@ -55,9 +55,8 @@ export const ThemeStep: React.FC<ThemeStepProps> = (props) => {
     setSubmitting(true);
     try {
       const referralCode = localStorage.getItem("anchr_referral_code") ?? undefined;
-      await completeOnboarding(referralCode);
       localStorage.removeItem("anchr_referral_code");
-      onSkip();
+      await finishOnboarding(referralCode, onSkip);
     } catch {
       toast.error(t("somethingWentWrongPleaseTryAgain"));
     } finally {

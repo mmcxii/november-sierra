@@ -7,11 +7,12 @@ import { useTranslation } from "react-i18next";
 
 export type CheckoutCelebrationProps = {
   open: boolean;
+  referral?: { durationDays: null | number; referrerName: null | string };
   onOpenChange: (open: boolean) => void;
 };
 
 export const CheckoutCelebration: React.FC<CheckoutCelebrationProps> = (props) => {
-  const { onOpenChange, open } = props;
+  const { onOpenChange, open, referral } = props;
 
   //* State
   const { t } = useTranslation();
@@ -43,9 +44,12 @@ export const CheckoutCelebration: React.FC<CheckoutCelebrationProps> = (props) =
 
   return (
     <div
+      aria-label={t("youreAnchored")}
+      aria-modal="true"
       className="bg-anc-deep-navy/95 fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300"
       data-theme="dark-depths"
       onTransitionEnd={handleTransitionEnd}
+      role="dialog"
       // eslint-disable-next-line november-sierra/no-inline-style -- dynamic opacity for mount/unmount transition
       style={{ opacity: visible ? 1 : 0 }}
     >
@@ -92,6 +96,19 @@ export const CheckoutCelebration: React.FC<CheckoutCelebrationProps> = (props) =
         <div className="flex flex-col items-center gap-2 text-center">
           <h2 className="text-anc-cream text-xl font-semibold">{t("youreAnchored")}</h2>
           <p className="text-anc-steel max-w-xs text-sm">{t("welcomeAboardProYoureReadyToChartYourOwnCourse")}</p>
+          {referral?.referrerName != null && (
+            <p className="text-anc-gold/80 max-w-xs text-sm">
+              {t("{{name}}GuidedYouIntoPort", { name: referral.referrerName })}
+            </p>
+          )}
+          {referral != null &&
+            (referral.durationDays != null ? (
+              <p className="text-anc-steel/60 max-w-xs text-xs">
+                {t("enjoy{{days}}DaysOfPro", { days: referral.durationDays })}
+              </p>
+            ) : (
+              <p className="text-anc-steel/60 max-w-xs text-xs">{t("enjoyLifetimeProOnUsSmoothSailing")}</p>
+            ))}
         </div>
 
         <Button className="bg-anc-gold text-anc-deep-navy hover:bg-anc-gold/90" onClick={handleButtonOnClick}>
