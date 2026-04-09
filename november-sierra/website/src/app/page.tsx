@@ -8,6 +8,9 @@ import { Products } from "@/components/sections/products";
 const HomePage: React.FC = () => {
   return (
     <>
+      <a className="skip-link" href="#about">
+        Skip to content
+      </a>
       <SideNav />
       <main>
         <Hero />

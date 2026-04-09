@@ -1,21 +1,21 @@
 export const SECTIONS = ["hero", "about", "products", "contact"] as const;
 
-export const TAGLINE_WORDS = ["Thoughtful.", "Intentional.", "Software."];
+export const TAGLINE_KEYS = ["thoughtful", "intentional", "software"] as const;
 
 export const ANIMATION_PHASES = ["ns", "bars", "full-name", "tagline", "complete"] as const;
 
-export const TOPICS = ["Your products", "Working together", "Something else"] as const;
+export const TOPIC_KEYS = ["yourProducts", "workingTogether", "somethingElse"] as const;
 
 export const ANCHR_OG_IMAGE = "https://anchr.to/opengraph-image";
 
 export const ANCHR_URL = "https://anchr.to";
 
-export const NAV_ITEMS: Array<{ id: SectionId; label: string }> = [
-  { id: "hero", label: "Home" },
-  { id: "about", label: "About" },
-  { id: "products", label: "Products" },
-  { id: "contact", label: "Contact" },
-];
+export const NAV_ITEMS = [
+  { id: "hero", labelKey: "home" },
+  { id: "about", labelKey: "about" },
+  { id: "products", labelKey: "products" },
+  { id: "contact", labelKey: "contact" },
+] as const satisfies ReadonlyArray<{ id: SectionId; labelKey: string }>;
 
 export type SectionId = (typeof SECTIONS)[number];
 

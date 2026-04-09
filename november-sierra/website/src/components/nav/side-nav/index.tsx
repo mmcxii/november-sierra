@@ -5,18 +5,20 @@ import { useTheme } from "@/hooks/use-theme";
 import { NAV_ITEMS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Moon, Sun } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const SideNav: React.FC = () => {
   //* State
   const activeSection = useActiveSection();
   const { mounted, theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
 
   //* Variables
   const isForest = theme === "forest";
   const themeIcon = isForest ? <Sun size={14} /> : <Moon size={14} />;
   const themeIconMobile = isForest ? <Sun size={16} /> : <Moon size={16} />;
-  const themeLabel = isForest ? "Light" : "Dark";
-  const themeAriaLabel = `Switch to ${isForest ? "fog" : "forest"} theme`;
+  const themeLabel = isForest ? t("light") : t("dark");
+  const themeAriaLabel = t("switchTo{{theme}}Theme", { theme: isForest ? "fog" : "forest" });
 
   return (
     <>
@@ -41,7 +43,7 @@ export const SideNav: React.FC = () => {
                     "bg-transparent": !isActive,
                   })}
                 />
-                {item.label}
+                {t(item.labelKey)}
               </a>
             );
           })}
@@ -63,22 +65,23 @@ export const SideNav: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile/tablet: Floating dots (below xl) */}
+      {/* Mobile/tablet: Floating vertical dots (below xl) */}
       <nav aria-label="Section navigation" className="fixed right-4 bottom-4 z-50 flex xl:hidden">
-        <div className="border-ns-card-border bg-ns-nav-bg flex items-center gap-2 rounded-full border px-3 py-2.5 backdrop-blur-md">
+        <div className="border-ns-card-border bg-ns-nav-bg flex flex-col items-center gap-2 rounded-full border px-2.5 py-3 backdrop-blur-md">
           {NAV_ITEMS.map((item) => {
             const isActive = activeSection === item.id;
 
             return (
               <a
-                aria-label={item.label}
+                aria-label={t(item.labelKey)}
                 className="block rounded-full p-1 transition-all duration-200"
                 href={`#${item.id}`}
                 key={item.id}
               >
                 <span
                   className={cn("block rounded-full transition-all duration-200", {
-                    "bg-ns-nav-indicator h-2.5 w-2.5 opacity-100": isActive,
+                    "bg-ns-nav-indicator ring-ns-nav-indicator h-2.5 w-2.5 opacity-100 ring-2 ring-offset-2 ring-offset-transparent":
+                      isActive,
                     "bg-ns-nav-text h-2 w-2 opacity-40": !isActive,
                   })}
                 />
@@ -88,7 +91,7 @@ export const SideNav: React.FC = () => {
 
           {mounted && (
             <>
-              <div className="bg-ns-border mx-1 h-4 w-px" />
+              <div className="bg-ns-border my-1 h-px w-4" />
               <button
                 aria-label={themeAriaLabel}
                 className="text-ns-nav-text rounded-full p-1 transition-colors duration-200"

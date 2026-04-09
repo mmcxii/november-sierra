@@ -143,8 +143,8 @@ h6 {
   opacity: 0;
   transform: translateY(2rem);
   transition:
-    opacity 0.8s ease,
-    transform 0.8s ease;
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .section-reveal.visible {
@@ -194,38 +194,65 @@ h6 {
 }
 
 .pulse-arrow {
-  animation: pulseArrow 2s ease-in-out infinite;
+  animation: pulseArrow 2.5s ease-in-out infinite;
 }
 
 /* ── Wordmark letter animation ─────────────────────────────────────────────── */
 
 .wordmark-bar {
   transition:
-    width 0.7s ease-out,
-    opacity 0.7s ease-out;
+    width 1s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.8s ease-out;
 }
 
 .wordmark-letters {
   transition:
-    max-width 0.7s ease-out,
-    opacity 0.7s ease-out;
+    max-width 1s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.8s ease-out;
   overflow: hidden;
   display: inline-block;
   vertical-align: bottom;
 }
 
 .wordmark-spacer {
-  transition: width 0.7s ease-out;
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-block;
 }
 
 /* ── Form focus styles ─────────────────────────────────────────────────────── */
 
-input:focus,
-textarea:focus,
-select:focus {
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--ns-accent);
   outline-offset: 2px;
+}
+
+/* ── Focus-visible ────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--ns-accent);
+  outline-offset: 2px;
+}
+
+/* ── Skip link ────────────────────────────────────────────────────────────── */
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--ns-accent);
+  color: var(--ns-mist);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--ns-radius);
+  font-weight: 500;
+  z-index: 100;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
 }
 
 /* ── Selection ─────────────────────────────────────────────────────────────── */

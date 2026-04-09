@@ -1,13 +1,16 @@
 "use client";
 
-import { ANIMATION_PHASES, TAGLINE_WORDS, type AnimationPhase } from "@/lib/constants";
+import { ANIMATION_PHASES, TAGLINE_KEYS, type AnimationPhase } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
+import Image from "next/image";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 
 export const Hero: React.FC = () => {
   //* State
   const [phase, setPhase] = React.useState<AnimationPhase>("ns");
+  const { t } = useTranslation();
 
   //* Variables
   const phaseIndex = ANIMATION_PHASES.indexOf(phase);
@@ -21,16 +24,16 @@ export const Hero: React.FC = () => {
     const timers = [
       setTimeout(() => {
         setPhase("bars");
-      }, 800),
+      }, 1200),
       setTimeout(() => {
         setPhase("full-name");
-      }, 1600),
+      }, 2400),
       setTimeout(() => {
         setPhase("tagline");
-      }, 2800),
+      }, 4000),
       setTimeout(() => {
         setPhase("complete");
-      }, 4200),
+      }, 5800),
     ];
 
     return () => {
@@ -39,10 +42,12 @@ export const Hero: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative flex h-dvh items-center justify-center overflow-hidden" id="hero">
+    <section className="relative flex h-[100vh] h-dvh items-center justify-center overflow-hidden" id="hero">
       {/* Ken Burns background */}
       <div className="absolute inset-0">
-        <div className="ken-burns absolute inset-0 bg-[url('/images/hero-forest.jpg')] bg-cover bg-center" />
+        <div className="ken-burns absolute inset-0">
+          <Image alt="" className="object-cover" fill priority sizes="100vw" src="/images/hero-forest.jpg" />
+        </div>
         <div className="bg-ns-hero-overlay absolute inset-0" />
       </div>
 
@@ -50,6 +55,7 @@ export const Hero: React.FC = () => {
       <div className="relative z-10 flex flex-col items-center px-4 text-center">
         {/* Top bar */}
         <div
+          aria-hidden="true"
           className={cn(
             "wordmark-bar bg-ns-text-heading mb-4 h-px",
             { "opacity-0": !barsVisible, "opacity-100": barsVisible },
@@ -58,7 +64,7 @@ export const Hero: React.FC = () => {
         />
 
         {/* Wordmark */}
-        <h1 className="text-ns-text-heading relative font-serif text-[clamp(2rem,6vw,4.5rem)] tracking-widest whitespace-nowrap">
+        <h1 className="text-ns-text-heading relative font-serif text-[clamp(2rem,6vw,4.5rem)] leading-none tracking-widest whitespace-nowrap">
           <span className="inline-block overflow-hidden">
             <span>{"N"}</span>
             <span
@@ -86,6 +92,7 @@ export const Hero: React.FC = () => {
 
         {/* Bottom bar */}
         <div
+          aria-hidden="true"
           className={cn(
             "wordmark-bar bg-ns-text-heading mt-4 h-px",
             { "opacity-0": !barsVisible, "opacity-100": barsVisible },
@@ -94,29 +101,29 @@ export const Hero: React.FC = () => {
         />
 
         {/* Tagline */}
-        <div className="mt-8 flex gap-3 font-serif">
-          {TAGLINE_WORDS.map((word, i) => {
+        <p className="mt-8 flex gap-3 font-serif">
+          {TAGLINE_KEYS.map((key, i) => {
             return (
               <span
-                className={cn("text-ns-text text-lg tracking-wide italic transition-all duration-500 md:text-xl", {
+                className={cn("text-ns-text text-lg tracking-wide italic transition-all duration-700 md:text-xl", {
                   "-translate-y-2 opacity-0": !taglineVisible,
                   "translate-y-0 opacity-100": taglineVisible,
                 })}
-                key={word}
-                style={{ transitionDelay: `${i * 0.4}s` }}
+                key={key}
+                style={{ transitionDelay: `${i * 0.5}s` }}
               >
-                {word}
+                {t(key)}
               </span>
             );
           })}
-        </div>
+        </p>
       </div>
 
       {/* Scroll indicator */}
       <a
-        aria-label="Scroll to about section"
+        aria-label={t("scrollToAboutSection")}
         className={cn(
-          "pulse-arrow text-ns-text absolute bottom-8 left-1/2 -translate-x-1/2 transition-opacity duration-500",
+          "pulse-arrow text-ns-text absolute bottom-8 left-1/2 -translate-x-1/2 transition-opacity duration-700",
           { "opacity-0": !scrollVisible, "opacity-100": scrollVisible },
         )}
         href="#about"

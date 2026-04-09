@@ -27,7 +27,7 @@ test.describe("site smoke tests", () => {
     await page.goto("/");
 
     //* Act — wait for the full-name animation phase
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(4000);
 
     //* Assert
     const heading = page.locator("h1");
@@ -41,7 +41,7 @@ test.describe("site smoke tests", () => {
     await page.goto("/");
 
     //* Act — wait for the tagline animation phase
-    await page.waitForTimeout(4500);
+    await page.waitForTimeout(6500);
 
     //* Assert
     await expect(page.getByText("Thoughtful.")).toBeVisible();
@@ -54,7 +54,7 @@ test.describe("site smoke tests", () => {
     await page.goto("/");
 
     //* Assert
-    await expect(page.getByText("I build products with intuitive interfaces designed for people")).toBeVisible();
+    await expect(page.getByText("Building products with intuitive interfaces designed for people")).toBeVisible();
   });
 
   test("products section renders Anchr card with link", async ({ page }) => {
@@ -64,7 +64,7 @@ test.describe("site smoke tests", () => {
     //* Assert
     const anchrCard = page.locator('a[href="https://anchr.to"]');
     await expect(anchrCard).toBeVisible();
-    await expect(page.getByText("Your harbor for every connection")).toBeVisible();
+    await expect(page.getByText("theme studio")).toBeVisible();
   });
 
   test("contact form fields are present", async ({ page }) => {
@@ -125,7 +125,8 @@ test.describe("navigation", () => {
     await page.goto("/");
 
     //* Act
-    await page.click('a[href="#about"]');
+    const desktopNav = page.locator('nav[aria-label="Section navigation"]').first();
+    await desktopNav.locator('a[href="#about"]').click();
     await page.waitForTimeout(500);
 
     //* Assert
@@ -197,5 +198,29 @@ test.describe("contact form submission", () => {
       return (el as HTMLInputElement).validity.valid;
     });
     expect(isValid).toBe(false);
+  });
+});
+
+test.describe("accessibility", () => {
+  test("skip link is present and targets main content", async ({ page }) => {
+    //* Act
+    await page.goto("/");
+
+    //* Assert
+    const skipLink = page.locator('a.skip-link[href="#about"]');
+    await expect(skipLink).toBeAttached();
+  });
+
+  test("all images have alt text", async ({ page }) => {
+    //* Act
+    await page.goto("/");
+
+    //* Assert
+    const images = page.locator("img");
+    const count = await images.count();
+    for (let i = 0; i < count; i++) {
+      const alt = await images.nth(i).getAttribute("alt");
+      expect(alt).not.toBeNull();
+    }
   });
 });

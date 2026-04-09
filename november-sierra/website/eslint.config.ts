@@ -11,6 +11,14 @@ const eslintConfig = defineConfig([
       "november-sierra/no-inline-style": "off",
     },
   },
+
+  // Allow inline style for OG image routes (next/og ImageResponse requires inline styles)
+  {
+    files: ["src/app/opengraph-image.tsx", "src/app/twitter-image.tsx"],
+    rules: {
+      "november-sierra/no-inline-style": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

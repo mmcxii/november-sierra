@@ -1,6 +1,12 @@
+"use client";
+
 import { GITHUB_ICON_PATH } from "@/lib/constants";
+import { useTranslation } from "react-i18next";
 
 export const Footer: React.FC = () => {
+  //* State
+  const { t } = useTranslation();
+
   return (
     <footer className="px-6 py-12 md:px-12">
       <div className="mx-auto flex max-w-4xl flex-col items-center gap-6">
@@ -16,9 +22,7 @@ export const Footer: React.FC = () => {
           </svg>
         </a>
 
-        <p className="text-ns-footer-text text-center text-sm">
-          {"\u00A9 2026 November Sierra \u00B7 Built in the Pacific Northwest"}
-        </p>
+        <p className="text-ns-footer-text text-center text-sm">{t("©2026NovemberSierra·BuiltInThePacificNorthwest")}</p>
       </div>
     </footer>
   );
