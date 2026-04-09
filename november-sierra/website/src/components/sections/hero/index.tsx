@@ -24,16 +24,16 @@ export const Hero: React.FC = () => {
     const timers = [
       setTimeout(() => {
         setPhase("bars");
-      }, 1200),
+      }, 400),
       setTimeout(() => {
         setPhase("full-name");
-      }, 2400),
+      }, 1600),
       setTimeout(() => {
         setPhase("tagline");
-      }, 4000),
+      }, 3200),
       setTimeout(() => {
         setPhase("complete");
-      }, 5800),
+      }, 5000),
     ];
 
     return () => {
