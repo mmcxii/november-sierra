@@ -27,7 +27,7 @@ test.describe("site smoke tests", () => {
     await page.goto("/");
 
     //* Act — wait for the full-name animation phase
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(3200);
 
     //* Assert
     const heading = page.locator("h1");
@@ -41,7 +41,7 @@ test.describe("site smoke tests", () => {
     await page.goto("/");
 
     //* Act — wait for the tagline animation phase
-    await page.waitForTimeout(6500);
+    await page.waitForTimeout(5000);
 
     //* Assert
     await expect(page.getByText("Thoughtful.")).toBeVisible();
