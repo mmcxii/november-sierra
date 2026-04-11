@@ -54,7 +54,11 @@ vi.mock("@/lib/db/queries/username", () => ({
   updateUsername: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({
-  envSchema: { NEXT_PUBLIC_APP_URL: "https://test.anchr.to", STRIPE_PRO_PRICE_ID: "price_test" },
+  envSchema: {
+    NEXT_PUBLIC_APP_URL: "https://test.anchr.to",
+    STRIPE_PRO_PRICE_ID_ANNUAL: "price_test_annual",
+    STRIPE_PRO_PRICE_ID_MONTHLY: "price_test_monthly",
+  },
 }));
 vi.mock("@/lib/nostr", () => ({ isNpub: vi.fn() }));
 vi.mock("@/lib/nostr-profile", () => ({

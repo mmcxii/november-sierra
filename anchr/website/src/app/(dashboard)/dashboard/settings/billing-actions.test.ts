@@ -42,7 +42,8 @@ vi.mock("@/lib/stripe", () => ({
 vi.mock("@/lib/env", () => ({
   envSchema: {
     NEXT_PUBLIC_APP_URL: "https://test.anchr.to",
-    STRIPE_PRO_PRICE_ID: "price_test_pro",
+    STRIPE_PRO_PRICE_ID_ANNUAL: "price_test_pro_annual",
+    STRIPE_PRO_PRICE_ID_MONTHLY: "price_test_pro_monthly",
   },
 }));
 
@@ -131,7 +132,7 @@ describe("createCheckoutSession", () => {
     expect(mockCheckoutSessionsCreate).not.toHaveBeenCalled();
   });
 
-  it("creates a checkout session without a customer arg when stripeCustomerId is null", async () => {
+  it("defaults to the monthly price id and creates a session without a customer arg when stripeCustomerId is null", async () => {
     //* Arrange
     mockAuth.mockResolvedValue({ userId: "user-1" });
     mockSelect.mockReturnValueOnce(buildSelectChain([{ stripeCustomerId: null }]).root);
@@ -148,11 +149,41 @@ describe("createCheckoutSession", () => {
     expect(params).toMatchObject({
       cancel_url: "https://test.anchr.to/dashboard/settings",
       client_reference_id: "user-1",
-      line_items: [{ price: "price_test_pro", quantity: 1 }],
+      line_items: [{ price: "price_test_pro_monthly", quantity: 1 }],
       mode: "subscription",
       success_url: "https://test.anchr.to/dashboard/settings?checkout=success",
     });
     expect(params).not.toHaveProperty("customer");
+  });
+
+  it("uses the annual price id when interval is 'annual'", async () => {
+    //* Arrange
+    mockAuth.mockResolvedValue({ userId: "user-1" });
+    mockSelect.mockReturnValueOnce(buildSelectChain([{ stripeCustomerId: null }]).root);
+    mockCheckoutSessionsCreate.mockResolvedValueOnce({ url: "https://stripe.test/session_annual" });
+    const { createCheckoutSession } = await import("./actions");
+
+    //* Act
+    await createCheckoutSession("annual");
+
+    //* Assert
+    const params = mockCheckoutSessionsCreate.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(params.line_items).toEqual([{ price: "price_test_pro_annual", quantity: 1 }]);
+  });
+
+  it("uses the monthly price id when interval is explicitly 'monthly'", async () => {
+    //* Arrange
+    mockAuth.mockResolvedValue({ userId: "user-1" });
+    mockSelect.mockReturnValueOnce(buildSelectChain([{ stripeCustomerId: null }]).root);
+    mockCheckoutSessionsCreate.mockResolvedValueOnce({ url: "https://stripe.test/session_monthly" });
+    const { createCheckoutSession } = await import("./actions");
+
+    //* Act
+    await createCheckoutSession("monthly");
+
+    //* Assert
+    const params = mockCheckoutSessionsCreate.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(params.line_items).toEqual([{ price: "price_test_pro_monthly", quantity: 1 }]);
   });
 
   it("reuses existing stripeCustomerId when present", async () => {

@@ -11,13 +11,20 @@ export const SidebarUpgradeCard: React.FC = () => {
   const { t } = useTranslation();
   const { loading, startCheckout } = useStripeCheckout();
 
+  //* Handlers
+  // The sidebar upgrade button has no interval picker — defaults to monthly.
+  // Extracted (rather than inline) to satisfy november-sierra/no-inline-function-props.
+  const handleUpgradeClick = () => {
+    void startCheckout();
+  };
+
   return (
     <div className="border-sidebar-border/60 bg-sidebar-accent/40 mx-3 mb-3 flex flex-col gap-2 rounded-md border p-3">
       <div className="text-sidebar-foreground flex items-center gap-1.5 text-xs font-medium">
         <Anchor className="text-primary size-3.5" />
         {t("unlockMoreWithPro")}
       </div>
-      <Button disabled={loading} onClick={startCheckout} size="sm">
+      <Button disabled={loading} onClick={handleUpgradeClick} size="sm">
         {loading && <Loader2 className="size-3.5 animate-spin" />}
         {t("upgradeToPro")}
       </Button>
