@@ -22,11 +22,12 @@ import { createTransientUser, destroyTransientUser, type TransientUser } from ".
  * so cleanup works even when the webhook hasn't round-tripped yet.
  *
  * Required env (all provided by the deploy workflow via `vercel env pull`):
- *   - DATABASE_URL         → stage Neon branch
- *   - CLERK_SECRET_KEY     → stage Clerk instance
- *   - STRIPE_SECRET_KEY    → stage Stripe test-mode key (sk_test_*)
- *   - STRIPE_PRO_PRICE_ID  → the Pro test-mode price id
- *   - E2E_USER_PASSWORD    → password applied to the transient Clerk user
+ *   - DATABASE_URL                 → stage Neon branch
+ *   - CLERK_SECRET_KEY             → stage Clerk instance
+ *   - STRIPE_SECRET_KEY            → stage Stripe test-mode key (sk_test_*)
+ *   - STRIPE_PRO_PRICE_ID_MONTHLY  → the Pro monthly price id (price_…)
+ *   - STRIPE_PRO_PRICE_ID_ANNUAL   → the Pro annual price id (price_…)
+ *   - E2E_USER_PASSWORD            → password applied to the transient Clerk user
  *
  * If any of these are missing the whole suite is skipped rather than
  * red-flagging the run — this keeps the test honest about its dependencies.
@@ -36,7 +37,8 @@ const REQUIRED_ENV = [
   "CLERK_SECRET_KEY",
   "DATABASE_URL",
   "E2E_USER_PASSWORD",
-  "STRIPE_PRO_PRICE_ID",
+  "STRIPE_PRO_PRICE_ID_ANNUAL",
+  "STRIPE_PRO_PRICE_ID_MONTHLY",
   "STRIPE_SECRET_KEY",
 ] as const;
 
@@ -69,9 +71,9 @@ test.describe("stripe checkout — hosted flow smoke against stage", () => {
 
       //* Act — full purchase flow: sign in → settings → Upgrade → Stripe → return.
       // The outcome race around the upgrade click turns a silent action
-      // error (wrong STRIPE_PRO_PRICE_ID, auth failure, onboarding
-      // redirect, etc.) into an error message that names the failure mode,
-      // instead of a generic 30s timeout on `waitForURL`.
+      // error (wrong STRIPE_PRO_PRICE_ID_MONTHLY/_ANNUAL, auth failure,
+      // onboarding redirect, etc.) into an error message that names the
+      // failure mode, instead of a generic 30s timeout on `waitForURL`.
       await signInByUsername(page, user.username);
       await page.goto("/dashboard/settings");
       await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();

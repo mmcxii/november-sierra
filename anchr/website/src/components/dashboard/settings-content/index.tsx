@@ -64,7 +64,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const [brandingHidden, setBrandingHidden] = React.useState(hideBranding);
   const [brandingPending, startBrandingTransition] = React.useTransition();
   const [manageBillingLoading, setManageBillingLoading] = React.useState(false);
-  const { loading: upgradeLoading, startCheckout: handleUpgrade } = useStripeCheckout();
+  const { loading: upgradeLoading, startCheckout: startStripeCheckout } = useStripeCheckout();
   const [celebrationOpen, setCelebrationOpen] = React.useState(checkoutSuccess === true);
   const [displayNameInput, setDisplayNameInput] = React.useState(user.displayName ?? "");
   const [bioInput, setBioInput] = React.useState(user.bio ?? "");
@@ -555,6 +555,13 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   handleEmailVerifyRef.current = handleEmailVerify;
   handleReverifySubmitRef.current = handleReverifySubmit;
 
+  // The settings Current Plan card has no interval picker — defaults to
+  // monthly. Wrapped in a named handler (rather than `onClick={() => …}`)
+  // to satisfy november-sierra/no-inline-function-props.
+  const handleUpgradeClick = () => {
+    void startStripeCheckout();
+  };
+
   const handleManageBilling = async () => {
     setManageBillingLoading(true);
     try {
@@ -965,7 +972,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                 <p className="text-muted-foreground text-sm">
                   {t("upgradeToUnlockUnlimitedLinksCustomDomainsAndMore")}
                 </p>
-                <Button disabled={upgradeLoading} onClick={handleUpgrade}>
+                <Button disabled={upgradeLoading} onClick={handleUpgradeClick}>
                   {upgradeLoading && <Loader2 className="size-3.5 animate-spin" />}
                   {t("upgradeToPro")}
                 </Button>

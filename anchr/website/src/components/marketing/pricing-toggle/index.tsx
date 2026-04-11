@@ -47,6 +47,13 @@ export const PricingCards: React.FC<PricingCardsProps> = (props) => {
     );
   };
 
+  // Bind the toggle's current `interval` into the checkout call so a user
+  // who picked "annual" actually gets billed annually. Wrapped in a named
+  // handler to satisfy november-sierra/no-inline-function-props.
+  const handleProCtaClick = () => {
+    void startCheckout(interval);
+  };
+
   return (
     <>
       <div className="mb-10 flex flex-col items-center gap-3">
@@ -113,7 +120,7 @@ export const PricingCards: React.FC<PricingCardsProps> = (props) => {
             <button
               className={cn(CTA_CLASSES, "m-accent-bg m-page-bg-color mt-auto")}
               disabled={checkoutLoading}
-              onClick={startCheckout}
+              onClick={handleProCtaClick}
               type="button"
             >
               {checkoutLoading && <Loader2 className="size-4 animate-spin" />}

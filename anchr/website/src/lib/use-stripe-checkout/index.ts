@@ -1,6 +1,6 @@
 "use client";
 
-import { createCheckoutSession } from "@/app/(dashboard)/dashboard/settings/actions";
+import { createCheckoutSession, type CheckoutInterval } from "@/app/(dashboard)/dashboard/settings/actions";
 import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -11,17 +11,25 @@ import { toast } from "sonner";
  * Shared by the settings Current Plan card, the sidebar upgrade card, and
  * the marketing pricing page. Surfaces a toast on failure and exposes a
  * loading flag for the caller to disable its trigger.
+ *
+ * `startCheckout` accepts the billing interval; defaults to "monthly" so
+ * call sites without an interval picker (settings, sidebar) get the
+ * sensible default. The marketing pricing page passes the toggle's current
+ * value so the user gets billed at whatever cadence they selected.
  */
-export function useStripeCheckout(): { loading: boolean; startCheckout: () => Promise<void> } {
+export function useStripeCheckout(): {
+  loading: boolean;
+  startCheckout: (interval?: CheckoutInterval) => Promise<void>;
+} {
   //* State
   const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
 
   //* Handlers
-  const startCheckout = async () => {
+  const startCheckout = async (interval: CheckoutInterval = "monthly") => {
     setLoading(true);
     try {
-      const result = await createCheckoutSession();
+      const result = await createCheckoutSession(interval);
       if (result.success) {
         if (result.url != null) {
           window.location.href = result.url;

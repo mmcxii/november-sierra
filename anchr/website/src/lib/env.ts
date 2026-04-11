@@ -11,7 +11,9 @@ export const envSchema = createEnv({
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string(),
     NEXT_PUBLIC_POSTHOG_HOST: z.string(),
     NEXT_PUBLIC_POSTHOG_KEY: z.string(),
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().refine((v) => v.startsWith("pk_test_") || v.startsWith("pk_live_"), {
+      message: "Must be a Stripe publishable key (pk_test_… or pk_live_…)",
+    }),
   },
   runtimeEnv: {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
@@ -30,7 +32,8 @@ export const envSchema = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
-    STRIPE_PRO_PRICE_ID: process.env.STRIPE_PRO_PRICE_ID,
+    STRIPE_PRO_PRICE_ID_ANNUAL: process.env.STRIPE_PRO_PRICE_ID_ANNUAL,
+    STRIPE_PRO_PRICE_ID_MONTHLY: process.env.STRIPE_PRO_PRICE_ID_MONTHLY,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
@@ -48,9 +51,25 @@ export const envSchema = createEnv({
     CRON_SECRET: z.string(),
     DATABASE_URL: z.url(),
     RESEND_API_KEY: z.string(),
-    STRIPE_PRO_PRICE_ID: z.string(),
-    STRIPE_SECRET_KEY: z.string(),
-    STRIPE_WEBHOOK_SECRET: z.string(),
+    // Stripe ID prefixes are stable across the API. We validate at boot
+    // because misconfiguring a price var to a product id (`prod_…`)
+    // instead of a price id (`price_…`) is a silent footgun: checkout
+    // creation fails at runtime with "No such price" and the user sees a
+    // generic toast. Catching it here turns the misconfig into a
+    // build/deploy failure instead of a broken purchase flow on prod.
+    // https://docs.stripe.com/api/prices
+    STRIPE_PRO_PRICE_ID_ANNUAL: z
+      .string()
+      .startsWith("price_", "Must be a Stripe price id (price_…), not a product id (prod_…)"),
+    STRIPE_PRO_PRICE_ID_MONTHLY: z
+      .string()
+      .startsWith("price_", "Must be a Stripe price id (price_…), not a product id (prod_…)"),
+    STRIPE_SECRET_KEY: z
+      .string()
+      .refine((v) => v.startsWith("sk_test_") || v.startsWith("sk_live_") || v.startsWith("rk_"), {
+        message: "Must be a Stripe secret key (sk_test_…, sk_live_…) or restricted key (rk_…)",
+      }),
+    STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_", "Must be a Stripe webhook signing secret (whsec_…)"),
     UPLOADTHING_TOKEN: z.string(),
     UPSTASH_REDIS_REST_TOKEN: z.string(),
     UPSTASH_REDIS_REST_URL: z.string(),

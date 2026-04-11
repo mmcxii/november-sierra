@@ -145,7 +145,15 @@ export async function updateHideBranding(hide: boolean): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function createCheckoutSession(): Promise<ActionResult> {
+export type CheckoutInterval = "annual" | "monthly";
+
+/**
+ * Create a Stripe checkout session for the Pro plan at the requested
+ * billing interval. The interval determines which Stripe price id is
+ * billed; the marketing pricing page lets users pick, the dashboard
+ * upgrade buttons default to monthly via the hook caller.
+ */
+export async function createCheckoutSession(interval: CheckoutInterval = "monthly"): Promise<ActionResult> {
   const { userId } = await auth();
 
   if (userId == null) {
@@ -162,12 +170,14 @@ export async function createCheckoutSession(): Promise<ActionResult> {
     };
   }
 
+  const priceId = interval === "annual" ? envSchema.STRIPE_PRO_PRICE_ID_ANNUAL : envSchema.STRIPE_PRO_PRICE_ID_MONTHLY;
+
   try {
     const session = await stripe.checkout.sessions.create({
       client_reference_id: userId,
       ...(user.stripeCustomerId != null && { customer: user.stripeCustomerId }),
       cancel_url: `${envSchema.NEXT_PUBLIC_APP_URL}/dashboard/settings`,
-      line_items: [{ price: envSchema.STRIPE_PRO_PRICE_ID, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${envSchema.NEXT_PUBLIC_APP_URL}/dashboard/settings?checkout=success`,
     });
