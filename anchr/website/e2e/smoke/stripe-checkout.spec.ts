@@ -48,20 +48,75 @@ test.describe("stripe checkout — hosted flow smoke against stage", () => {
   test.skip(missingEnv().length > 0, `missing env: ${missingEnv().join(", ")}`);
 
   test("transient free user upgrades to pro via real Stripe checkout", async ({ page }) => {
-    //* Arrange — create a run-scoped user we will fully tear down in finally
+    //* Arrange — create a run-scoped user we will fully tear down in finally.
+    // We also wire up diagnostic listeners so a silent failure (e.g. the
+    // upgrade click firing an error toast instead of navigating to Stripe)
+    // produces an actionable error message instead of a generic timeout.
+    const consoleErrors: string[] = [];
+    const pageErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(msg.text());
+      }
+    });
+    page.on("pageerror", (err) => {
+      pageErrors.push(err.message);
+    });
+
     let user: null | TransientUser = null;
     try {
       user = await createTransientUser();
 
-      //* Act — run the full purchase flow from dashboard → Stripe → redirect
+      //* Act — full purchase flow: sign in → settings → Upgrade → Stripe → return.
+      // The outcome race around the upgrade click turns a silent action
+      // error (wrong STRIPE_PRO_PRICE_ID, auth failure, onboarding
+      // redirect, etc.) into an error message that names the failure mode,
+      // instead of a generic 30s timeout on `waitForURL`.
       await signInByUsername(page, user.username);
       await page.goto("/dashboard/settings");
       await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
-      // Scope to the main content area so the sidebar upgrade card (also
-      // labelled "Upgrade to Pro") can't be clicked instead.
       const main = page.getByRole("main");
       await main.getByRole("button", { name: t.upgradeToPro }).click();
-      await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
+
+      const stripeNavigation = page
+        .waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 })
+        .then(() => "stripe" as const);
+      const errorToast = page
+        .getByText(t.somethingWentWrongPleaseTryAgain)
+        .waitFor({ state: "visible", timeout: 30_000 })
+        .then(() => "errorToast" as const);
+      const onboardingRedirect = page
+        .waitForURL(/\/onboarding/, { timeout: 30_000 })
+        .then(() => "onboardingRedirect" as const);
+      const outcome = await Promise.race([
+        stripeNavigation,
+        errorToast.catch(() => null),
+        onboardingRedirect.catch(() => null),
+      ]).catch(() => null);
+
+      if (outcome !== "stripe") {
+        const currentUrl = page.url();
+        const visibleToasts = await page
+          .locator('[role="status"], [data-sonner-toast], li[role="status"]')
+          .allTextContents()
+          .catch(() => [] as string[]);
+        const mainText = await page
+          .getByRole("main")
+          .textContent({ timeout: 1000 })
+          .catch(() => null);
+        throw new Error(
+          [
+            `Upgrade click did not reach Stripe checkout within 30s.`,
+            `outcome: ${outcome ?? "timeout"}`,
+            `currentUrl: ${currentUrl}`,
+            `visibleToasts: ${JSON.stringify(visibleToasts)}`,
+            `mainSnippet: ${(mainText ?? "").slice(0, 400)}`,
+            `consoleErrors (last 5): ${JSON.stringify(consoleErrors.slice(-5))}`,
+            `pageErrors (last 5): ${JSON.stringify(pageErrors.slice(-5))}`,
+          ].join("\n"),
+        );
+      }
+
       await fillStripeTestCard(page, { email: user.email, name: "Smoke Test" });
       await page.waitForURL(/\/dashboard\/settings\?checkout=success/, { timeout: 60_000 });
 

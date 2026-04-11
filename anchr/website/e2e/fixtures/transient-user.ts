@@ -96,13 +96,34 @@ export async function createTransientUser(): Promise<TransientUser> {
     username,
   });
 
-  await db.insert(usersTable).values({
-    displayName: "Smoke Test",
-    id: created.id,
-    onboardingComplete: true,
-    tier: "free",
-    username,
-  });
+  // Race with the Clerk `user.created` webhook, which auto-inserts a users
+  // row via `src/app/api/clerk/webhook/route.ts` with a generateUsername()
+  // -derived username and `onboardingComplete: false` (the column default).
+  // Whoever runs first, we want to land with our chosen username and
+  // `onboardingComplete: true` so the sign-in flow doesn't redirect us to
+  // /onboarding. `onConflictDoUpdate` handles both orderings:
+  //   • webhook first → we UPDATE to override username + onboardingComplete
+  //   • us first      → our INSERT wins; the webhook's later insert fails
+  //                     with duplicate-key (a pre-existing quirk of the
+  //                     webhook handler, unrelated to this test)
+  await db
+    .insert(usersTable)
+    .values({
+      displayName: "Smoke Test",
+      id: created.id,
+      onboardingComplete: true,
+      tier: "free",
+      username,
+    })
+    .onConflictDoUpdate({
+      set: {
+        displayName: "Smoke Test",
+        onboardingComplete: true,
+        tier: "free",
+        username,
+      },
+      target: usersTable.id,
+    });
 
   return { clerkId: created.id, email, password, username };
 }
