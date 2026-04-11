@@ -35,6 +35,7 @@ import { usernameSchema } from "@/lib/schemas/username";
 import { type ThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
 import { useUploadThing } from "@/lib/uploadthing";
+import { useStripeCheckout } from "@/lib/use-stripe-checkout";
 import { useReverification, useSession, useUser } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import type { SessionVerificationResource } from "@clerk/shared/types";
@@ -62,7 +63,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const [previewThemes] = React.useState({ dark: pageDarkThemeId, light: pageLightThemeId });
   const [brandingHidden, setBrandingHidden] = React.useState(hideBranding);
   const [brandingPending, startBrandingTransition] = React.useTransition();
-  const [billingLoading, setBillingLoading] = React.useState(false);
+  const [manageBillingLoading, setManageBillingLoading] = React.useState(false);
+  const { loading: upgradeLoading, startCheckout: handleUpgrade } = useStripeCheckout();
   const [celebrationOpen, setCelebrationOpen] = React.useState(checkoutSuccess === true);
   const [displayNameInput, setDisplayNameInput] = React.useState(user.displayName ?? "");
   const [bioInput, setBioInput] = React.useState(user.bio ?? "");
@@ -553,10 +555,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   handleEmailVerifyRef.current = handleEmailVerify;
   handleReverifySubmitRef.current = handleReverifySubmit;
 
-  // TODO: ANC-107 — restore handleUpgrade once Stripe product is created
-
   const handleManageBilling = async () => {
-    setBillingLoading(true);
+    setManageBillingLoading(true);
     try {
       const result = await createPortalSession();
       if (result.success) {
@@ -569,7 +569,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
     } catch {
       toast.error(t("somethingWentWrongPleaseTryAgain"));
     } finally {
-      setBillingLoading(false);
+      setManageBillingLoading(false);
     }
   };
 
@@ -956,7 +956,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                     {t("proAccessExpiresOn{{date}}", { date: user.proExpiresAt.toLocaleDateString() })}
                   </p>
                 )}
-                <Button disabled={billingLoading} onClick={handleManageBilling} variant="secondary">
+                <Button disabled={manageBillingLoading} onClick={handleManageBilling} variant="secondary">
                   {t("manageBilling")}
                 </Button>
               </div>
@@ -965,7 +965,10 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                 <p className="text-muted-foreground text-sm">
                   {t("upgradeToUnlockUnlimitedLinksCustomDomainsAndMore")}
                 </p>
-                {/* TODO: ANC-107 — re-enable once Stripe product is created */}
+                <Button disabled={upgradeLoading} onClick={handleUpgrade}>
+                  {upgradeLoading && <Loader2 className="size-3.5 animate-spin" />}
+                  {t("upgradeToPro")}
+                </Button>
               </div>
             )}
 

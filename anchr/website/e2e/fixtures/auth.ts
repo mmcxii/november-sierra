@@ -30,8 +30,10 @@ const signInOnly = async (page: Page, emailAddress: string) => {
 /**
  * Sign in as a user by username via Clerk REST API + testing token.
  * This bypasses clerk.signIn()'s getUserList which can't find +clerk_test emails.
+ * Exported so smoke tests that spin up transient users can reuse it without
+ * rebuilding the ticket-strategy dance from scratch.
  */
-const signInByUsername = async (page: Page, username: string) => {
+export const signInByUsername = async (page: Page, username: string) => {
   const secretKey = process.env.CLERK_SECRET_KEY;
 
   if (secretKey == null) {

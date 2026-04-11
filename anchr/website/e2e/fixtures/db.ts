@@ -12,6 +12,8 @@ const usersTable = pgTable("users", {
   pageLightEnabled: boolean("page_light_enabled").default(true).notNull(),
   pageLightTheme: text("page_light_theme").default("stateroom").notNull(),
   proExpiresAt: timestamp("pro_expires_at"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   tier: text("tier").default("free").notNull(),
   username: text("username").unique().notNull(),
 });
@@ -54,6 +56,61 @@ function getDb() {
 export async function setUserTier(username: string, tier: "free" | "pro") {
   const db = getDb();
   await db.update(usersTable).set({ proExpiresAt: null, tier }).where(eq(usersTable.username, username));
+}
+
+/**
+ * Read the user's billing-relevant columns so e2e tests can prove that a
+ * flow (webhook simulation, manual flip, etc.) produced the expected DB
+ * state. Returns `null` if the user doesn't exist.
+ */
+export async function getUserBilling(username: string) {
+  const db = getDb();
+  const [user] = await db
+    .select({
+      proExpiresAt: usersTable.proExpiresAt,
+      stripeCustomerId: usersTable.stripeCustomerId,
+      stripeSubscriptionId: usersTable.stripeSubscriptionId,
+      tier: usersTable.tier,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.username, username));
+  return user ?? null;
+}
+
+/**
+ * Look up a user's primary key (Clerk id) by username. Used by the signed
+ * webhook e2e to construct events that reference the correct user.
+ */
+export async function getUserIdByUsername(username: string): Promise<null | string> {
+  const db = getDb();
+  const [user] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username));
+  return user?.id ?? null;
+}
+
+/**
+ * Set a user's billing state (tier + stripe customer/subscription + optional
+ * proExpiresAt) so downgrade flows can be seeded with realistic data and
+ * cleaned up after the test.
+ */
+export async function setUserBilling(
+  username: string,
+  billing: {
+    proExpiresAt?: null | Date;
+    stripeCustomerId?: null | string;
+    stripeSubscriptionId?: null | string;
+    tier: "free" | "pro";
+  },
+) {
+  const db = getDb();
+  await db
+    .update(usersTable)
+    .set({
+      proExpiresAt: billing.proExpiresAt ?? null,
+      stripeCustomerId: billing.stripeCustomerId ?? null,
+      stripeSubscriptionId: billing.stripeSubscriptionId ?? null,
+      tier: billing.tier,
+    })
+    .where(eq(usersTable.username, username));
 }
 
 /**

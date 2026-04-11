@@ -19,6 +19,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { SidebarUpgradeCard } from "./upgrade-card";
 import { ADMIN_NAV_ITEMS, NAV_ITEMS } from "./utils";
 
 export type DashboardSidebarProps = {
@@ -164,7 +165,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
           )}
         </nav>
 
-        {/* TODO: ANC-107 — re-enable upgrade CTA once Stripe product is created */}
+        {!isPro && <SidebarUpgradeCard />}
 
         {/* User menu */}
         <div className="border-sidebar-border border-t p-3">

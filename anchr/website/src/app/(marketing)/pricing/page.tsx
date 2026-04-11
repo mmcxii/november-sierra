@@ -1,10 +1,15 @@
 import { JsonLd } from "@/components/json-ld";
 import { FadeIn } from "@/components/marketing/fade-in";
 import { Footer } from "@/components/marketing/footer";
-import { PricingCards } from "@/components/marketing/pricing-toggle";
+import { PricingCards, type PricingViewer } from "@/components/marketing/pricing-toggle";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { Container } from "@/components/ui/container";
+import { db } from "@/lib/db/client";
+import { usersTable } from "@/lib/db/schema/user";
 import { initTranslations } from "@/lib/i18n/server";
+import { isProUser } from "@/lib/tier";
+import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
 import { ChevronDown } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -29,6 +34,13 @@ const FAQ = [
 
 const PricingPage: React.FC = async () => {
   const { t } = await initTranslations("en-US");
+
+  const { userId } = await auth();
+  let viewer: PricingViewer = "anonymous";
+  if (userId != null) {
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    viewer = user != null && isProUser(user) ? "pro" : "free";
+  }
 
   const faqJsonLd = {
     "@context": "https://schema.org",
@@ -59,7 +71,7 @@ const PricingPage: React.FC = async () => {
 
         {/* Pricing cards */}
         <FadeIn delay={100}>
-          <PricingCards />
+          <PricingCards viewer={viewer} />
         </FadeIn>
 
         {/* Sign-up CTA */}

@@ -1,8 +1,32 @@
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { SessionUser } from "./auth";
 import { db } from "./db/client";
 import { usersTable } from "./db/schema/user";
 
+/**
+ * Grant Pro access to a user.
+ *
+ * - `durationDays === null` → lifetime pro. Single UPDATE, clears expiry.
+ * - `durationDays === number` → finite expiry, computed ENTIRELY IN SQL via
+ *   a CASE expression. Two important properties:
+ *
+ *     1. **Atomicity.** The stacking math (`existing + days` vs `now + days`)
+ *        runs inside one UPDATE, so Postgres's row-level lock serializes
+ *        concurrent grants against the same user. Two webhook redeliveries
+ *        or a webhook + a referral redemption firing at the same instant
+ *        both land — the second UPDATE reads the post-commit expiry and
+ *        stacks correctly on top of the first. The previous JS-based
+ *        read-modify-write could silently lose one grant's days.
+ *
+ *     2. **neon-http compatibility.** The production db client uses the
+ *        `neon-http` driver, which fires each query as an independent HTTP
+ *        request and does NOT support `db.transaction(...)`. Keeping the
+ *        mutation as a single statement is the only way this runs in prod.
+ *
+ * - Lifetime pro users are never overwritten with a finite expiry. The
+ *   WHERE clause explicitly excludes `tier = 'pro' AND proExpiresAt IS NULL`
+ *   so comped accounts can't be downgraded by a timed grant.
+ */
 export async function grantPro(userId: string, durationDays: null | number): Promise<void> {
   if (durationDays == null) {
     await db
@@ -12,26 +36,24 @@ export async function grantPro(userId: string, durationDays: null | number): Pro
     return;
   }
 
-  const [user] = await db
-    .select({ proExpiresAt: usersTable.proExpiresAt, tier: usersTable.tier })
-    .from(usersTable)
-    .where(eq(usersTable.id, userId))
-    .limit(1);
-
-  if (user == null) {
-    return;
-  }
-
-  // Stack on existing expiration if user is already pro with time remaining
-  const baseDate =
-    user.tier === "pro" && user.proExpiresAt != null && user.proExpiresAt > new Date() ? user.proExpiresAt : new Date();
-
-  const expiresAt = new Date(baseDate.getTime() + durationDays * 24 * 60 * 60 * 1000);
-
   await db
     .update(usersTable)
-    .set({ proExpiresAt: expiresAt, tier: "pro", updatedAt: new Date() })
-    .where(eq(usersTable.id, userId));
+    .set({
+      proExpiresAt: sql`CASE
+        WHEN ${usersTable.tier} = 'pro' AND ${usersTable.proExpiresAt} > NOW()
+          THEN ${usersTable.proExpiresAt} + make_interval(days => ${durationDays})
+        ELSE NOW() + make_interval(days => ${durationDays})
+      END`,
+      tier: "pro",
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(usersTable.id, userId),
+        // Preserve lifetime pro — never overwrite tier=pro, proExpiresAt=null.
+        sql`NOT (${usersTable.tier} = 'pro' AND ${usersTable.proExpiresAt} IS NULL)`,
+      ),
+    );
 }
 
 export async function cleanupExpiredPro(user: SessionUser): Promise<SessionUser> {

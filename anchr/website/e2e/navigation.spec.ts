@@ -33,4 +33,24 @@ test.describe("sidebar navigation", () => {
     await expect(page.getByRole("heading", { exact: true, name: t.qrCode })).toBeVisible();
     await expect(page.getByRole("button", { name: t.downloadPng })).toBeVisible();
   });
+
+  test("free-tier user sees sidebar upgrade card with enabled Upgrade to Pro button", async ({ freeUser: page }) => {
+    //* Act
+    const sidebar = page.locator("aside").first();
+    await sidebar.getByText(t.unlockMoreWithPro).waitFor();
+
+    //* Assert
+    await expect(sidebar.getByText(t.unlockMoreWithPro)).toBeVisible();
+    await expect(sidebar.getByRole("button", { name: t.upgradeToPro })).toBeEnabled();
+  });
+
+  test("pro-tier user does not see sidebar upgrade card", async ({ proUser: page }) => {
+    //* Act
+    const sidebar = page.locator("aside").first();
+    await sidebar.getByRole("link", { name: t.links }).waitFor();
+
+    //* Assert
+    await expect(sidebar.getByText(t.unlockMoreWithPro)).toBeHidden();
+    await expect(sidebar.getByRole("button", { name: t.upgradeToPro })).toBeHidden();
+  });
 });
