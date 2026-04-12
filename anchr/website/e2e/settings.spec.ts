@@ -73,8 +73,8 @@ test.describe("settings", () => {
     await page.goto("/dashboard/settings");
     await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
-    //* Assert
-    await expect(page.getByRole("button", { name: t.manageBilling })).toBeVisible();
+    //* Assert — seeded pro user has no Stripe customer, so shows lifetime pro text
+    await expect(page.getByText(t.youHaveLifetimeProAccess)).toBeVisible();
     await expect(page.getByPlaceholder("ANCHR-XXXXXX")).toBeVisible();
     await expect(page.getByRole("button", { name: t.redeem })).toBeDisabled();
   });

@@ -102,7 +102,11 @@ test.describe("onboarding flow", () => {
     await page.goto("/dashboard/settings");
     await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
-    //* Assert — referral code was redeemed and Pro access was granted
-    await expect(page.getByRole("button", { name: t.manageBilling })).toBeVisible();
+    //* Assert — referral code was redeemed and Pro access was granted.
+    //* Referral pro users have no Stripe customer, so they see upgrade buttons
+    //* (not Manage Billing) alongside their expiry info.
+    await expect(page.getByText(/Pro access expires on/)).toBeVisible();
+    await expect(page.getByRole("button", { name: `${t.$5Mo} ${t.annual}` })).toBeVisible();
+    await expect(page.getByRole("button", { name: `${t.$7Mo} ${t.monthly}` })).toBeVisible();
   });
 });

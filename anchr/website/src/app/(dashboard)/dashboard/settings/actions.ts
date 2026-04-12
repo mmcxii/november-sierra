@@ -612,6 +612,24 @@ export async function redeemReferralCode(code: string): Promise<RedeemReferralCo
     return { error: "youHaveAlreadyRedeemedThisCode", success: false };
   }
 
+  // Collusion prevention: each user may only redeem one user-type code, ever.
+  // Admin/promotional codes are unaffected by this limit.
+  if (referralCode.type === "user") {
+    const [priorUserCodeRedemption] = await db
+      .select({ id: referralRedemptionsTable.id })
+      .from(referralRedemptionsTable)
+      .innerJoin(referralCodesTable, eq(referralRedemptionsTable.codeId, referralCodesTable.id))
+      .where(and(eq(referralRedemptionsTable.userId, userId), eq(referralCodesTable.type, "user")))
+      .limit(1);
+
+    if (priorUserCodeRedemption != null) {
+      return {
+        error: "youHaveAlreadyRedeemedAnotherUsersReferralCodePromotionalCodesCanStillBeRedeemed",
+        success: false,
+      };
+    }
+  }
+
   // Insert redemption and increment counter
   await db.insert(referralRedemptionsTable).values({
     codeId: referralCode.id,
