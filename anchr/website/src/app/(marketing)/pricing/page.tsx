@@ -63,21 +63,23 @@ const PricingPage: React.FC = async () => {
       <Container as="main" className="flex-1 py-16">
         {/* Hero */}
         <FadeIn>
-          <div className="mx-auto mb-16 max-w-2xl text-center">
-            <h2 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">{t("simpleTransparentPricing")}</h2>
+          <section className="mx-auto mb-16 max-w-2xl text-center">
+            <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">{t("simpleTransparentPricing")}</h1>
             <p className="m-muted-70 text-lg">{t("chooseAPlanThatFitsYourNeeds")}</p>
-          </div>
+          </section>
         </FadeIn>
 
         {/* Pricing cards */}
         <FadeIn delay={100}>
-          <PricingCards viewer={viewer} />
+          <section>
+            <PricingCards viewer={viewer} />
+          </section>
         </FadeIn>
 
         {/* Sign-up CTA */}
         <FadeIn delay={200}>
-          <div className="mx-auto mt-24 max-w-md text-center">
-            <h2 className="mb-8 text-2xl font-bold tracking-tight sm:text-3xl">{t("readyToDropAnchor")}</h2>
+          <section className="mx-auto mt-24 max-w-md text-center">
+            <h2 className="mb-8 text-2xl font-bold tracking-tight sm:text-3xl">{t("readyToSetSail")}</h2>
             <div className="flex justify-center">
               <Link
                 className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center rounded-md px-6 text-sm font-medium transition-colors"
@@ -86,12 +88,12 @@ const PricingPage: React.FC = async () => {
                 {t("getStarted")}
               </Link>
             </div>
-          </div>
+          </section>
         </FadeIn>
 
         {/* FAQ */}
         <FadeIn delay={300}>
-          <div className="mx-auto mt-24 max-w-2xl">
+          <section className="mx-auto mt-24 max-w-2xl">
             <h2 className="mb-10 text-center text-2xl font-bold tracking-tight sm:text-3xl">
               {t("frequentlyAskedQuestions")}
             </h2>
@@ -108,7 +110,7 @@ const PricingPage: React.FC = async () => {
                 </details>
               ))}
             </div>
-          </div>
+          </section>
         </FadeIn>
       </Container>
 

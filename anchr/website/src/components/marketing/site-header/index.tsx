@@ -11,7 +11,7 @@ export const SiteHeader: React.FC = async () => {
   return (
     <Container as="header" className="relative z-[51] flex items-center justify-between py-6">
       <Link className="group inline-flex items-center" href="/">
-        <SiteBrandmark as="h1" className="transition-opacity group-hover:opacity-75" size="sm" />
+        <SiteBrandmark className="transition-opacity group-hover:opacity-75" size="sm" />
       </Link>
       <nav className="flex items-center gap-6">
         {NAV_LINKS.map((link) => {

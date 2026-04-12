@@ -21,7 +21,7 @@ export const Cta: React.FC<CtaProps> = (props) => {
       </div>
 
       <Container className="relative z-10 flex flex-col items-center text-center">
-        <h2 className="mb-10 text-2xl font-bold tracking-tight sm:text-3xl">{t("readyToDropAnchor")}</h2>
+        <h2 className="mb-10 text-2xl font-bold tracking-tight sm:text-3xl">{t("readyToSetSail")}</h2>
         <Link
           className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center rounded-md px-6 text-sm font-medium transition-colors"
           href="/sign-up"

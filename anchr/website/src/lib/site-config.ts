@@ -19,5 +19,9 @@ function resolveEnvironment(): "development" | "production" | "stage" {
 }
 
 export const siteConfig = {
+  emails: {
+    legal: "anchr-legal@novembersierra.dev",
+    privacy: "anchr-privacy@novembersierra.dev",
+  },
   environment: resolveEnvironment(),
-};
+} as const;

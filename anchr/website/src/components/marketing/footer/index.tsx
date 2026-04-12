@@ -20,23 +20,25 @@ export const Footer: React.FC<FooterProps> = (props) => {
         <span className="text-sm font-semibold">{t("anchr")}</span>
       </div>
       <div className="flex items-center gap-6">
-        <Link className="m-muted-40 text-xs transition-colors" href="/pricing">
-          {t("pricing")}
-        </Link>
-        <Link className="m-muted-40 text-xs transition-colors" href="/legal/privacy">
-          {t("privacyPolicy")}
-        </Link>
-        <Link className="m-muted-40 text-xs transition-colors" href="/legal/terms">
-          {t("termsOfService")}
-        </Link>
-        <Link
-          className="m-muted-40 text-xs transition-colors"
-          href="https://github.com/mmcxii/november-sierra"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          {t("github")}
-        </Link>
+        <nav aria-label="Footer" className="flex items-center gap-6">
+          <Link className="m-muted-40 text-xs transition-colors" href="/pricing">
+            {t("pricing")}
+          </Link>
+          <Link className="m-muted-40 text-xs transition-colors" href="/legal/privacy">
+            {t("privacyPolicy")}
+          </Link>
+          <Link className="m-muted-40 text-xs transition-colors" href="/legal/terms">
+            {t("termsOfService")}
+          </Link>
+          <Link
+            className="m-muted-40 text-xs transition-colors"
+            href="https://github.com/mmcxii/november-sierra"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {t("github")}
+          </Link>
+        </nav>
         {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- copyright punctuation around translated values */}
         <p className="m-muted-40 text-xs">
           &copy; {new Date().getFullYear()} {t("anchr")}. {t("allRightsReserved")}

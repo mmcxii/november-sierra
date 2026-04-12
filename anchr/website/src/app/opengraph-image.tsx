@@ -1,7 +1,7 @@
 /* eslint-disable november-sierra/no-inline-style, november-sierra/no-raw-string-jsx */
 import { ImageResponse } from "next/og";
 
-export const alt = "Anchr — Your Harbor for Every Connection";
+export const alt = "Anchr — Your Harbor. Everyone's Destination.";
 export const contentType = "image/png";
 export const dynamic = "force-dynamic";
 export const size = { height: 630, width: 1200 };
@@ -118,7 +118,7 @@ export default async function OpenGraphImage() {
           textTransform: "uppercase",
         }}
       >
-        Your Harbor for Every Connection
+        Your Harbor. Everyone&apos;s Destination.
       </div>
     </div>,
     {

@@ -15,7 +15,7 @@ const WelcomePage: React.FC = async () => {
   const { t } = await initTranslations("en-US");
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6">
+    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6">
       {/* Ambient glow */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[rgb(var(--m-glow))] opacity-40 blur-[120px]" />
 
@@ -48,7 +48,7 @@ const WelcomePage: React.FC = async () => {
           </Link>
         </Button>
       </div>
-    </div>
+    </main>
   );
 };
 

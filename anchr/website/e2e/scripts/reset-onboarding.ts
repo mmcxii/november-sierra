@@ -54,7 +54,7 @@ async function main() {
     return;
   }
 
-  const seededUsersPath = path.join(__dirname, "..", ".clerk", "seeded-users.json");
+  const seededUsersPath = path.join(import.meta.dirname, "..", ".clerk", "seeded-users.json");
   if (!fs.existsSync(seededUsersPath)) {
     console.log("[e2e:reset-onboarding] seeded-users.json not found, skipping");
     return;
