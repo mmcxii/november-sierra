@@ -97,7 +97,8 @@ type SelectChain = {
 function buildSelectChain(rows: unknown[]): SelectChain {
   const limit = vi.fn().mockResolvedValue(rows);
   const where = vi.fn().mockReturnValue({ limit });
-  const from = vi.fn().mockReturnValue({ where });
+  const innerJoin = vi.fn().mockReturnValue({ where });
+  const from = vi.fn().mockReturnValue({ innerJoin, where });
   return { root: { from } };
 }
 
@@ -149,24 +150,34 @@ function makeCode(overrides: Partial<ReferralCodeRow> = {}): ReferralCodeRow {
 
 // Queues up the select chain returns in the order the action reads them:
 // 1. referralCodesTable lookup
-// 2. referralRedemptionsTable existing check
-// 3. (optional) users lookup for reserved-username conflict
-// 4. (optional) users lookup for current username (if reserved-username claim)
-// 5. (optional) users lookup for referrer display name
+// 2. referralRedemptionsTable existing check (same code, same user)
+// 3. (user-type only) referralRedemptionsTable + referralCodesTable join (any prior user-type redemption)
+// 4. (optional) users lookup for reserved-username conflict
+// 5. (optional) users lookup for current username (if reserved-username claim)
+// 6. (optional) users lookup for referrer display name
 function queueSelects(options: {
   code?: null | ReferralCodeRow;
   creator?: null | { displayName: null | string; username: string };
   currentUser?: null | { username: string };
   existingRedemption?: boolean;
+  priorUserCodeRedemption?: boolean;
   reservedUsernameTakenBy?: null | { id: string };
 }) {
-  const { code, creator, currentUser, existingRedemption, reservedUsernameTakenBy } = options;
+  const { code, creator, currentUser, existingRedemption, priorUserCodeRedemption, reservedUsernameTakenBy } = options;
 
   // Every `redeemReferralCode` call starts with the referral-code lookup and
   // the prior-redemption check, so always push those two (even if one will
   // short-circuit before we get to it).
   mockSelect.mockReturnValueOnce(buildSelectChain(code == null ? [] : [code]).root);
   mockSelect.mockReturnValueOnce(buildSelectChain(existingRedemption === true ? [{ id: "red-1" }] : []).root);
+
+  // Collusion check: for user-type codes, the action queries whether the user
+  // has already redeemed ANY user-type code (innerJoin on referral_codes).
+  if (code != null && code.type === "user") {
+    mockSelect.mockReturnValueOnce(
+      buildSelectChain(priorUserCodeRedemption === true ? [{ id: "red-prior" }] : []).root,
+    );
+  }
 
   if (code != null && code.reservedUsername != null) {
     mockSelect.mockReturnValueOnce(
@@ -314,6 +325,43 @@ describe("redeemReferralCode", () => {
     //* Assert
     expect(result).toEqual({ error: "youHaveAlreadyRedeemedThisCode", success: false });
     expect(mockGrantPro).not.toHaveBeenCalled();
+  });
+
+  it("blocks user from redeeming a second user-type code (collusion prevention)", async () => {
+    //* Arrange
+    mockAuth.mockResolvedValue({ userId: "user-1" });
+    queueSelects({
+      code: makeCode({ creatorId: "referrer-2", type: "user" }),
+      priorUserCodeRedemption: true,
+    });
+    const { redeemReferralCode } = await import("./actions");
+
+    //* Act
+    const result = await redeemReferralCode("ANCHR-OTHER");
+
+    //* Assert
+    expect(result).toEqual({
+      error: "youHaveAlreadyRedeemedAnotherUsersReferralCodePromotionalCodesCanStillBeRedeemed",
+      success: false,
+    });
+    expect(mockGrantPro).not.toHaveBeenCalled();
+  });
+
+  it("allows admin code even if user already redeemed a user-type code", async () => {
+    //* Arrange
+    mockAuth.mockResolvedValue({ userId: "user-1" });
+    // Admin-type code — collusion check is skipped entirely
+    queueSelects({ code: makeCode({ durationDays: 14, type: "admin" }) });
+    mockInsert.mockReturnValueOnce(buildInsertChain().root);
+    mockUpdate.mockReturnValueOnce(buildUpdateChain().root);
+    const { redeemReferralCode } = await import("./actions");
+
+    //* Act
+    const result = await redeemReferralCode("ANCHR-PROMO");
+
+    //* Assert
+    expect(result).toEqual({ durationDays: 14, referrerName: null, success: true });
+    expect(mockGrantPro).toHaveBeenCalledWith("user-1", 14);
   });
 
   // ─── Success branches ─────────────────────────────────────────────────────

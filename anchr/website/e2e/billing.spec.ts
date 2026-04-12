@@ -48,8 +48,12 @@ test.describe("billing — upgrade & downgrade", () => {
     freeUser: page,
   }) => {
     try {
-      //* Act — flip tier in the DB (simulates a successful webhook upgrade) and reload
-      await setUserTier(testUsers.admin.username, "pro");
+      //* Act — seed billing state (simulates a successful webhook upgrade) and reload
+      await setUserBilling(testUsers.admin.username, {
+        stripeCustomerId: "cus_e2e_upgrade",
+        stripeSubscriptionId: "sub_e2e_upgrade",
+        tier: "pro",
+      });
       await page.reload();
       await page.getByRole("heading", { exact: true, name: t.links }).waitFor();
 
@@ -77,7 +81,11 @@ test.describe("billing — upgrade & downgrade", () => {
       await expect(page.getByRole("button", { name: t.upgradeToPro })).toHaveCount(0);
     } finally {
       // Restore shared admin user to free so other tests aren't disturbed.
-      await setUserTier(testUsers.admin.username, "free");
+      await setUserBilling(testUsers.admin.username, {
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        tier: "free",
+      });
     }
   });
 
@@ -227,21 +235,20 @@ test.describe("billing — upgrade & downgrade", () => {
     await expect(page.getByText(t.checkoutWasCancelledYouCanUpgradeAnytime)).toBeVisible();
   });
 
-  test("clicking manage billing for a pro user without a stripe customer shows an error toast", async ({
+  test("pro user without stripe customer sees lifetime pro text instead of manage billing", async ({
     proUser: page,
   }) => {
-    // The seeded pro user has no stripeCustomerId (we never ran checkout in
-    // test mode), so `createPortalSession` should short-circuit and return
-    // an error. This proves the action path is wired correctly without
-    // requiring a real Stripe customer.
+    // The seeded pro user has no stripeCustomerId (never ran checkout), so
+    // the UI should show "You have lifetime Pro access" with no Manage
+    // Billing button — preventing the portal session error entirely.
 
     //* Act
     await page.goto("/dashboard/settings");
     await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
     const main = page.getByRole("main");
-    await main.getByRole("button", { name: t.manageBilling }).click();
 
-    //* Assert — error toast surfaces the i18n key
-    await expect(page.getByText(t.somethingWentWrongPleaseTryAgain)).toBeVisible();
+    //* Assert — lifetime text visible, manage billing absent
+    await expect(main.getByText(t.youHaveLifetimeProAccess)).toBeVisible();
+    await expect(main.getByRole("button", { name: t.manageBilling })).toHaveCount(0);
   });
 });

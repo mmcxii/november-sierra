@@ -983,32 +983,52 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
                     {upgradeLoading && <Loader2 className="size-3.5 animate-spin" />}
                     {t("resubscribe")}
                   </Button>
-                  <Button disabled={manageBillingLoading} onClick={handleManageBilling} variant="tertiary">
-                    {t("manageBilling")}
-                  </Button>
+                  {user.stripeCustomerId != null && (
+                    <Button disabled={manageBillingLoading} onClick={handleManageBilling} variant="tertiary">
+                      {t("manageBilling")}
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
             {isPro && user.subscriptionCancelAt == null && (
               <div className="space-y-3">
-                {user.billingInterval != null && (
-                  <p className="text-muted-foreground text-sm">
-                    {user.billingInterval === "annual" ? t("annual") : t("monthly")}
-                  </p>
+                {user.stripeCustomerId != null && (
+                  <>
+                    {user.billingInterval != null && (
+                      <p className="text-muted-foreground text-sm">
+                        {user.billingInterval === "annual" ? t("annual") : t("monthly")}
+                      </p>
+                    )}
+                    {user.currentPeriodEnd != null && user.stripeSubscriptionId != null && (
+                      <p className="text-muted-foreground text-sm">
+                        {t("renewsOn{{date}}", { date: user.currentPeriodEnd.toLocaleDateString() })}
+                      </p>
+                    )}
+                    <Button disabled={manageBillingLoading} onClick={handleManageBilling} variant="secondary">
+                      {t("manageBilling")}
+                    </Button>
+                  </>
                 )}
-                {user.currentPeriodEnd != null && user.stripeSubscriptionId != null && (
-                  <p className="text-muted-foreground text-sm">
-                    {t("renewsOn{{date}}", { date: user.currentPeriodEnd.toLocaleDateString() })}
-                  </p>
+                {user.stripeCustomerId == null && user.proExpiresAt != null && (
+                  <>
+                    <p className="text-muted-foreground text-sm">
+                      {t("proAccessExpiresOn{{date}}", { date: user.proExpiresAt.toLocaleDateString() })}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button disabled={upgradeLoading} onClick={handleUpgradeAnnual}>
+                        {upgradeLoading && <Loader2 className="size-3.5 animate-spin" />}
+                        {t("$5Mo")} {t("annual")}
+                      </Button>
+                      <Button disabled={upgradeLoading} onClick={handleUpgradeMonthly} variant="secondary">
+                        {t("$7Mo")} {t("monthly")}
+                      </Button>
+                    </div>
+                  </>
                 )}
-                {user.proExpiresAt != null && user.stripeSubscriptionId == null && (
-                  <p className="text-muted-foreground text-sm">
-                    {t("proAccessExpiresOn{{date}}", { date: user.proExpiresAt.toLocaleDateString() })}
-                  </p>
+                {user.stripeCustomerId == null && user.proExpiresAt == null && (
+                  <p className="text-muted-foreground text-sm">{t("youHaveLifetimeProAccess")}</p>
                 )}
-                <Button disabled={manageBillingLoading} onClick={handleManageBilling} variant="secondary">
-                  {t("manageBilling")}
-                </Button>
               </div>
             )}
             {!isPro && (
