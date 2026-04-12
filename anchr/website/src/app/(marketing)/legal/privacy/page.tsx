@@ -2,6 +2,7 @@ import { Footer } from "@/components/marketing/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { Container } from "@/components/ui/container";
 import { initTranslations } from "@/lib/i18n/server";
+import { siteConfig } from "@/lib/site-config";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -36,7 +37,7 @@ const sections = [
     heading: "Your rights",
   },
   {
-    body: "Questions, concerns, or requests? Email us at privacy@anchr.to and we'll get back to you.",
+    body: `Questions, concerns, or requests? Email us at ${siteConfig.emails.privacy} and we'll get back to you.`,
     heading: "Contact",
   },
 ];
@@ -56,7 +57,7 @@ const PrivacyPage: React.FC = async () => {
             Last updated March 22, 2026
           </p>
           {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- legal page, static content */}
-          <h2 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Privacy Policy</h2>
+          <h1 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Privacy Policy</h1>
           {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- legal page, static content */}
           <p className="text-anc-steel/70 text-lg leading-relaxed">
             We built Anchr to help people own their presence online. That extends to how we handle your data — with
@@ -67,10 +68,10 @@ const PrivacyPage: React.FC = async () => {
         {/* Sections */}
         <div className="flex flex-col gap-12">
           {sections.map((section) => (
-            <div key={section.heading}>
+            <section key={section.heading}>
               <h2 className="text-anc-gold mb-3 text-lg font-semibold">{section.heading}</h2>
               <p className="text-anc-steel/70 leading-relaxed">{section.body}</p>
-            </div>
+            </section>
           ))}
         </div>
       </Container>

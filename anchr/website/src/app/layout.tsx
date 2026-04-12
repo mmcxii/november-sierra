@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     url: "/",
   },
   title: {
-    default: "Anchr — Your Harbor for Every Connection",
+    default: "Anchr — Your Harbor. Everyone's Destination.",
     template: "%s | Anchr",
   },
   twitter: {

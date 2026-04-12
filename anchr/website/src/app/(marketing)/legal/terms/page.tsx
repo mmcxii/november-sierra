@@ -2,6 +2,7 @@ import { Footer } from "@/components/marketing/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { Container } from "@/components/ui/container";
 import { initTranslations } from "@/lib/i18n/server";
+import { siteConfig } from "@/lib/site-config";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -43,7 +44,7 @@ const sections = [
     heading: "Changes to terms",
   },
   {
-    body: "Questions about these terms? Email us at legal@anchr.to and we'll get back to you.",
+    body: `Questions about these terms? Email us at ${siteConfig.emails.legal} and we'll get back to you.`,
     heading: "Contact",
   },
 ];
@@ -63,7 +64,7 @@ const TermsPage: React.FC = async () => {
             Last updated March 3, 2026
           </p>
           {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- legal page, static content */}
-          <h2 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Terms of Service</h2>
+          <h1 className="text-anc-cream mb-6 text-4xl font-bold tracking-tight">Terms of Service</h1>
           {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- legal page, static content */}
           <p className="text-anc-steel/70 text-lg leading-relaxed">
             These terms govern your use of Anchr. By using our Service, you agree to these terms — please read them
@@ -74,10 +75,10 @@ const TermsPage: React.FC = async () => {
         {/* Sections */}
         <div className="flex flex-col gap-12">
           {sections.map((section) => (
-            <div key={section.heading}>
+            <section key={section.heading}>
               <h2 className="text-anc-gold mb-3 text-lg font-semibold">{section.heading}</h2>
               <p className="text-anc-steel/70 leading-relaxed">{section.body}</p>
-            </div>
+            </section>
           ))}
         </div>
       </Container>

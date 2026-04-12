@@ -40,9 +40,11 @@ const MarketingPage: React.FC = async () => {
       <JsonLd data={websiteJsonLd} />
       <JsonLd data={organizationJsonLd} />
       <SiteHeader />
-      <Hero t={t} />
-      <Features />
-      <Cta t={t} />
+      <main>
+        <Hero t={t} />
+        <Features />
+        <Cta t={t} />
+      </main>
       <Footer t={t} />
     </>
   );

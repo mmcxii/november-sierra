@@ -47,7 +47,7 @@ const DevelopersPage: React.FC = async () => {
         {/* 1. Hero */}
         <FadeIn>
           <div className="mx-auto mb-24 max-w-2xl text-center">
-            <h2 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">{t("builtForTheAiAgentEra")}</h2>
+            <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">{t("builtForTheAiAgentEra")}</h1>
             <p className="m-muted-70 text-lg">{t("theLinkInBioYourAiAssistantCanManage")}</p>
           </div>
         </FadeIn>
@@ -55,7 +55,7 @@ const DevelopersPage: React.FC = async () => {
         {/* 2. Key Capabilities */}
         <FadeIn delay={100}>
           <section className="mb-24">
-            <h3 className="mb-8 text-2xl font-bold tracking-tight">{t("keyCapabilities")}</h3>
+            <h2 className="mb-8 text-2xl font-bold tracking-tight">{t("keyCapabilities")}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {CAPABILITIES.map((key) => (
                 <div className="m-card-bg-bg m-card-border flex items-start gap-3 rounded-xl p-5" key={key}>
@@ -74,7 +74,7 @@ const DevelopersPage: React.FC = async () => {
         {/* 3. Code Examples */}
         <FadeIn delay={200}>
           <section className="mb-24">
-            <h3 className="mb-8 text-2xl font-bold tracking-tight">{t("codeExamples")}</h3>
+            <h2 className="mb-8 text-2xl font-bold tracking-tight">{t("codeExamples")}</h2>
             <CodeTabs highlightedHtml={highlightedHtml} />
           </section>
         </FadeIn>
@@ -82,7 +82,7 @@ const DevelopersPage: React.FC = async () => {
         {/* 4. MCP Demo */}
         <FadeIn delay={300}>
           <section className="mb-24">
-            <h3 className="mb-8 text-2xl font-bold tracking-tight">{t("seeItInAction")}</h3>
+            <h2 className="mb-8 text-2xl font-bold tracking-tight">{t("seeItInAction")}</h2>
             <div className="m-card-bg-bg m-card-border overflow-hidden rounded-xl">
               <div className="border-b border-white/10 px-5 py-3">
                 <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ const DevelopersPage: React.FC = async () => {
         {/* 5. Comparison */}
         <FadeIn delay={400}>
           <section className="mb-24">
-            <h3 className="mb-8 text-2xl font-bold tracking-tight">{t("otherLinkInBioToolsWerentBuiltForTheAiEra")}</h3>
+            <h2 className="mb-8 text-2xl font-bold tracking-tight">{t("otherLinkInBioToolsWerentBuiltForTheAiEra")}</h2>
             <div className="m-card-bg-bg m-card-border overflow-hidden rounded-xl">
               <table className="w-full text-sm">
                 <thead>
@@ -148,7 +148,7 @@ const DevelopersPage: React.FC = async () => {
         {/* 6. Interactive Try It */}
         <FadeIn delay={500}>
           <section className="mb-24">
-            <h3 className="mb-4 text-2xl font-bold tracking-tight">{t("tryTheLiveApi")}</h3>
+            <h2 className="mb-4 text-2xl font-bold tracking-tight">{t("tryTheLiveApi")}</h2>
             <p className="m-muted-70 mb-8 text-sm">{t("theLinkInBioYourAiAssistantCanManage")}</p>
             <TryApi />
           </section>
@@ -157,7 +157,7 @@ const DevelopersPage: React.FC = async () => {
         {/* 7. CTA */}
         <FadeIn delay={600}>
           <section className="mb-16 text-center">
-            <h3 className="mb-6 text-2xl font-bold tracking-tight sm:text-3xl">{t("getYourApiKey")}</h3>
+            <h2 className="mb-6 text-2xl font-bold tracking-tight sm:text-3xl">{t("getYourApiKey")}</h2>
             <Link
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center rounded-md px-6 text-sm font-medium transition-colors"
               href="/sign-up"

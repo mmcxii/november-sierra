@@ -61,7 +61,7 @@ test.describe("developers page", () => {
     await page.goto("/developers");
 
     //* Assert
-    const nav = page.getByRole("navigation");
+    const nav = page.getByRole("banner").getByRole("navigation");
     await expect(nav.getByRole("link", { name: t.home })).toBeVisible();
     await expect(nav.getByRole("link", { name: t.developers })).toBeVisible();
     await expect(nav.getByRole("link", { name: t.pricing })).toBeVisible();

@@ -76,7 +76,7 @@ export const PricingCards: React.FC<PricingCardsProps> = (props) => {
         <div className={cn(CARD_BASE, CARD_CLASSES, "flex flex-col p-8")}>
           <div className="m-accent-gradient-bg absolute inset-x-0 top-0 h-px" />
           <h3 className="mb-4 text-xl font-bold">{t("free")}</h3>
-          <p className="m-muted-50 mb-6 text-sm">{t("youreJustTestingTheWaters")}</p>
+          <p className="m-muted-50 mb-6 text-sm">{t("everythingYouNeedToStart")}</p>
           <div className="mb-2 text-4xl font-bold">{t("$0")}</div>
           <p className="m-muted-50 mb-8 text-sm">{t("freeForever")}</p>
           <ul className="flex flex-col gap-3">
