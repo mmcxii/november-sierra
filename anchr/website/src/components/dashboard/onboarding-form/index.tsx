@@ -1,5 +1,6 @@
 "use client";
 
+import type { ImportResultData } from "@/app/(dashboard)/dashboard/import-actions";
 import { completeOnboarding, type CompleteOnboardingResult } from "@/app/onboarding/actions";
 import { CheckoutCelebration } from "@/components/dashboard/checkout-celebration";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -22,6 +23,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = (props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [referralData, setReferralData] = React.useState<CompleteOnboardingResult["referral"]>();
+  const [importData, setImportData] = React.useState<ImportResultData>();
 
   //* Variables
   const stepParam = searchParams.get("step");
@@ -35,7 +37,12 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = (props) => {
 
   const handleUsernameStepOnComplete = () => goToStep("link");
 
-  const handleLinkStepOnComplete = () => goToStep("theme");
+  const handleLinkStepOnComplete = (importResult?: ImportResultData) => {
+    if (importResult != null) {
+      setImportData(importResult);
+    }
+    goToStep("theme");
+  };
 
   const handleLinkStepOnSkip = () => goToStep("theme");
 
@@ -70,6 +77,9 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = (props) => {
       {currentStep === "complete" && <CompleteStep />}
       {referralData != null && (
         <CheckoutCelebration onOpenChange={handleCelebrationDismiss} open={true} referral={referralData} />
+      )}
+      {importData?.proGranted === true && referralData == null && (
+        <CheckoutCelebration importData={importData} onOpenChange={handleCelebrationDismiss} open={true} />
       )}
     </div>
   );

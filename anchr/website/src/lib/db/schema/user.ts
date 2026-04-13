@@ -1,4 +1,8 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+
+export type UserPreferences = {
+  dismissedAlerts?: string[];
+};
 
 /** Core user table — holds profile, auth, subscription, and feature-flag state. */
 export const usersTable = pgTable("users", {
@@ -23,6 +27,7 @@ export const usersTable = pgTable("users", {
   pageLightEnabled: boolean("page_light_enabled").default(true).notNull(),
   pageLightTheme: text("page_light_theme").default("stateroom").notNull(),
   paymentFailedAt: timestamp("payment_failed_at"),
+  preferences: jsonb("preferences").$type<UserPreferences>().default({}).notNull(),
   proExpiresAt: timestamp("pro_expires_at"),
   referredBy: text("referred_by"),
   stripeCustomerId: text("stripe_customer_id").unique(),
