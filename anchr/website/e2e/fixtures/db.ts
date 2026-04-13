@@ -6,6 +6,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { boolean, integer, jsonb, pgTable, real, text, timestamp } from "drizzle-orm/pg-core";
 
 const usersTable = pgTable("users", {
+  avatarUrl: text("avatar_url"),
   billingInterval: text("billing_interval"),
   currentPeriodEnd: timestamp("current_period_end"),
   domainRemovedAt: timestamp("domain_removed_at"),
@@ -309,4 +310,25 @@ export async function deleteTestApiKeys(username: string): Promise<void> {
     return;
   }
   await db.execute(sql`DELETE FROM api_keys WHERE user_id = ${user.id} AND name LIKE 'E2E MCP%'`);
+}
+
+/** 1×1 transparent PNG as a data URL — lightweight, no external dependency. */
+export const TEST_AVATAR_URL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+/**
+ * Set a user's avatar URL directly in the database. Does NOT set customAvatar
+ * so teardown won't attempt an UploadThing deletion.
+ */
+export async function setUserAvatar(username: string, avatarUrl: string): Promise<void> {
+  const db = getDb();
+  await db.update(usersTable).set({ avatarUrl }).where(eq(usersTable.username, username));
+}
+
+/**
+ * Clear a user's avatar URL back to null.
+ */
+export async function clearUserAvatar(username: string): Promise<void> {
+  const db = getDb();
+  await db.update(usersTable).set({ avatarUrl: null }).where(eq(usersTable.username, username));
 }

@@ -109,6 +109,7 @@
   "copyYourApiKeyNowYouWontBeAbleToSeeItAgain": "Copy your API key now. You won't be able to see it again.",
   "copyYourSigningSecretNowYouWontBeAbleToSeeItAgain": "Copy your signing secret now. You won't be able to see it again.",
   "couldNotFetchNostrProfilePleaseTryAgainOrCheckYourRelays": "Could not fetch Nostr profile. Please try again or check your relays.",
+  "couldNotLoadAvatar": "Could not load avatar.",
   "create": "Create",
   "createAWebhookToReceiveEventNotifications": "Create a webhook to receive event notifications.",
   "createAnAccount": "Create an account",

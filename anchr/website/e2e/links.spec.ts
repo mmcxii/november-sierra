@@ -1,5 +1,7 @@
 import { createLink, deleteLink, expect, saveLinkForm, test } from "./fixtures/auth";
+import { TEST_AVATAR_URL, clearUserAvatar, setUserAvatar } from "./fixtures/db";
 import { t } from "./fixtures/i18n";
+import { testUsers } from "./fixtures/test-users";
 
 test.describe("link CRUD", () => {
   test.describe.configure({ mode: "serial" });
@@ -145,6 +147,81 @@ test.describe("advanced link features", () => {
     //* Arrange — cleanup
     await page.keyboard.press("Escape");
     await deleteLink(page, "QR Test");
+  });
+
+  test("QR modal hides avatar option when user has no avatar", async ({ proUser: page }) => {
+    //* Arrange
+    await createLink(page, "QR Avatar Test", "https://example.com/qr-avatar");
+    const linkCard = page.locator("li", { hasText: "QR Avatar Test" });
+
+    //* Act
+    await linkCard.getByRole("button", { name: t.actions }).click();
+    await page.getByRole("menuitem", { name: t.qrCode }).click();
+
+    //* Assert — avatar option should not exist (user has no avatar)
+    await expect(page.getByRole("button", { name: t.anchor })).toBeVisible();
+    await expect(page.getByRole("button", { name: t.none })).toBeVisible();
+    await expect(page.getByRole("button", { name: t.avatar })).toBeHidden();
+
+    //* Arrange — cleanup
+    await page.keyboard.press("Escape");
+    await deleteLink(page, "QR Avatar Test");
+  });
+
+  test("QR modal shows avatar option and renders preview when user has avatar", async ({ proUser: page }) => {
+    //* Arrange — seed avatar URL directly in DB
+    await setUserAvatar(testUsers.pro.username, TEST_AVATAR_URL);
+    await createLink(page, "QR Avatar Visible", "https://example.com/qr-avatar-vis");
+    const linkCard = page.locator("li", { hasText: "QR Avatar Visible" });
+
+    //* Act — open QR modal and select avatar
+    await linkCard.getByRole("button", { name: t.actions }).click();
+    await page.getByRole("menuitem", { name: t.qrCode }).click();
+    await page.getByRole("button", { name: t.avatar }).click();
+
+    //* Assert — avatar option active, circular avatar img visible in preview
+    await expect(page.getByRole("button", { name: t.avatar })).toHaveAttribute("data-active", "true");
+    const dialog = page.getByRole("dialog");
+    const avatarImg = dialog.locator("img.rounded-full[alt='']");
+    await expect(avatarImg).toBeVisible();
+
+    //* Arrange — cleanup
+    await page.keyboard.press("Escape");
+    await deleteLink(page, "QR Avatar Visible");
+    await clearUserAvatar(testUsers.pro.username);
+  });
+
+  test("QR modal toggles between anchor and none logo options", async ({ proUser: page }) => {
+    //* Arrange
+    await createLink(page, "QR Toggle Test", "https://example.com/qr-toggle");
+    const linkCard = page.locator("li", { hasText: "QR Toggle Test" });
+
+    //* Act — open QR modal
+    await linkCard.getByRole("button", { name: t.actions }).click();
+    await page.getByRole("menuitem", { name: t.qrCode }).click();
+
+    //* Assert — anchor is default, preview shows anchor SVG img
+    const dialog = page.getByRole("dialog");
+    const previewImg = dialog.locator("img[alt='']");
+    await expect(page.getByRole("button", { name: t.anchor })).toHaveAttribute("data-active", "true");
+    await expect(previewImg).toBeVisible();
+
+    //* Act — switch to none
+    await page.getByRole("button", { name: t.none }).click();
+
+    //* Assert — no logo image in preview
+    await expect(page.getByRole("button", { name: t.none })).toHaveAttribute("data-active", "true");
+    await expect(previewImg).toBeHidden();
+
+    //* Act — switch back to anchor
+    await page.getByRole("button", { name: t.anchor }).click();
+
+    //* Assert — anchor logo reappears
+    await expect(previewImg).toBeVisible();
+
+    //* Arrange — cleanup
+    await page.keyboard.press("Escape");
+    await deleteLink(page, "QR Toggle Test");
   });
 
   test("bulk hides and shows selected links", async ({ proUser: page }) => {

@@ -1,12 +1,12 @@
 "use client";
 
-import { SiteLogo } from "@/components/marketing/site-logo";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   buildAnchorSvgUrl,
   DEFAULT_QR_SIZE,
   downloadQrPng,
+  LOGO_RATIO,
   QR_SIZES,
   QR_STYLE_COLORS,
   type QrLogoOption,
@@ -17,6 +17,7 @@ import { Check, Copy, Download, Lock } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { PREVIEW_LOGO_SIZE, PREVIEW_SIZE } from "./constants";
 import { RoundedQrCanvas } from "./rounded-qr-canvas";
 
 export type QrCodeModalProps = {
@@ -52,7 +53,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = (props) => {
 
   const logoOptions: { label: string; proOnly: boolean; value: QrLogoOption }[] = [
     { label: t("anchor"), proOnly: false, value: "anchor" },
-    { label: t("avatar"), proOnly: true, value: "avatar" },
+    ...(avatarUrl != null ? [{ label: t("avatar"), proOnly: true, value: "avatar" as const }] : []),
     { label: t("none"), proOnly: true, value: "none" },
   ];
 
@@ -67,22 +68,26 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = (props) => {
     copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const canvas = canvasRef.current;
     if (canvas == null) {
       return;
     }
     const filename = label.toLowerCase().replace(/\s+/g, "-");
 
-    let logoSrc: undefined | string;
+    let logo: undefined | { circular?: boolean; src: string };
     if (selectedLogo === "anchor") {
-      const logoSize = Math.round(selectedSize.px * 0.22);
-      logoSrc = buildAnchorSvgUrl(logoSize, selectedStyle);
+      const logoSize = Math.round(selectedSize.px * LOGO_RATIO);
+      logo = { src: buildAnchorSvgUrl(logoSize, selectedStyle) };
     } else if (selectedLogo === "avatar" && avatarUrl != null) {
-      logoSrc = avatarUrl;
+      logo = { circular: true, src: avatarUrl };
     }
 
-    downloadQrPng(canvas, `${filename}-qr`, logoSrc);
+    try {
+      await downloadQrPng(canvas, `${filename}-qr`, logo);
+    } catch {
+      toast.error(t("couldNotLoadAvatar"));
+    }
   };
 
   //* Effects
@@ -134,12 +139,28 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = (props) => {
               ref={canvasRef}
               size={selectedSize.px}
               // eslint-disable-next-line november-sierra/no-inline-style -- CSS-scale the canvas to a fixed display size
-              style={{ height: 200, width: 200 }}
+              style={{ height: PREVIEW_SIZE, width: PREVIEW_SIZE }}
               value={url}
             />
             {selectedLogo === "anchor" && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <SiteLogo opaque size="sm" />
+                <img
+                  alt=""
+                  src={buildAnchorSvgUrl(PREVIEW_LOGO_SIZE * 2, selectedStyle)}
+                  // eslint-disable-next-line november-sierra/no-inline-style -- size must match LOGO_RATIO for download fidelity
+                  style={{ height: PREVIEW_LOGO_SIZE, width: PREVIEW_LOGO_SIZE }}
+                />
+              </div>
+            )}
+            {selectedLogo === "avatar" && avatarUrl != null && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <img
+                  alt=""
+                  className="rounded-full"
+                  src={avatarUrl}
+                  // eslint-disable-next-line november-sierra/no-inline-style -- size must match LOGO_RATIO for download fidelity
+                  style={{ height: PREVIEW_LOGO_SIZE, width: PREVIEW_LOGO_SIZE }}
+                />
               </div>
             )}
           </div>

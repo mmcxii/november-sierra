@@ -62,34 +62,65 @@ export const buildAnchorSvgUrl = (size: number, style: QrStyleOption = "light"):
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 };
 
+export type QrLogo = {
+  /** Clip the logo to a circle (use for raster avatars). */
+  circular?: boolean;
+  src: string;
+};
+
 /**
  * Composite the QR canvas with an optional center logo and trigger a PNG download.
+ *
+ * Returns a rejected promise when the logo image fails to load.
+ * The QR code is still downloaded without the logo in that case.
  */
-export const downloadQrPng = (qrCanvas: HTMLCanvasElement, filename: string, logoSrc?: string): void => {
-  const size = qrCanvas.width;
-  const out = document.createElement("canvas");
-  out.width = size;
-  out.height = size;
-  const ctx = out.getContext("2d");
-  if (ctx == null) {
-    return;
-  }
+export const downloadQrPng = (qrCanvas: HTMLCanvasElement, filename: string, logo?: QrLogo): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const size = qrCanvas.width;
+    const out = document.createElement("canvas");
+    out.width = size;
+    out.height = size;
+    const ctx = out.getContext("2d");
+    if (ctx == null) {
+      reject(new Error("Failed to get canvas context"));
+      return;
+    }
 
-  ctx.drawImage(qrCanvas, 0, 0);
+    ctx.drawImage(qrCanvas, 0, 0);
 
-  if (logoSrc == null) {
-    triggerDownload(out, filename);
-    return;
-  }
+    if (logo == null) {
+      triggerDownload(out, filename);
+      resolve();
+      return;
+    }
 
-  const img = new Image();
-  img.onload = () => {
-    const logoSize = Math.round(size * LOGO_RATIO);
-    const offset = Math.round((size - logoSize) / 2);
-    ctx.drawImage(img, offset, offset, logoSize, logoSize);
-    triggerDownload(out, filename);
-  };
-  img.src = logoSrc;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const logoSize = Math.round(size * LOGO_RATIO);
+      const offset = Math.round((size - logoSize) / 2);
+
+      if (logo.circular) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, logoSize / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, offset, offset, logoSize, logoSize);
+        ctx.restore();
+      } else {
+        ctx.drawImage(img, offset, offset, logoSize, logoSize);
+      }
+
+      triggerDownload(out, filename);
+      resolve();
+    };
+    img.onerror = () => {
+      triggerDownload(out, filename);
+      reject(new Error("Failed to load logo image"));
+    };
+    img.src = logo.src;
+  });
 };
 
 const triggerDownload = (canvas: HTMLCanvasElement, filename: string): void => {
