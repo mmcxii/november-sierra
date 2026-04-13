@@ -1,0 +1,84 @@
+{
+  "props": {
+    "pageProps": {
+      "account": {
+        "description": "Digital creator & musician. Based in Portland.",
+        "id": 12345678,
+        "pageTitle": "Test Creator",
+        "profilePictureUrl": "https://ugc.production.linktr.ee/example-avatar.jpeg",
+        "username": "testcreator",
+        "uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+      },
+      "links": [
+        {
+          "id": "100000001",
+          "locked": null,
+          "position": 0,
+          "rules": { "gate": { "activeOrder": [] } },
+          "thumbnail": null,
+          "title": "My YouTube Channel",
+          "type": "CLASSIC",
+          "url": "https://youtube.com/@testcreator"
+        },
+        {
+          "id": "100000002",
+          "locked": null,
+          "position": 1,
+          "rules": { "gate": { "activeOrder": [] } },
+          "thumbnail": null,
+          "title": "Follow me on Instagram",
+          "type": "CLASSIC",
+          "url": "https://instagram.com/testcreator"
+        },
+        {
+          "id": "100000003",
+          "locked": null,
+          "position": 2,
+          "rules": { "gate": { "activeOrder": [] } },
+          "thumbnail": null,
+          "title": "Listen on Spotify",
+          "type": "CLASSIC",
+          "url": "https://open.spotify.com/artist/abc123"
+        },
+        {
+          "id": "100000004",
+          "locked": null,
+          "position": 3,
+          "rules": { "gate": { "activeOrder": [] } },
+          "thumbnail": null,
+          "title": "Support me on Patreon",
+          "type": "CLASSIC",
+          "url": "https://patreon.com/testcreator"
+        },
+        {
+          "id": "100000005",
+          "locked": null,
+          "position": 4,
+          "rules": { "gate": { "activeOrder": [] } },
+          "thumbnail": null,
+          "title": "My GitHub Projects",
+          "type": "CLASSIC",
+          "url": "https://github.com/testcreator"
+        },
+        {
+          "id": "100000006",
+          "locked": null,
+          "position": 5,
+          "rules": { "gate": { "activeOrder": [] } },
+          "thumbnail": null,
+          "title": "",
+          "type": "CLASSIC",
+          "url": "https://example.com/no-title-link"
+        }
+      ],
+      "socialLinks": [
+        { "position": 0, "type": "INSTAGRAM", "url": "https://instagram.com/testcreator" },
+        { "position": 1, "type": "TIKTOK", "url": "https://tiktok.com/@testcreator" },
+        { "position": 2, "type": "X", "url": "https://x.com/testcreator" }
+      ],
+      "theme": {
+        "key": "air-snow"
+      }
+    }
+  }
+}

@@ -1,10 +1,12 @@
 "use client";
 
+import { ImportBanner } from "@/components/dashboard/import-banner";
 import { LinkList, type GroupItem, type LinkItem } from "@/components/dashboard/link-list";
 import { PreviewToggle } from "@/components/dashboard/preview-toggle";
 import { QrCodeModal } from "@/components/dashboard/qr-code-modal";
 import { Button } from "@/components/ui/button";
 import type { SessionUser } from "@/lib/auth";
+import type { UserPreferences } from "@/lib/db/schema/user";
 import { isProUser } from "@/lib/tier";
 import { QrCode } from "lucide-react";
 import * as React from "react";
@@ -30,6 +32,8 @@ export const DashboardContent: React.FC<DashboardContentProps> = (props) => {
   const isPro = isProUser(user);
   const customDomain = user.customDomainVerified && user.customDomain != null ? user.customDomain : null;
   const baseUrl = customDomain != null ? `https://${customDomain}` : `https://anchr.to/${user.username}`;
+  const prefs = (user.preferences ?? {}) as UserPreferences;
+  const showImportBanner = !(prefs.dismissedAlerts ?? []).includes("import");
 
   //* Handlers
   const handleShareProfile = () => {
@@ -58,6 +62,8 @@ export const DashboardContent: React.FC<DashboardContentProps> = (props) => {
           <PreviewToggle previewKey={previewKey} user={user} />
         </div>
       </div>
+
+      {showImportBanner && <ImportBanner />}
 
       <LinkList
         customDomain={customDomain}

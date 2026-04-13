@@ -10,7 +10,7 @@ import { initTranslations } from "@/lib/i18n/server";
 import { isProUser } from "@/lib/tier";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Download, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -91,8 +91,35 @@ const PricingPage: React.FC = async () => {
           </section>
         </FadeIn>
 
-        {/* FAQ */}
+        {/* Earn free Pro */}
         <FadeIn delay={300}>
+          <section className="mx-auto mt-24 max-w-2xl">
+            <h2 className="mb-10 text-center text-2xl font-bold tracking-tight sm:text-3xl">{t("earnFreePro")}</h2>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="m-card-bg-bg m-card-border flex flex-1 flex-col gap-3 rounded-2xl p-6">
+                <div className="flex items-center gap-3">
+                  <Users className="m-muted-40 size-5 shrink-0" />
+                  <h3 className="font-medium">{t("referFriends")}</h3>
+                </div>
+                <p className="m-muted-70 text-sm leading-relaxed">
+                  {t("referAFriendYouBothGet1FreeMonthOfProWhenTheySubscribe")}
+                </p>
+              </div>
+              <div className="m-card-bg-bg m-card-border flex flex-1 flex-col gap-3 rounded-2xl p-6">
+                <div className="flex items-center gap-3">
+                  <Download className="m-muted-40 size-5 shrink-0" />
+                  <h3 className="font-medium">{t("switchFromACompetitor")}</h3>
+                </div>
+                <p className="m-muted-70 text-sm leading-relaxed">
+                  {t("importYourLinksFromAnotherPlatformAndGet1FreeMonthOfPro")}
+                </p>
+              </div>
+            </div>
+          </section>
+        </FadeIn>
+
+        {/* FAQ */}
+        <FadeIn delay={400}>
           <section className="mx-auto mt-24 max-w-2xl">
             <h2 className="mb-10 text-center text-2xl font-bold tracking-tight sm:text-3xl">
               {t("frequentlyAskedQuestions")}

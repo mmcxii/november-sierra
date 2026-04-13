@@ -77,6 +77,13 @@
       "tag": "0010_nostalgic_beast",
       "version": "7",
       "when": 1775976951591
+    },
+    {
+      "breakpoints": true,
+      "idx": 11,
+      "tag": "0011_modern_calypso",
+      "version": "7",
+      "when": 1776109196675
     }
   ],
   "version": "7"

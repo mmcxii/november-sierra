@@ -6,13 +6,14 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 
 export type CheckoutCelebrationProps = {
+  importData?: { importedCount: number; proGranted: boolean; referrerName: null | string; totalProDays: number };
   open: boolean;
   referral?: { durationDays: null | number; referrerName: null | string };
   onOpenChange: (open: boolean) => void;
 };
 
 export const CheckoutCelebration: React.FC<CheckoutCelebrationProps> = (props) => {
-  const { onOpenChange, open, referral } = props;
+  const { importData, onOpenChange, open, referral } = props;
 
   //* State
   const { t } = useTranslation();
@@ -95,20 +96,47 @@ export const CheckoutCelebration: React.FC<CheckoutCelebrationProps> = (props) =
 
         <div className="flex flex-col items-center gap-2 text-center">
           <h2 className="text-anc-cream text-xl font-semibold">{t("youreAnchored")}</h2>
-          <p className="text-anc-steel max-w-xs text-sm">{t("welcomeAboardProYoureReadyToChartYourOwnCourse")}</p>
-          {referral?.referrerName != null && (
-            <p className="text-anc-gold/80 max-w-xs text-sm">
-              {t("{{name}}GuidedYouIntoPort", { name: referral.referrerName })}
-            </p>
+          {importData != null ? (
+            <>
+              <p className="text-anc-steel max-w-xs text-sm">{t("welcomeAboardYourLinksHaveBeenImported")}</p>
+              {importData.referrerName != null && (
+                <p className="text-anc-gold/80 max-w-xs text-sm">
+                  {t("{{name}}GuidedYouIntoPort", { name: importData.referrerName })}
+                </p>
+              )}
+              {importData.proGranted &&
+                (importData.referrerName != null ? (
+                  <p className="text-anc-steel/60 max-w-xs text-xs">
+                    {t("enjoy{{days}}DaysOfPro{{days}}CourtesyOf{{name}}Plus{{bonusDays}}MoreOnUs", {
+                      bonusDays: 30,
+                      days: importData.totalProDays,
+                      name: importData.referrerName,
+                    })}
+                  </p>
+                ) : (
+                  <p className="text-anc-steel/60 max-w-xs text-xs">
+                    {t("enjoy{{days}}DaysOfPro", { days: importData.totalProDays })}
+                  </p>
+                ))}
+            </>
+          ) : (
+            <>
+              <p className="text-anc-steel max-w-xs text-sm">{t("welcomeAboardProYoureReadyToChartYourOwnCourse")}</p>
+              {referral?.referrerName != null && (
+                <p className="text-anc-gold/80 max-w-xs text-sm">
+                  {t("{{name}}GuidedYouIntoPort", { name: referral.referrerName })}
+                </p>
+              )}
+              {referral != null &&
+                (referral.durationDays != null ? (
+                  <p className="text-anc-steel/60 max-w-xs text-xs">
+                    {t("enjoy{{days}}DaysOfPro", { days: referral.durationDays })}
+                  </p>
+                ) : (
+                  <p className="text-anc-steel/60 max-w-xs text-xs">{t("enjoyLifetimeProOnUsSmoothSailing")}</p>
+                ))}
+            </>
           )}
-          {referral != null &&
-            (referral.durationDays != null ? (
-              <p className="text-anc-steel/60 max-w-xs text-xs">
-                {t("enjoy{{days}}DaysOfPro", { days: referral.durationDays })}
-              </p>
-            ) : (
-              <p className="text-anc-steel/60 max-w-xs text-xs">{t("enjoyLifetimeProOnUsSmoothSailing")}</p>
-            ))}
         </div>
 
         <Button className="bg-anc-gold text-anc-deep-navy hover:bg-anc-gold/90" onClick={handleButtonOnClick}>

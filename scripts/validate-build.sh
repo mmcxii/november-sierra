@@ -42,9 +42,18 @@ echo "▸ Starting production server…"
 pnpm start &
 SERVER_PID=$!
 
+kill_tree() {
+  local pid=$1
+  # Kill children first (recursive), then the process itself
+  for child in $(pgrep -P "$pid" 2>/dev/null); do
+    kill_tree "$child"
+  done
+  kill "$pid" 2>/dev/null || true
+}
+
 cleanup() {
   echo "▸ Stopping server (PID $SERVER_PID)…"
-  kill "$SERVER_PID" 2>/dev/null || true
+  kill_tree "$SERVER_PID"
   wait "$SERVER_PID" 2>/dev/null || true
 }
 trap cleanup EXIT
