@@ -1,7 +1,8 @@
 import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
+import { hash } from "bcryptjs";
 import { createHash } from "crypto";
-import { count, eq, sql } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { boolean, integer, jsonb, pgTable, real, text, timestamp } from "drizzle-orm/pg-core";
 
@@ -17,11 +18,62 @@ const usersTable = pgTable("users", {
   pageLightTheme: text("page_light_theme").default("stateroom").notNull(),
   paymentFailedAt: timestamp("payment_failed_at"),
   proExpiresAt: timestamp("pro_expires_at"),
+  shortDomain: text("short_domain"),
+  shortDomainVerified: boolean("short_domain_verified").default(false).notNull(),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionCancelAt: timestamp("subscription_cancel_at"),
   tier: text("tier").default("free").notNull(),
   username: text("username").unique().notNull(),
+});
+
+const shortSlugsTable = pgTable("short_slugs", {
+  linkId: text("link_id"),
+  shortLinkId: text("short_link_id"),
+  slug: text("slug").primaryKey(),
+  tombstoned: boolean("tombstoned").default(false).notNull(),
+  type: text("type").notNull(),
+  userId: text("user_id").notNull(),
+});
+
+const shortLinksTable = pgTable("short_links", {
+  customSlug: text("custom_slug"),
+  expiresAt: timestamp("expires_at"),
+  id: text("id").primaryKey(),
+  passwordHash: text("password_hash"),
+  slug: text("slug").notNull(),
+  url: text("url").notNull(),
+  userId: text("user_id").notNull(),
+});
+
+const clicksTable = pgTable("clicks", {
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  id: text("id").primaryKey(),
+  linkId: text("link_id"),
+  shortLinkId: text("short_link_id"),
+  source: text("source").default("profile").notNull(),
+});
+
+const linksTable = pgTable("links", {
+  customShortSlug: text("custom_short_slug"),
+  id: text("id").primaryKey(),
+  position: integer("position").notNull(),
+  shortSlug: text("short_slug"),
+  slug: text("slug").notNull(),
+  title: text("title").notNull(),
+  url: text("url").notNull(),
+  userId: text("user_id").notNull(),
+  visible: boolean("visible").default(true).notNull(),
+});
+
+const webhookDeliveriesTable = pgTable("webhook_deliveries", {
+  attempt: integer("attempt").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  event: text("event").notNull(),
+  id: text("id").primaryKey(),
+  statusCode: integer("status_code"),
+  success: boolean("success").notNull(),
+  webhookId: text("webhook_id").notNull(),
 });
 
 const apiKeysTable = pgTable("api_keys", {
@@ -331,4 +383,252 @@ export async function setUserAvatar(username: string, avatarUrl: string): Promis
 export async function clearUserAvatar(username: string): Promise<void> {
   const db = getDb();
   await db.update(usersTable).set({ avatarUrl: null }).where(eq(usersTable.username, username));
+}
+
+/**
+ * Set a user's custom short URL domain directly in the database, pre-verified so
+ * the middleware short-domain lookup resolves without going through the DNS
+ * verification UI flow. Used by redirect e2e tests.
+ */
+export async function setUserShortDomain(username: string, shortDomain: null | string): Promise<void> {
+  const db = getDb();
+  await db
+    .update(usersTable)
+    .set({ shortDomain, shortDomainVerified: shortDomain != null })
+    .where(eq(usersTable.username, username));
+}
+
+/**
+ * Directly insert a transitory short link into the database so redirect tests
+ * can exercise expiry, password, and tombstone edge cases without going
+ * through the creation UI (which does a urlResolves HEAD probe).
+ */
+export async function insertShortLinkFixture(params: {
+  customSlug?: null | string;
+  destinationUrl: string;
+  expiresAt?: Date;
+  passwordHash?: null | string;
+  slug: string;
+  userId: string;
+}): Promise<string> {
+  const db = getDb();
+  const shortLinkId = crypto.randomUUID();
+
+  // Mirror the production 3-step insert that avoids the circular FK on neon-http.
+  await db.insert(shortSlugsTable).values({
+    slug: params.slug,
+    tombstoned: true,
+    type: "transitory",
+    userId: params.userId,
+  });
+  await db.insert(shortLinksTable).values({
+    customSlug: params.customSlug ?? null,
+    expiresAt: params.expiresAt ?? null,
+    id: shortLinkId,
+    passwordHash: params.passwordHash ?? null,
+    slug: params.slug,
+    url: params.destinationUrl,
+    userId: params.userId,
+  });
+  await db.update(shortSlugsTable).set({ shortLinkId, tombstoned: false }).where(eq(shortSlugsTable.slug, params.slug));
+
+  return shortLinkId;
+}
+
+/** Tombstone a short_slugs row (same state as post-delete) without deleting the short_links row. */
+export async function tombstoneShortSlug(slug: string): Promise<void> {
+  const db = getDb();
+  await db.update(shortSlugsTable).set({ shortLinkId: null, tombstoned: true }).where(eq(shortSlugsTable.slug, slug));
+}
+
+/** Remove a short link fixture and its slug (for test cleanup). */
+export async function deleteShortLinkFixture(slug: string): Promise<void> {
+  const db = getDb();
+  await db.update(shortSlugsTable).set({ shortLinkId: null, tombstoned: true }).where(eq(shortSlugsTable.slug, slug));
+  await db.delete(shortSlugsTable).where(eq(shortSlugsTable.slug, slug));
+}
+
+/** Nuke every short_link + transitory short_slug for a user. Called as an
+ *  arrange step by tests that require the empty-state UI branch — without
+ *  this, earlier specs (short-link-api, short-link-webhook) leave rows in
+ *  the DB that push the pro user into list-view rendering. */
+export async function deleteAllShortLinksForUser(username: string): Promise<void> {
+  const db = getDb();
+  const [user] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username));
+  if (user == null) {
+    return;
+  }
+  // Tombstone first so the short_links delete doesn't cascade-kill the slug rows
+  // in the middle of the cleanup (even though we delete both, order matters for
+  // webhook_deliveries that reference these via webhook_id → wouldn't cascade,
+  // but short_slugs.short_link_id → short_links.id does cascade).
+  await db.execute(sql`
+    UPDATE short_slugs
+      SET short_link_id = NULL, tombstoned = true
+      WHERE user_id = ${user.id} AND type = 'transitory'
+  `);
+  await db.execute(sql`DELETE FROM short_links WHERE user_id = ${user.id}`);
+  await db.execute(sql`DELETE FROM short_slugs WHERE user_id = ${user.id} AND type = 'transitory'`);
+}
+
+/** Produce a real bcrypt hash — needed by the /unlock/<slug> flow since the
+ *  server action calls verifyPassword() against whatever hash is in the DB. */
+export async function hashShortLinkPassword(password: string): Promise<string> {
+  return hash(password, 10);
+}
+
+/** Find a short_link row by its customSlug for a given user. Used to verify
+ *  that the UI's custom-slug input successfully propagated to the server and
+ *  the row was persisted with the expected customSlug value — the toast UI
+ *  only surfaces the auto-gen slug, not the customSlug, so UI-level assertions
+ *  can't prove this alone. */
+export async function findShortLinkByCustomSlug(params: {
+  customSlug: string;
+  username: string;
+}): Promise<null | { customSlug: null | string; id: string; slug: string; url: string }> {
+  const db = getDb();
+  const [user] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(eq(usersTable.username, params.username));
+  if (user == null) {
+    return null;
+  }
+  const [row] = await db
+    .select({
+      customSlug: shortLinksTable.customSlug,
+      id: shortLinksTable.id,
+      slug: shortLinksTable.slug,
+      url: shortLinksTable.url,
+    })
+    .from(shortLinksTable)
+    .where(and(eq(shortLinksTable.userId, user.id), eq(shortLinksTable.customSlug, params.customSlug)));
+  return row ?? null;
+}
+
+/** Count webhook delivery rows matching a webhookId and event. The delivery
+ *  row is inserted even when the outbound POST fails (see webhook.ts), so
+ *  presence alone proves the event fired for this subscription. */
+export async function countWebhookDeliveries(params: { event: string; webhookId: string }): Promise<number> {
+  const db = getDb();
+  const [row] = await db
+    .select({ n: count() })
+    .from(webhookDeliveriesTable)
+    .where(and(eq(webhookDeliveriesTable.webhookId, params.webhookId), eq(webhookDeliveriesTable.event, params.event)));
+  return row?.n ?? 0;
+}
+
+/** Count clicks recorded for a given shortLinkId. Used to verify click-tracking
+ *  side effects after a redirect. Click inserts run inside Next.js `after()` so
+ *  callers should await a short polling loop rather than assuming immediacy. */
+export async function countClicksForShortLink(shortLinkId: string): Promise<number> {
+  const db = getDb();
+  const [row] = await db.select({ n: count() }).from(clicksTable).where(eq(clicksTable.shortLinkId, shortLinkId));
+  return row?.n ?? 0;
+}
+
+/** Read the most recent click for a shortLinkId — used to assert the `source`
+ *  column was set correctly (profile vs short_url vs direct). */
+export async function getLatestClickForShortLink(shortLinkId: string) {
+  const db = getDb();
+  const [row] = await db
+    .select({ createdAt: clicksTable.createdAt, source: clicksTable.source })
+    .from(clicksTable)
+    .where(eq(clicksTable.shortLinkId, shortLinkId))
+    .orderBy(sql`${clicksTable.createdAt} DESC`)
+    .limit(1);
+  return row ?? null;
+}
+
+/** Count clicks for a bio link id. */
+export async function countClicksForLink(linkId: string): Promise<number> {
+  const db = getDb();
+  const [row] = await db.select({ n: count() }).from(clicksTable).where(eq(clicksTable.linkId, linkId));
+  return row?.n ?? 0;
+}
+
+/** Read the most recent click for a bio link id. */
+export async function getLatestClickForLink(linkId: string) {
+  const db = getDb();
+  const [row] = await db
+    .select({ createdAt: clicksTable.createdAt, source: clicksTable.source })
+    .from(clicksTable)
+    .where(eq(clicksTable.linkId, linkId))
+    .orderBy(sql`${clicksTable.createdAt} DESC`)
+    .limit(1);
+  return row ?? null;
+}
+
+/** Look up a bio link's id + url by (userId, slug). Used by e2e to discover
+ *  the linkId of a just-created bio link so click-source assertions can be
+ *  scoped to that row. */
+export async function findBioLinkBySlug(params: {
+  slug: string;
+  userId: string;
+}): Promise<null | { id: string; url: string }> {
+  const db = getDb();
+  const [row] = await db
+    .select({ id: linksTable.id, url: linksTable.url })
+    .from(linksTable)
+    .where(and(eq(linksTable.userId, params.userId), eq(linksTable.slug, params.slug)));
+  return row ?? null;
+}
+
+/** Insert a bio link directly with an associated bio-type short_slug row so
+ *  redirect tests can exercise the `type='bio'` branch of /r/[slug]. */
+export async function insertBioLinkWithShortSlug(params: {
+  destinationUrl: string;
+  linkSlug: string;
+  shortSlug: string;
+  title: string;
+  userId: string;
+}): Promise<string> {
+  const db = getDb();
+  const linkId = crypto.randomUUID();
+
+  // Insert the bio link first, then the slug pointing at it. short_slugs has a
+  // CHECK constraint that requires (link_id NOT NULL XOR short_link_id NOT NULL)
+  // when not tombstoned.
+  await db.insert(linksTable).values({
+    id: linkId,
+    position: 0,
+    slug: params.linkSlug,
+    title: params.title,
+    url: params.destinationUrl,
+    userId: params.userId,
+  });
+  await db.insert(shortSlugsTable).values({
+    linkId,
+    slug: params.shortSlug,
+    type: "bio",
+    userId: params.userId,
+  });
+  await db.update(linksTable).set({ shortSlug: params.shortSlug }).where(eq(linksTable.id, linkId));
+
+  return linkId;
+}
+
+/** Clean up bio-link fixtures created by insertBioLinkWithShortSlug. */
+export async function deleteBioLinkWithShortSlug(linkId: string, shortSlug: string): Promise<void> {
+  const db = getDb();
+  await db.update(linksTable).set({ shortSlug: null }).where(eq(linksTable.id, linkId));
+  await db.delete(shortSlugsTable).where(eq(shortSlugsTable.slug, shortSlug));
+  await db.delete(linksTable).where(eq(linksTable.id, linkId));
+}
+
+/** Count links that have been backfilled with a short_slug. Used to verify the
+ *  migration backfill happens on the e2e DB. */
+export async function countLinksWithShortSlug(userId?: string): Promise<number> {
+  const db = getDb();
+  const [row] =
+    userId != null
+      ? await db
+          .select({ n: count() })
+          .from(linksTable)
+          .where(and(eq(linksTable.userId, userId), sql`${linksTable.shortSlug} IS NOT NULL`))
+      : await db
+          .select({ n: count() })
+          .from(linksTable)
+          .where(sql`${linksTable.shortSlug} IS NOT NULL`);
+  return row?.n ?? 0;
 }

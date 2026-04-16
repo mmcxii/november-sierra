@@ -455,6 +455,58 @@ test.describe("MCP server", () => {
     const err = mcp.parseError(result);
     expect(err.code).toBe("NOT_FOUND");
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Short link tools (ANC-174)
+  // ──────────────────────────────────────────────────────────────────────────
+
+  test("list_short_links returns an array for a user with no links yet", async () => {
+    //* Act
+    const result = await mcp.callTool("list_short_links", {});
+
+    //* Assert — the underlying service returns ServiceResult<ShortLinkResponse[]>.
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  test("create_short_link -> list_short_links -> delete_short_link round-trip", async () => {
+    //* Act — create
+    const created = await mcp.callTool("create_short_link", { url: "https://anchr-e2e-testing.site" });
+
+    //* Assert — created shape matches the REST contract.
+    expect(created.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(created.shortUrl).toMatch(/^https:\/\/anch\.to\/[a-z0-9]+$/);
+
+    //* Act — list and confirm the new id is present
+    const list = await mcp.callTool("list_short_links", {});
+
+    //* Assert
+    expect(list.find((row: { id: string }) => row.id === created.id)).toBeTruthy();
+
+    //* Act — delete
+    await mcp.callTool("delete_short_link", { id: created.id });
+
+    //* Assert — subsequent list no longer includes the id
+    const afterDelete = await mcp.callTool("list_short_links", {});
+    expect(afterDelete.find((row: { id: string }) => row.id === created.id)).toBeFalsy();
+  });
+
+  test("update_short_link patches the destination URL", async () => {
+    //* Arrange
+    const created = await mcp.callTool("create_short_link", { url: "https://anchr-e2e-testing.site" });
+
+    try {
+      //* Act
+      const updated = await mcp.callTool("update_short_link", {
+        id: created.id,
+        url: "https://anchr-e2e-testing.site/?v=mcp-patched",
+      });
+
+      //* Assert
+      expect(updated.url).toBe("https://anchr-e2e-testing.site/?v=mcp-patched");
+    } finally {
+      await mcp.callTool("delete_short_link", { id: created.id });
+    }
+  });
 });
 
 // ---- free-tier gating (separate describe, different user) ----

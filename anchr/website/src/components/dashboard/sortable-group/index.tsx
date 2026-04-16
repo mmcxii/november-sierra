@@ -16,6 +16,7 @@ export type SortableGroupProps = {
   group: GroupItem;
   links: LinkItem[];
   selectedIds: Set<string>;
+  shortDomain?: string;
   username: string;
   onDeleteGroup: (group: GroupItem) => void;
   onDeleteLink: (link: LinkItem) => void;
@@ -43,6 +44,7 @@ export const SortableGroup: React.FC<SortableGroupProps> = (props) => {
     onToggleGroupVisibility,
     onToggleLinkVisibility,
     selectedIds,
+    shortDomain,
     username,
   } = props;
 
@@ -139,6 +141,7 @@ export const SortableGroup: React.FC<SortableGroupProps> = (props) => {
                     onToggleFeatured={onToggleFeatured}
                     onToggleVisibility={onToggleLinkVisibility}
                     selected={selectedIds.has(link.id)}
+                    shortDomain={shortDomain}
                     username={username}
                   />
                 ))}

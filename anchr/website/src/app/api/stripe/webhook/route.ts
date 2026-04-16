@@ -24,6 +24,7 @@ async function handleDowngrade(customerId: string): Promise<void> {
       customDomain: usersTable.customDomain,
       id: usersTable.id,
       proExpiresAt: usersTable.proExpiresAt,
+      shortDomain: usersTable.shortDomain,
     })
     .from(usersTable)
     .where(eq(usersTable.stripeCustomerId, customerId))
@@ -41,6 +42,18 @@ async function handleDowngrade(customerId: string): Promise<void> {
     }
   }
 
+  // The custom short-URL domain is a Pro-only feature and the middleware's
+  // resolveShortDomain check is tier-agnostic, so without tearing it down here
+  // a canceled pro user would continue to have their anch.to-equivalent host
+  // resolving indefinitely.
+  if (user.shortDomain != null) {
+    try {
+      await removeDomain(user.shortDomain);
+    } catch (error) {
+      console.error("[stripe webhook] failed to remove short domain from Vercel:", error);
+    }
+  }
+
   // If user has remaining referral Pro time, keep Pro until it expires
   const hasReferralPro = user.proExpiresAt != null && user.proExpiresAt > new Date();
 
@@ -55,6 +68,8 @@ async function handleDowngrade(customerId: string): Promise<void> {
       // on the user's next visit explaining what happened.
       ...(user.customDomain != null && { domainRemovedAt: new Date() }),
       paymentFailedAt: null,
+      shortDomain: null,
+      shortDomainVerified: false,
       stripeSubscriptionId: null,
       subscriptionCancelAt: null,
       ...(hasReferralPro ? {} : { proExpiresAt: null, tier: "free" }),

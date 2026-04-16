@@ -22,8 +22,8 @@ test.describe("webhook lifecycle", () => {
     await page.getByRole("button", { name: t.createWebhook }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(t.endpointUrl).fill(webhookUrl);
-    await dialog.locator("label", { hasText: "link.created" }).click();
-    await dialog.locator("label", { hasText: "link.deleted" }).click();
+    await dialog.locator("label", { hasText: /^link\.created$/ }).click();
+    await dialog.locator("label", { hasText: /^link\.deleted$/ }).click();
     await dialog.getByRole("button", { name: t.create }).click();
 
     //* Assert — secret step is shown with signing secret (64-char hex string)
@@ -152,7 +152,7 @@ test.describe("webhook free tier limit", () => {
     await page.getByRole("button", { name: t.createWebhook }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(t.endpointUrl).fill(freeUrl);
-    await dialog.locator("label", { hasText: "link.created" }).click();
+    await dialog.locator("label", { hasText: /^link\.created$/ }).click();
     await dialog.getByRole("button", { name: t.create }).click();
 
     //* Assert — secret shown (creation succeeded)
@@ -163,7 +163,7 @@ test.describe("webhook free tier limit", () => {
     await page.getByRole("button", { name: t.createWebhook }).click();
     const dialog2 = page.getByRole("dialog");
     await dialog2.getByLabel(t.endpointUrl).fill("https://example.com/second");
-    await dialog2.locator("label", { hasText: "link.created" }).click();
+    await dialog2.locator("label", { hasText: /^link\.created$/ }).click();
     await dialog2.getByRole("button", { name: t.create }).click();
 
     //* Assert — limit error shown

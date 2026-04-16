@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import type { SessionUser } from "./auth";
 import { db } from "./db/client";
 import { usersTable } from "./db/schema/user";
+import { removeDomain } from "./vercel";
 
 /**
  * Grant Pro access to a user.
@@ -61,10 +62,47 @@ export async function cleanupExpiredPro(user: SessionUser): Promise<SessionUser>
     return user;
   }
 
+  // Custom profile and short-URL domains are Pro-only features. When referral-
+  // granted Pro expires we flip the user back to free, but the domain rows
+  // would otherwise continue to resolve via middleware (which doesn't check
+  // tier on the hot path for cache reasons). Remove them from Vercel and
+  // clear the DB columns in one shot. Mirrors the Stripe handleDowngrade path.
+  if (user.customDomain != null) {
+    try {
+      await removeDomain(user.customDomain);
+    } catch (error) {
+      console.error("[cleanupExpiredPro] failed to remove custom domain from Vercel:", error);
+    }
+  }
+  if (user.shortDomain != null) {
+    try {
+      await removeDomain(user.shortDomain);
+    } catch (error) {
+      console.error("[cleanupExpiredPro] failed to remove short domain from Vercel:", error);
+    }
+  }
+
   await db
     .update(usersTable)
-    .set({ proExpiresAt: null, tier: "free", updatedAt: new Date() })
+    .set({
+      customDomain: null,
+      customDomainVerified: false,
+      ...(user.customDomain != null && { domainRemovedAt: new Date() }),
+      proExpiresAt: null,
+      shortDomain: null,
+      shortDomainVerified: false,
+      tier: "free",
+      updatedAt: new Date(),
+    })
     .where(eq(usersTable.id, user.id));
 
-  return { ...user, proExpiresAt: null, tier: "free" };
+  return {
+    ...user,
+    customDomain: null,
+    customDomainVerified: false,
+    proExpiresAt: null,
+    shortDomain: null,
+    shortDomainVerified: false,
+    tier: "free",
+  };
 }

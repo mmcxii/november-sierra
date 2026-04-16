@@ -4,7 +4,7 @@ import { createMcpServer } from "./server";
 
 vi.mock("@/lib/db/client", () => ({ db: {} }));
 vi.mock("@/lib/env", () => ({
-  envSchema: { NEXT_PUBLIC_APP_URL: "https://anchr.to" },
+  envSchema: { NEXT_PUBLIC_APP_URL: "https://anchr.to", NEXT_PUBLIC_SHORT_DOMAIN: "test.short.domain" },
 }));
 
 const PRO_USER: ApiKeyUser = { id: "user-1", tier: "pro", username: "testuser" };
@@ -25,6 +25,10 @@ const ALL_TOOL_NAMES = [
   "create_group",
   "update_group",
   "delete_group",
+  "list_short_links",
+  "create_short_link",
+  "update_short_link",
+  "delete_short_link",
   "get_analytics",
   "get_link_analytics",
   "get_referrer_analytics",
@@ -34,7 +38,7 @@ const ALL_TOOL_NAMES = [
 ];
 
 describe("createMcpServer", () => {
-  it("registers exactly the 20 expected tools", () => {
+  it("registers exactly the 24 expected tools", () => {
     //* Act
     const server = createMcpServer(PRO_USER);
 

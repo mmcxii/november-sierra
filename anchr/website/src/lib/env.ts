@@ -11,6 +11,7 @@ export const envSchema = createEnv({
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string(),
     NEXT_PUBLIC_POSTHOG_HOST: z.string(),
     NEXT_PUBLIC_POSTHOG_KEY: z.string(),
+    NEXT_PUBLIC_SHORT_DOMAIN: z.string().min(1),
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().refine((v) => v.startsWith("pk_test_") || v.startsWith("pk_live_"), {
       message: "Must be a Stripe publishable key (pk_test_… or pk_live_…)",
     }),
@@ -24,6 +25,7 @@ export const envSchema = createEnv({
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_SHORT_DOMAIN: process.env.NEXT_PUBLIC_SHORT_DOMAIN,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 
     ADMIN_USER_ID: process.env.ADMIN_USER_ID,

@@ -15,6 +15,14 @@ vi.mock("@/lib/db/schema/user", () => ({
   usersTable: { id: "id", proExpiresAt: "pro_expires_at", tier: "tier" },
 }));
 
+// Stub the Vercel client — cleanupExpiredPro calls removeDomain when a user
+// has a custom_domain or short_domain set. We don't need real Vercel behavior
+// in unit tests; just a resolved promise per invocation.
+const mockRemoveDomain = vi.fn().mockResolvedValue({ ok: true });
+vi.mock("@/lib/vercel", () => ({
+  removeDomain: (...args: unknown[]) => mockRemoveDomain(...args),
+}));
+
 // ─── Chain helper ────────────────────────────────────────────────────────────
 
 type UpdateChain = {

@@ -38,12 +38,54 @@ test.describe("stage deployment smoke tests", () => {
     await expect(page.getByRole("heading", { exact: true, name: t.links })).toBeVisible();
   });
 
+  test("short links page loads", async ({ proUser: page }) => {
+    //* Act
+    await page.goto("/dashboard/short-links");
+
+    //* Assert
+    await expect(page.getByRole("heading", { exact: true, name: t.shortLinks })).toBeVisible();
+  });
+
   test("API keys page loads", async ({ proUser: page }) => {
     //* Act
     await page.goto("/dashboard/api");
 
     //* Assert
     await expect(page.getByRole("heading", { exact: true, name: t.api })).toBeVisible();
+  });
+
+  test("short link create + anch.to redirect works end-to-end", async ({ request }) => {
+    //* Arrange — fresh API key against the deployed stage API.
+    const apiKey = await createTestApiKey(testUsers.pro.username);
+
+    try {
+      //* Act — create via REST, then follow the redirect.
+      const createResp = await request.post(`/api/v1/short-links`, {
+        data: { url: "https://anchr-e2e-testing.site" },
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      });
+      const createdBody = createResp.status() === 201 ? await createResp.json() : null;
+      const redirectResp =
+        createdBody != null ? await request.get(createdBody.data.shortUrl, { maxRedirects: 0 }) : null;
+
+      //* Assert — the deployed short domain resolves and redirects to the
+      //  destination. This is the end-to-end check: middleware + /r/[slug] +
+      //  DB lookup all reachable from the internet post-deploy.
+      expect(createResp.status()).toBe(201);
+      expect(createdBody?.data.shortUrl).toMatch(/^https:\/\/anch\.to\/[a-z0-9]+$/);
+      expect(redirectResp?.status()).toBeGreaterThanOrEqual(300);
+      expect(redirectResp?.status()).toBeLessThan(400);
+      expect(redirectResp?.headers().location).toBe("https://anchr-e2e-testing.site");
+
+      //* Arrange — cleanup
+      if (createdBody?.data.id != null) {
+        await request.delete(`/api/v1/short-links/${createdBody.data.id}`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+      }
+    } finally {
+      await deleteTestApiKeys(testUsers.pro.username).catch(() => undefined);
+    }
   });
 
   test("link CRUD works end-to-end", async ({ proUser: page }) => {

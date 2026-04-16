@@ -21,6 +21,7 @@ import {
   Eye,
   EyeOff,
   GripVertical,
+  Link,
   Pencil,
   QrCode,
   Star,
@@ -34,6 +35,7 @@ export type SortableLinkCardProps = {
   customDomain?: null | string;
   link: LinkItem;
   selected: boolean;
+  shortDomain?: string;
   username: string;
   onDelete: (link: LinkItem) => void;
   onEdit: (link: LinkItem) => void;
@@ -54,6 +56,7 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
     onToggleFeatured,
     onToggleVisibility,
     selected,
+    shortDomain,
     username,
   } = props;
 
@@ -84,6 +87,14 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
       clearTimeout(copiedTimerRef.current);
     }
     copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyShortUrl = async () => {
+    if (link.shortSlug == null) {
+      return;
+    }
+    await navigator.clipboard.writeText(`https://${shortDomain}/${link.shortSlug}`);
+    toast.success(t("shortUrlCopied"));
   };
 
   const handleFeaturedDropdownMenuItemOnClick = () => onToggleFeatured?.(link);
@@ -175,6 +186,12 @@ export const SortableLinkCard: React.FC<SortableLinkCardProps> = (props) => {
           </IconButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {link.shortSlug != null && (
+            <DropdownMenuItem onClick={handleCopyShortUrl}>
+              <Link />
+              {t("copyShortUrl")}
+            </DropdownMenuItem>
+          )}
           {onQrCode != null && (
             <DropdownMenuItem onClick={handleQrCodeDropdownMenuItemOnClick}>
               <QrCode />

@@ -184,3 +184,43 @@ export async function rateLimitRequest(request: Request): Promise<RateLimitResul
     return { headers: {}, limited: false, response: null };
   }
 }
+
+// ─── Short URL Redirect Rate Limiter ────────────────────────────────────────
+
+/** Per-IP sliding-window limit for short URL redirects (/r/[slug]). Picked to
+ *  be ~50× typical legitimate click-through (one user clicking a few links) so
+ *  normal traffic is untouched, while sustained scraping/enumeration across the
+ *  ~33M 5-char slug space gets throttled. */
+const SHORT_URL_RATE_LIMIT = { limit: 120, window: "1 m" } as const;
+let shortUrlLimiter: null | Ratelimit = null;
+
+function getShortUrlLimiter(): Ratelimit {
+  if (shortUrlLimiter == null) {
+    shortUrlLimiter = new Ratelimit({
+      limiter: Ratelimit.slidingWindow(SHORT_URL_RATE_LIMIT.limit, SHORT_URL_RATE_LIMIT.window),
+      redis: createRedis(),
+    });
+  }
+  return shortUrlLimiter;
+}
+
+/** Check the short-URL-redirect rate limit for a request. Keyed on the client
+ *  IP (x-forwarded-for / fallback). Returns `limited=true` + a 429 response
+ *  when exceeded. Fails open (allows the request) on Redis errors so a single
+ *  Upstash outage doesn't break all short URL redirects. */
+export async function rateLimitShortUrlRedirect(
+  request: Request,
+): Promise<{ limited: boolean; response: null | Response }> {
+  try {
+    const { identifier } = resolveIdentifierFromRequest(request);
+    const key = `short-url:${identifier}`;
+    const { success } = await getShortUrlLimiter().limit(key);
+    if (!success) {
+      return { limited: true, response: new Response("Too Many Requests", { status: 429 }) };
+    }
+    return { limited: false, response: null };
+  } catch (error) {
+    console.error("[rate-limit] short URL limiter failed, allowing request:", error);
+    return { limited: false, response: null };
+  }
+}

@@ -5,6 +5,7 @@ import { registerDiscoveryTools } from "./tools/discovery";
 import { registerGroupTools } from "./tools/group";
 import { registerLinkTools } from "./tools/link";
 import { registerProfileTools } from "./tools/profile";
+import { registerShortLinkTools } from "./tools/short-link";
 
 export function createMcpServer(user: ApiKeyUser): McpServer {
   const server = new McpServer({
@@ -15,6 +16,7 @@ export function createMcpServer(user: ApiKeyUser): McpServer {
   registerProfileTools(server, user);
   registerLinkTools(server, user);
   registerGroupTools(server, user);
+  registerShortLinkTools(server, user);
   registerAnalyticsTools(server, user);
   registerDiscoveryTools(server);
 

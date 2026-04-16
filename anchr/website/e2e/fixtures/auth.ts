@@ -130,7 +130,14 @@ export async function saveLinkForm(page: Page) {
 }
 
 /**
- * Creates a link via the Add link dialog and waits for the dialog to close.
+ * Creates a link via the Add link dialog, waits for the dialog to close, AND
+ * waits for the new link row to appear in the list. saveLinkForm resolves as
+ * soon as the server action completes, but the list's re-render is driven by
+ * Next.js revalidation which can lag by hundreds of ms (more now that bio-link
+ * creation also inserts a short_slugs row). Without this wait, callers that
+ * immediately interact with the list (bulk checkboxes, etc.) race the render
+ * and select a stale subset.
+ *
  * Optionally sets a custom slug for predictable redirect URLs.
  */
 export async function createLink(page: Page, title: string, url: string, slug?: string) {
@@ -143,6 +150,7 @@ export async function createLink(page: Page, title: string, url: string, slug?: 
     await slugInput.fill(slug);
   }
   await saveLinkForm(page);
+  await expect(page.locator("li", { hasText: title })).toBeVisible({ timeout: 10_000 });
 }
 
 /**

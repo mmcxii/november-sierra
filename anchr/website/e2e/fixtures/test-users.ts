@@ -8,8 +8,13 @@
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
 
 export const testDomain = {
-  /** Run-scoped subdomain for custom domain E2E tests. */
+  /** Run-scoped subdomain for custom short-url domain E2E tests (users.short_domain). */
+  shortSubdomain: `${RUN_ID}-short-url.anchr-e2e-testing.site`,
+  /** Run-scoped subdomain for custom profile domain E2E tests. */
   subdomain: `${RUN_ID}.anchr-e2e-testing.site`,
+  /** Apex of the e2e testing domain, used as a stable destination URL for tests
+   *  that exercise outbound URL validation (e.g. short-link creation). */
+  url: "https://anchr-e2e-testing.site",
 };
 
 export const testUsers = {

@@ -21,21 +21,119 @@ export function ensureProtocol(url: string): string {
 }
 
 export const BLOCKED_PROTOCOLS = /^(javascript|data|vbscript):/i;
-const INTERNAL_HOSTS = /^(www\.)?anchr\.to$/i;
+
+/** Hostnames that refer back to the app itself — blocked to prevent redirect
+ *  loops when a user configures a bio/short link pointing at anchr.to or the
+ *  configured short domain. The short-domain match is env-aware so this works
+ *  in CI (anch.to) and any production override identically. */
+function isAppSelfHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (h === "anchr.to" || h === "www.anchr.to") {
+    return true;
+  }
+  const shortDomain = process.env.NEXT_PUBLIC_SHORT_DOMAIN?.toLowerCase();
+  if (shortDomain != null && shortDomain.length > 0) {
+    if (h === shortDomain || h === `www.${shortDomain}`) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Hostnames that resolve to private or link-local address space. Blocking
+ * these at URL-parse time prevents SSRF via server-side URL probes
+ * (see urlResolves, which HEADs the user-supplied destination).
+ *
+ * Covers:
+ *   - localhost and all bare .localhost / .local / .internal / .lan suffixes
+ *   - IPv4 loopback (127.0.0.0/8), RFC1918 private (10/8, 172.16/12, 192.168/16),
+ *     link-local (169.254/16 — includes AWS/GCP/Azure metadata), CGNAT (100.64/10),
+ *     and 0.0.0.0/8
+ *   - IPv6 loopback (::1), unique-local (fc00::/7), link-local (fe80::/10),
+ *     IPv4-mapped private ranges
+ *   - Raw IP literals surrounded by [] (IPv6 form)
+ */
+const PRIVATE_HOSTNAME = /^(localhost|.+\.(localhost|local|internal|lan))$/i;
+
+function isPrivateIpv4(host: string): boolean {
+  const parts = host.split(".");
+  if (parts.length !== 4) {
+    return false;
+  }
+  const octets = parts.map((p) => Number(p));
+  if (octets.some((o) => !Number.isInteger(o) || o < 0 || o > 255)) {
+    return false;
+  }
+  const [a, b] = octets;
+  if (a === 0 || a === 10 || a === 127) {
+    return true;
+  }
+  if (a === 169 && b === 254) {
+    return true;
+  }
+  if (a === 172 && b >= 16 && b <= 31) {
+    return true;
+  }
+  if (a === 192 && b === 168) {
+    return true;
+  }
+  if (a === 100 && b >= 64 && b <= 127) {
+    return true;
+  }
+  return false;
+}
+
+function isPrivateIpv6(host: string): boolean {
+  const h = host.toLowerCase();
+  if (h === "::" || h === "::1") {
+    return true;
+  }
+  if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) {
+    return true;
+  }
+  // IPv4-mapped (::ffff:...) — WHATWG URL normalizes dotted v4 suffixes into
+  // hex, so we can't just pattern-match the dotted form. Treat any ::ffff:
+  // address as private — they're not used for legitimate public destinations.
+  if (h.startsWith("::ffff:")) {
+    return true;
+  }
+  return false;
+}
 
 export function isSafeUrl(url: string, options?: { allowInternalHosts?: boolean }): boolean {
   if (BLOCKED_PROTOCOLS.test(url.trim())) {
     return false;
   }
 
+  let parsed: URL;
   try {
-    const parsed = new URL(ensureProtocol(url));
-
-    if (!options?.allowInternalHosts && INTERNAL_HOSTS.test(parsed.hostname)) {
-      return false;
-    }
+    parsed = new URL(ensureProtocol(url));
   } catch {
     return false;
+  }
+
+  // Allowlist scheme — http(s) only. Rejects file://, ftp://, gopher://, etc.
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return false;
+  }
+
+  if (!options?.allowInternalHosts && isAppSelfHost(parsed.hostname)) {
+    return false;
+  }
+
+  // Private-host check is gated on allowInternalHosts — admins creating links
+  // to internal tooling need the escape hatch, but regular users do not.
+  if (!options?.allowInternalHosts) {
+    // WHATWG-compliant URL parsers keep the surrounding brackets on IPv6
+    // hostnames ([::1]); strip them before pattern-matching.
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    if (PRIVATE_HOSTNAME.test(host)) {
+      return false;
+    }
+    if (isPrivateIpv4(host) || isPrivateIpv6(host)) {
+      return false;
+    }
   }
 
   return true;

@@ -7,6 +7,9 @@ export const WEBHOOK_EVENTS = [
   "group.created",
   "group.updated",
   "group.deleted",
+  "short_link.created",
+  "short_link.updated",
+  "short_link.deleted",
 ] as const;
 
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];

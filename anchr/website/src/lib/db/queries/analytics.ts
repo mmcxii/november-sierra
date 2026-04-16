@@ -1,5 +1,5 @@
 import { fillDateGaps } from "@/lib/utils/analytics";
-import { and, count, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
 import { db } from "../client";
 import { clicksTable } from "../schema/click";
 import { linksTable } from "../schema/link";
@@ -129,7 +129,7 @@ export async function getPerLinkSparklines(userId: string) {
   return db
     .select({ clicks: count(), date: dateExpr, linkId: clicksTable.linkId })
     .from(clicksTable)
-    .where(and(eq(clicksTable.userId, userId), gte(clicksTable.createdAt, start)))
+    .where(and(eq(clicksTable.userId, userId), isNotNull(clicksTable.linkId), gte(clicksTable.createdAt, start)))
     .groupBy(clicksTable.linkId, dateExpr)
     .orderBy(dateExpr);
 }
@@ -156,7 +156,9 @@ export async function getPerLinkTrends(userId: string, range: DateRange) {
       previousClicks: sql<number>`count(*) filter (where ${clicksTable.createdAt} < ${currentStart})`,
     })
     .from(clicksTable)
-    .where(and(eq(clicksTable.userId, userId), gte(clicksTable.createdAt, previousStart)))
+    .where(
+      and(eq(clicksTable.userId, userId), isNotNull(clicksTable.linkId), gte(clicksTable.createdAt, previousStart)),
+    )
     .groupBy(clicksTable.linkId);
 
   return rows;

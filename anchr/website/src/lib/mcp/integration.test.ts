@@ -109,6 +109,25 @@ vi.mock("@/lib/services/discovery", () => ({
   },
 }));
 
+const mockListShortLinks = vi.fn();
+const mockCreateShortLink = vi.fn();
+const mockUpdateShortLink = vi.fn();
+const mockDeleteShortLink = vi.fn();
+vi.mock("@/lib/services/short-link", () => ({
+  createShortLink: (...a: unknown[]) => {
+    return mockCreateShortLink(...a);
+  },
+  deleteShortLink: (...a: unknown[]) => {
+    return mockDeleteShortLink(...a);
+  },
+  listShortLinks: (...a: unknown[]) => {
+    return mockListShortLinks(...a);
+  },
+  updateShortLink: (...a: unknown[]) => {
+    return mockUpdateShortLink(...a);
+  },
+}));
+
 // Still need these for tool registration (description generation)
 vi.mock("@/lib/themes", () => ({
   DARK_THEME_ID_LIST: ["dark-depths", "midnight-glow"],
