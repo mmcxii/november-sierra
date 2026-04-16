@@ -10,6 +10,7 @@ import { type UserPreferences, usersTable } from "@/lib/db/schema/user";
 import { parsePage } from "@/lib/import/parse";
 import type { ImportedLink, ImportedPage, ImportedProfile } from "@/lib/import/types";
 import { detectPlatform } from "@/lib/platforms";
+import { assignBioLinkShortSlug } from "@/lib/services/bio-link-short-slug";
 import { grantPro } from "@/lib/tier.server";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -183,6 +184,7 @@ export async function confirmImport(input: ConfirmImportInput): Promise<ConfirmI
   // Bulk insert links
   const linkValues = await Promise.all(
     newLinks.map(async (link, i) => ({
+      id: crypto.randomUUID(),
       platform: detectPlatform(link.url),
       position: maxPos + 1 + i,
       slug: await generateUniqueSlug(user.id, link.url),
@@ -194,6 +196,12 @@ export async function confirmImport(input: ConfirmImportInput): Promise<ConfirmI
   );
 
   await db.insert(linksTable).values(linkValues);
+
+  // Auto-generate anch.to short URLs for each imported link so they match the
+  // migration backfill's output shape (same userId, type='bio', per-row short_slug).
+  for (const lv of linkValues) {
+    await assignBioLinkShortSlug({ linkId: lv.id, userId: user.id });
+  }
 
   // Apply profile data if opted in and fields are empty
   const profileUpdates: Record<string, string> = {};

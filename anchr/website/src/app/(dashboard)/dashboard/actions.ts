@@ -9,6 +9,7 @@ import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { detectPlatform } from "@/lib/platforms";
 import { linkSchema } from "@/lib/schemas/link";
 import { groupSchema } from "@/lib/schemas/link-group";
+import { assignBioLinkShortSlug } from "@/lib/services/bio-link-short-slug";
 import { FREE_LINK_LIMIT, isProUser } from "@/lib/tier";
 import { ensureProtocol, generateSlug, isSafeUrl, urlResolves } from "@/lib/utils/url";
 import { and, count, eq, inArray, not, sql } from "drizzle-orm";
@@ -111,11 +112,13 @@ export async function createLink(
     .where(eq(linksTable.userId, user.id));
 
   const platform = copyValue != null ? "nostr" : detectPlatform(fullUrl);
+  const linkId = crypto.randomUUID();
 
   await db.insert(linksTable).values({
     copyValue: copyValue ?? null,
     groupId: resolvedGroupId,
     icon: isProUser(user) ? (icon ?? null) : null,
+    id: linkId,
     platform,
     position: (maxPosition[0]?.max ?? -1) + 1,
     slug,
@@ -123,6 +126,10 @@ export async function createLink(
     url: fullUrl,
     userId: user.id,
   });
+
+  // Auto-generate an anch.to short URL for the new bio link. Mirrors the
+  // migration backfill so links created post-migration behave identically.
+  await assignBioLinkShortSlug({ linkId, userId: user.id });
 
   revalidatePages(user.username);
 

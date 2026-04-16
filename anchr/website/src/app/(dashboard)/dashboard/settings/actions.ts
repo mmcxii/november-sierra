@@ -461,14 +461,28 @@ export async function addCustomDomain(domain: string): Promise<ActionResult> {
     return { error: "pleaseEnterAValidUrl", success: false };
   }
 
-  // Check if domain is already used by another user
-  const [existing] = await db
+  // Check if the domain is in use by another user — on either the profile
+  // (custom_domain) or short-URL (short_domain) column. A domain can only
+  // route to one Anchr profile or its short-URL namespace; accepting this
+  // here would lead to a Vercel add-domain conflict or a middleware resolver
+  // ambiguity.
+  const [profileCollision] = await db
     .select({ id: usersTable.id })
     .from(usersTable)
     .where(and(eq(usersTable.customDomain, normalized), ne(usersTable.id, userId)))
     .limit(1);
 
-  if (existing != null) {
+  if (profileCollision != null) {
+    return { error: "thisDomainIsAlreadyInUse", success: false };
+  }
+
+  const [shortCollision] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(and(eq(usersTable.shortDomain, normalized), ne(usersTable.id, userId)))
+    .limit(1);
+
+  if (shortCollision != null) {
     return { error: "thisDomainIsAlreadyInUse", success: false };
   }
 
@@ -556,6 +570,139 @@ export async function removeCustomDomain(): Promise<ActionResult> {
   if (user.username) {
     revalidatePath(`/${user.username}`);
   }
+
+  return { success: true };
+}
+
+// ─── Custom Short Domain Actions ─────────────────────────────────────────────
+//
+// The short-URL custom domain (users.short_domain) mirrors the profile custom
+// domain (users.custom_domain) pattern: add → DNS-pending → verify via Vercel
+// → verified. Gated behind Pro and behind Vercel project domain provisioning.
+// Short domains without short_domain_verified=true are ignored by the short-URL
+// resolution middleware (see src/middleware.ts resolveShortDomain), which
+// ensures an unverified domain can't be used to hijack short-URL resolution.
+
+export async function addShortDomain(domain: string): Promise<ActionResult> {
+  const { userId } = await auth();
+
+  if (userId == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+
+  if (user == null || !isProUser(user)) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  const normalized = domain.trim().toLowerCase();
+
+  if (!isValidDomain(normalized)) {
+    return { error: "pleaseEnterAValidUrl", success: false };
+  }
+
+  // Refuse collisions across either custom_domain or short_domain columns on
+  // any other user — a domain can only route to one Anchr profile or its
+  // short-URL namespace.
+  const [profileCollision] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(and(eq(usersTable.customDomain, normalized), ne(usersTable.id, userId)))
+    .limit(1);
+
+  if (profileCollision != null) {
+    return { error: "thisDomainIsAlreadyInUse", success: false };
+  }
+
+  const [shortCollision] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(and(eq(usersTable.shortDomain, normalized), ne(usersTable.id, userId)))
+    .limit(1);
+
+  if (shortCollision != null) {
+    return { error: "thisDomainIsAlreadyInUse", success: false };
+  }
+
+  // If user already has a different short domain, remove it from Vercel first.
+  if (user.shortDomain != null && user.shortDomain !== normalized) {
+    await removeDomain(user.shortDomain);
+  }
+
+  const result = await addDomain(normalized);
+
+  if (!result.ok) {
+    console.error("[addShortDomain]", result.error);
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  await db
+    .update(usersTable)
+    .set({ shortDomain: normalized, shortDomainVerified: false, updatedAt: new Date() })
+    .where(eq(usersTable.id, userId));
+
+  revalidatePath("/dashboard/settings");
+
+  return { success: true };
+}
+
+export async function verifyShortDomain(): Promise<VerifyDomainResult> {
+  const { userId } = await auth();
+
+  if (userId == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", status: "error", success: false };
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+
+  if (user == null || user.shortDomain == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", status: "error", success: false };
+  }
+
+  const configResult = await getDomainConfig(user.shortDomain);
+
+  if (!configResult.ok || configResult.data.misconfigured) {
+    return { error: "dnsNotConfiguredYetPleaseAddTheCnameRecordAndTryAgain", status: "error", success: false };
+  }
+
+  const verifyResult = await verifyDomain(user.shortDomain);
+
+  if (!verifyResult.ok || !verifyResult.data.verified) {
+    return { error: "sslIsBeingProvisionedPleaseWaitAFewMinutesAndTryAgain", status: "error", success: false };
+  }
+
+  await db
+    .update(usersTable)
+    .set({ shortDomainVerified: true, updatedAt: new Date() })
+    .where(eq(usersTable.id, userId));
+
+  revalidatePath("/dashboard/settings");
+
+  return { status: "connected", success: true };
+}
+
+export async function removeShortDomain(): Promise<ActionResult> {
+  const { userId } = await auth();
+
+  if (userId == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+
+  if (user == null || user.shortDomain == null) {
+    return { error: "somethingWentWrongPleaseTryAgain", success: false };
+  }
+
+  await removeDomain(user.shortDomain);
+
+  await db
+    .update(usersTable)
+    .set({ shortDomain: null, shortDomainVerified: false, updatedAt: new Date() })
+    .where(eq(usersTable.id, userId));
+
+  revalidatePath("/dashboard/settings");
 
   return { success: true };
 }

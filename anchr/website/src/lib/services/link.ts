@@ -11,6 +11,7 @@ import { FREE_LINK_LIMIT } from "@/lib/tier";
 import { ensureProtocol, generateSlug, isSafeUrl, urlResolves } from "@/lib/utils/url";
 import { and, asc, count, eq, inArray, not, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { assignBioLinkShortSlug } from "./bio-link-short-slug";
 import { serviceError, serviceSuccess, type ServiceResult } from "./types";
 
 export type LinkResponse = {
@@ -153,10 +154,14 @@ export async function createLink(
     })
     .returning();
 
+  // Auto-generate an anch.to short URL so API-created links match the behavior
+  // of dashboard/onboarding/import creation and the migration backfill.
+  const shortSlug = await assignBioLinkShortSlug({ linkId: created.id, userId: user.id });
+
   revalidatePath("/dashboard");
   revalidatePath(`/${user.username}`);
 
-  return serviceSuccess(toLinkResponse(created));
+  return serviceSuccess(toLinkResponse({ ...created, shortSlug }));
 }
 
 export async function updateLink(

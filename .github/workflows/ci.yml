@@ -252,13 +252,16 @@ jobs:
           expires_at: ${{ env.NEON_BRANCH_EXPIRES }}
 
       - name: Apply schema to Neon branch
-        # --force skips confirmation prompts for destructive changes (CI is non-interactive)
-        # Source .env.local (from Vercel pull) for envSchema validation, but override DATABASE_URL
+        # db:migrate applies versioned SQL migrations against the ephemeral branch
+        # (cloned from stage, which is also managed via db:migrate). db:push has
+        # been observed to silently skip new columns, so we use db:migrate here
+        # for parity with stage/production and to guarantee all DDL is applied.
+        # Source .env.local (from Vercel pull) for envSchema validation, but override DATABASE_URL.
         working-directory: anchr/website
         run: |
           set -a && source .env.local && set +a
           export DATABASE_URL="${{ steps.neon-branch.outputs.db_url }}"
-          pnpm db:push --force
+          pnpm db:migrate
 
       - name: Remove staging DATABASE_URL from .env.local
         working-directory: anchr/website
@@ -276,6 +279,7 @@ jobs:
           E2E_USER_PASSWORD: e2e-test-password-ephemeral
           E2E_RUN_ID: ${{ github.run_id }}
           NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_SHORT_DOMAIN: anch.to
           WEBHOOK_SIGNING_ENCRYPTION_KEY: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
       - name: Upload Playwright report

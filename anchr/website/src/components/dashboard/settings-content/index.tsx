@@ -2,6 +2,7 @@
 
 import {
   addCustomDomain,
+  addShortDomain,
   checkUsernameAvailability,
   createPortalSession,
   disconnectNostrProfile,
@@ -10,11 +11,13 @@ import {
   redeemReferralCode,
   removeAvatar,
   removeCustomDomain,
+  removeShortDomain,
   saveNostrProfile,
   updateHideBranding,
   updateProfile,
   updateUsername,
   verifyCustomDomain,
+  verifyShortDomain,
 } from "@/app/(dashboard)/dashboard/settings/actions";
 import { CheckoutCelebration } from "@/components/dashboard/checkout-celebration";
 import { PagePreview } from "@/components/dashboard/page-preview";
@@ -77,6 +80,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
   const { isUploading, startUpload } = useUploadThing("avatarUploader");
   const [domainInput, setDomainInput] = React.useState("");
   const [domainPending, startDomainTransition] = React.useTransition();
+  const [shortDomainInput, setShortDomainInput] = React.useState("");
+  const [shortDomainPending, startShortDomainTransition] = React.useTransition();
   const [referralInput, setReferralInput] = React.useState("");
   const [referralPending, startReferralTransition] = React.useTransition();
   const [userReferralCode, setUserReferralCode] = React.useState<null | string>(null);
@@ -630,6 +635,42 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
 
   const handleDomainInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setDomainInput(e.target.value);
 
+  const handleAddShortDomain = () => {
+    startShortDomainTransition(async () => {
+      const result = await addShortDomain(shortDomainInput);
+      if (!result.success) {
+        toast.error(t(result.error as TranslationKey));
+        return;
+      }
+      setShortDomainInput("");
+    });
+  };
+
+  const handleVerifyShortDomain = () => {
+    startShortDomainTransition(async () => {
+      const result = await verifyShortDomain();
+      if (!result.success) {
+        toast.error(t(result.error as TranslationKey));
+        return;
+      }
+      toast.success(t("domainConnected"));
+    });
+  };
+
+  const handleRemoveShortDomain = () => {
+    startShortDomainTransition(async () => {
+      const result = await removeShortDomain();
+      if (!result.success) {
+        toast.error(t(result.error as TranslationKey));
+        return;
+      }
+      toast.success(t("domainRemoved"));
+    });
+  };
+
+  const handleShortDomainInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setShortDomainInput(e.target.value);
+
   const handleReferralInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setReferralInput(e.target.value);
 
   const handleRedeemCode = () => {
@@ -1093,92 +1134,182 @@ export const SettingsContent: React.FC<SettingsContentProps> = (props) => {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t("customDomain")}</CardTitle>
-            <CardDescription>{t("useYourOwnDomainForYourAnchrPage")}</CardDescription>
+            <CardTitle>{t("customDomains")}</CardTitle>
+            <CardDescription>{t("useYourOwnDomainsForYourAnchrPageAndShortLinks")}</CardDescription>
           </CardHeader>
-          <CardContent>
-            {!isPro && (
-              <div className="flex items-center gap-2">
-                <Lock className="text-muted-foreground size-4" />
-                <p className="text-muted-foreground text-sm">{t("upgradeToProToUseACustomDomain")}</p>
-              </div>
-            )}
-            {isPro && user.customDomain == null && (
-              <div className="flex gap-2">
-                <Input
-                  disabled={domainPending}
-                  onChange={handleDomainInputOnChange}
-                  placeholder="yourdomain.com"
-                  value={domainInput}
-                />
-                <Button
-                  disabled={domainPending || domainInput.trim().length === 0}
-                  onClick={handleAddDomain}
-                  variant="secondary"
-                >
-                  {domainPending && <Loader2 className="size-3.5 animate-spin" />}
-                  {t("addDomain")}
-                </Button>
-              </div>
-            )}
-            {isPro && user.customDomain != null && !user.customDomainVerified && (
-              <div className="space-y-4">
-                <p className="text-foreground text-sm font-medium">{user.customDomain}</p>
-                <div>
-                  <p className="text-muted-foreground mb-2 text-sm">{t("addThisCnameRecordToYourDnsProvider")}</p>
-                  <div className="bg-muted rounded-md border p-3">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="text-muted-foreground">
-                          {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
-                          <th className="pb-1 text-left font-medium">Type</th>
-                          {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
-                          <th className="pb-1 text-left font-medium">Name</th>
-                          {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
-                          <th className="pb-1 text-left font-medium">Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className="text-foreground">
-                          {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- DNS record type */}
-                          <td className="font-mono">CNAME</td>
-                          {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- DNS wildcard */}
-                          <td className="font-mono">@</td>
-                          {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- Vercel CNAME target */}
-                          <td className="font-mono">cname.vercel-dns.com</td>
-                        </tr>
-                      </tbody>
-                    </table>
+          <CardContent className="space-y-6">
+            <div>
+              <p className="mb-2 text-sm font-medium">{t("profile")}</p>
+              {!isPro && (
+                <div className="flex items-center gap-2">
+                  <Lock className="text-muted-foreground size-4" />
+                  <p className="text-muted-foreground text-sm">{t("upgradeToProToUseACustomDomain")}</p>
+                </div>
+              )}
+              {isPro && user.customDomain == null && (
+                <div className="flex gap-2">
+                  <Input
+                    disabled={domainPending}
+                    onChange={handleDomainInputOnChange}
+                    placeholder="yourdomain.com"
+                    value={domainInput}
+                  />
+                  <Button
+                    disabled={domainPending || domainInput.trim().length === 0}
+                    onClick={handleAddDomain}
+                    variant="secondary"
+                  >
+                    {domainPending && <Loader2 className="size-3.5 animate-spin" />}
+                    {t("addDomain")}
+                  </Button>
+                </div>
+              )}
+              {isPro && user.customDomain != null && !user.customDomainVerified && (
+                <div className="space-y-4">
+                  <p className="text-foreground text-sm font-medium">{user.customDomain}</p>
+                  <div>
+                    <p className="text-muted-foreground mb-2 text-sm">{t("addThisCnameRecordToYourDnsProvider")}</p>
+                    <div className="bg-muted rounded-md border p-3">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-muted-foreground">
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
+                            <th className="pb-1 text-left font-medium">Type</th>
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
+                            <th className="pb-1 text-left font-medium">Name</th>
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
+                            <th className="pb-1 text-left font-medium">Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="text-foreground">
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- DNS record type */}
+                            <td className="font-mono">CNAME</td>
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- DNS wildcard */}
+                            <td className="font-mono">@</td>
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- Vercel CNAME target */}
+                            <td className="font-mono">cname.vercel-dns.com</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button disabled={domainPending} onClick={handleVerifyDomain}>
+                      {domainPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("verifyDns")}
+                    </Button>
+                    <Button disabled={domainPending} onClick={handleRemoveDomain} variant="tertiary">
+                      {t("removeDomain")}
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button disabled={domainPending} onClick={handleVerifyDomain}>
-                    {domainPending && <Loader2 className="size-3.5 animate-spin" />}
-                    {t("verifyDns")}
-                  </Button>
+              )}
+              {isPro && user.customDomain != null && user.customDomainVerified && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="text-primary size-4" />
+                    <p className="text-foreground text-sm font-medium">{user.customDomain}</p>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    {t("yourPageIsLiveAt{{url}}", {
+                      interpolation: { escapeValue: false },
+                      url: `https://${user.customDomain}`,
+                    })}
+                  </p>
                   <Button disabled={domainPending} onClick={handleRemoveDomain} variant="tertiary">
                     {t("removeDomain")}
                   </Button>
                 </div>
-              </div>
-            )}
-            {isPro && user.customDomain != null && user.customDomainVerified && (
-              <div className="space-y-3">
+              )}
+            </div>
+
+            <div>
+              <p className="mb-2 text-sm font-medium">{t("shortLinks")}</p>
+              <p className="text-muted-foreground mb-2 text-sm">{t("useYourOwnDomainForYourShortLinks")}</p>
+              {!isPro && (
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="text-primary size-4" />
-                  <p className="text-foreground text-sm font-medium">{user.customDomain}</p>
+                  <Lock className="text-muted-foreground size-4" />
+                  <p className="text-muted-foreground text-sm">{t("upgradeToProToUseACustomDomain")}</p>
                 </div>
-                <p className="text-muted-foreground text-sm">
-                  {t("yourPageIsLiveAt{{url}}", {
-                    interpolation: { escapeValue: false },
-                    url: `https://${user.customDomain}`,
-                  })}
-                </p>
-                <Button disabled={domainPending} onClick={handleRemoveDomain} variant="tertiary">
-                  {t("removeDomain")}
-                </Button>
-              </div>
-            )}
+              )}
+              {isPro && user.shortDomain == null && (
+                <div className="flex gap-2">
+                  <Input
+                    disabled={shortDomainPending}
+                    onChange={handleShortDomainInputOnChange}
+                    placeholder="go.yourdomain.com"
+                    value={shortDomainInput}
+                  />
+                  <Button
+                    disabled={shortDomainPending || shortDomainInput.trim().length === 0}
+                    onClick={handleAddShortDomain}
+                    variant="secondary"
+                  >
+                    {shortDomainPending && <Loader2 className="size-3.5 animate-spin" />}
+                    {t("addDomain")}
+                  </Button>
+                </div>
+              )}
+              {isPro && user.shortDomain != null && !user.shortDomainVerified && (
+                <div className="space-y-4">
+                  <p className="text-foreground text-sm font-medium">{user.shortDomain}</p>
+                  <div>
+                    <p className="text-muted-foreground mb-2 text-sm">{t("addThisCnameRecordToYourDnsProvider")}</p>
+                    <div className="bg-muted rounded-md border p-3">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-muted-foreground">
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
+                            <th className="pb-1 text-left font-medium">Type</th>
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
+                            <th className="pb-1 text-left font-medium">Name</th>
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- standard DNS table headers */}
+                            <th className="pb-1 text-left font-medium">Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="text-foreground">
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- DNS record type */}
+                            <td className="font-mono">CNAME</td>
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- DNS wildcard */}
+                            <td className="font-mono">@</td>
+                            {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- Vercel CNAME target */}
+                            <td className="font-mono">cname.vercel-dns.com</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button disabled={shortDomainPending} onClick={handleVerifyShortDomain}>
+                      {shortDomainPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("verifyDns")}
+                    </Button>
+                    <Button disabled={shortDomainPending} onClick={handleRemoveShortDomain} variant="tertiary">
+                      {t("removeDomain")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {isPro && user.shortDomain != null && user.shortDomainVerified && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="text-primary size-4" />
+                    <p className="text-foreground text-sm font-medium">{user.shortDomain}</p>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    {t("yourShortUrlsAreLiveAt{{url}}", {
+                      interpolation: { escapeValue: false },
+                      url: `https://${user.shortDomain}`,
+                    })}
+                  </p>
+                  <Button disabled={shortDomainPending} onClick={handleRemoveShortDomain} variant="tertiary">
+                    {t("removeDomain")}
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 

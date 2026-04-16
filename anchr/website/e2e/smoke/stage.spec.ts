@@ -38,12 +38,55 @@ test.describe("stage deployment smoke tests", () => {
     await expect(page.getByRole("heading", { exact: true, name: t.links })).toBeVisible();
   });
 
+  test("short links page loads", async ({ proUser: page }) => {
+    //* Act
+    await page.goto("/dashboard/short-links");
+
+    //* Assert
+    await expect(page.getByRole("heading", { exact: true, name: t.shortLinks })).toBeVisible();
+  });
+
   test("API keys page loads", async ({ proUser: page }) => {
     //* Act
     await page.goto("/dashboard/api");
 
     //* Assert
     await expect(page.getByRole("heading", { exact: true, name: t.api })).toBeVisible();
+  });
+
+  test("short link create + anch.to redirect works end-to-end", async ({ request }) => {
+    //* Arrange — fresh API key against the deployed stage API.
+    const apiKey = await createTestApiKey(testUsers.pro.username);
+
+    try {
+      //* Act — create via REST, then follow the redirect.
+      const createResp = await request.post(`/api/v1/short-links`, {
+        data: { url: "https://anchr-e2e-testing.site" },
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      });
+      const createdBody = createResp.status() === 201 ? await createResp.json() : null;
+      const redirectResp =
+        createdBody != null ? await request.get(createdBody.data.shortUrl, { maxRedirects: 0 }) : null;
+
+      //* Assert — the deployed short domain resolves and redirects to the
+      //  destination. This is the end-to-end check: middleware + /r/[slug] +
+      //  DB lookup all reachable from the internet post-deploy.
+      expect(createResp.status()).toBe(201);
+      // Stage uses stage.anch.to; prod uses anch.to. Match both.
+      expect(createdBody?.data.shortUrl).toMatch(/^https:\/\/(?:[a-z0-9-]+\.)*anch\.to\/[a-z0-9]+$/);
+      expect(redirectResp?.status()).toBeGreaterThanOrEqual(300);
+      expect(redirectResp?.status()).toBeLessThan(400);
+      expect(redirectResp?.headers().location).toBe("https://anchr-e2e-testing.site");
+
+      //* Arrange — cleanup
+      if (createdBody?.data.id != null) {
+        await request.delete(`/api/v1/short-links/${createdBody.data.id}`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+      }
+    } finally {
+      await deleteTestApiKeys(testUsers.pro.username).catch(() => undefined);
+    }
   });
 
   test("link CRUD works end-to-end", async ({ proUser: page }) => {
@@ -118,8 +161,9 @@ test.describe("stage deployment smoke tests", () => {
       await page.waitForTimeout(1000);
     }
 
-    // Add domain
-    const domainInput = page.getByPlaceholder("yourdomain.com");
+    // Add domain — use exact match so we don't collide with the short-domain
+    // input ("go.yourdomain.com") that lives in the same settings page.
+    const domainInput = page.getByPlaceholder("yourdomain.com", { exact: true });
     await domainInput.clear();
     await domainInput.pressSequentially(testDomain.subdomain, { delay: 20 });
     await page.getByRole("button", { name: t.addDomain }).click();
@@ -409,14 +453,18 @@ baseTest.describe("MCP server smoke tests", () => {
       //* Act — list available tools
       const toolsBody = await mcp.rpc("tools/list", {});
 
-      //* Assert — all 20 tools are listed
+      //* Assert — all 24 tools are listed (3 profile + 7 link + 4 group + 4 short-link + 5 analytics + 1 discovery)
       const toolNames: string[] = toolsBody.result.tools.map((tool: { name: string }) => tool.name);
-      baseExpect(toolNames).toHaveLength(20);
+      baseExpect(toolNames).toHaveLength(24);
       baseExpect(toolNames).toContain("get_profile");
       baseExpect(toolNames).toContain("create_link");
       baseExpect(toolNames).toContain("list_groups");
       baseExpect(toolNames).toContain("get_analytics");
       baseExpect(toolNames).toContain("lookup_profile");
+      baseExpect(toolNames).toContain("list_short_links");
+      baseExpect(toolNames).toContain("create_short_link");
+      baseExpect(toolNames).toContain("update_short_link");
+      baseExpect(toolNames).toContain("delete_short_link");
     } finally {
       //* Cleanup
       await mcp.cleanup();

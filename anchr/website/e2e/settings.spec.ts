@@ -60,7 +60,8 @@ test.describe("settings", () => {
     await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
 
     //* Assert
-    await expect(page.getByText(t.upgradeToProToUseACustomDomain)).toBeVisible();
+    // Both Profile and Short Links sections show the same upgrade prompt for free users.
+    await expect(page.getByText(t.upgradeToProToUseACustomDomain)).toHaveCount(2);
     await expect(page.getByText(t.upgradeToProToHideBranding)).toBeVisible();
     // Current Plan card exposes annual + monthly upgrade buttons for free users.
     const main = page.getByRole("main");
@@ -77,5 +78,28 @@ test.describe("settings", () => {
     await expect(page.getByText(t.youHaveLifetimeProAccess)).toBeVisible();
     await expect(page.getByPlaceholder("ANCHR-XXXXXX")).toBeVisible();
     await expect(page.getByRole("button", { name: t.redeem })).toBeDisabled();
+  });
+
+  test("Custom Domains card renders Profile and Short Links sections", async ({ proUser: page }) => {
+    //* Arrange
+    await page.goto("/dashboard/settings");
+    await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
+
+    //* Act — scope queries to the main content region so the sidebar nav links
+    //  ("Short Links", etc.) don't collide with the card's section headings.
+    const main = page.getByRole("main");
+    const card = main.getByText(t.customDomains).locator("xpath=ancestor::*[contains(@class, 'rounded')][1]");
+    await card.scrollIntoViewIfNeeded();
+
+    //* Assert — both sub-sections are labelled; the profile input renders for
+    //  the seeded pro user (no domain configured). Scoping to the card ensures
+    //  we're asserting on the card's copy, not on page-level duplicates.
+    await expect(card.getByText(t.customDomains)).toBeVisible();
+    await expect(card.getByText(t.profile, { exact: true })).toBeVisible();
+    await expect(card.getByText(t.shortLinks, { exact: true })).toBeVisible();
+    // exact:true — the new short-domain input's placeholder "go.yourdomain.com"
+    // partially matches "yourdomain.com" without this constraint.
+    await expect(card.getByPlaceholder("yourdomain.com", { exact: true })).toBeVisible();
+    await expect(card.getByPlaceholder("go.yourdomain.com")).toBeVisible();
   });
 });

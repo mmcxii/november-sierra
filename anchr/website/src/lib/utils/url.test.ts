@@ -185,6 +185,84 @@ describe("isSafeUrl", () => {
     //* Assert
     expect(result).toBe(false);
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // SSRF hardening — urlResolves() HEADs the user-supplied destination server-
+  // side, so an attacker who can't reach private hosts themselves could use our
+  // server as a proxy without these blocks. Exhaustively cover RFC1918, link-
+  // local (inc. cloud metadata endpoints), CGNAT, loopback, and non-http
+  // schemes.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  it.each([
+    ["http://127.0.0.1/", "IPv4 loopback"],
+    ["http://127.5.5.5/", "IPv4 loopback any"],
+    ["http://0.0.0.0/", "IPv4 0.0.0.0/8"],
+    ["http://10.0.0.1/", "RFC1918 10/8"],
+    ["http://10.255.255.255/", "RFC1918 10/8 max"],
+    ["http://172.16.0.1/", "RFC1918 172.16/12 min"],
+    ["http://172.31.255.255/", "RFC1918 172.16/12 max"],
+    ["http://192.168.1.1/", "RFC1918 192.168/16"],
+    ["http://169.254.169.254/latest/meta-data/", "AWS/GCP/Azure metadata"],
+    ["http://100.64.0.1/", "CGNAT 100.64/10"],
+    ["http://localhost/", "localhost literal"],
+    ["http://foo.localhost/", "*.localhost suffix"],
+    ["http://router.local/", ".local mDNS"],
+    ["http://api.internal/", ".internal suffix"],
+    ["http://intra.lan/", ".lan suffix"],
+    ["http://[::1]/", "IPv6 loopback"],
+    ["http://[fe80::1]/", "IPv6 link-local"],
+    ["http://[fc00::1]/", "IPv6 unique-local"],
+    ["http://[::ffff:10.0.0.1]/", "IPv4-mapped IPv6 private"],
+  ])("blocks %s (%s) as SSRF target", (url) => {
+    expect(isSafeUrl(url)).toBe(false);
+  });
+
+  it.each([["file:///etc/passwd"], ["ftp://example.com/"], ["gopher://example.com/"]])(
+    "blocks non-http scheme %s",
+    (url) => {
+      expect(isSafeUrl(url)).toBe(false);
+    },
+  );
+
+  it("allows internal hosts when allowInternalHosts is true (admin escape hatch)", () => {
+    //* Act
+    const result = isSafeUrl("http://10.0.0.1/admin", { allowInternalHosts: true });
+
+    //* Assert
+    expect(result).toBe(true);
+  });
+
+  it("allows a public IPv4", () => {
+    //* Act
+    const result = isSafeUrl("https://1.1.1.1/");
+
+    //* Assert
+    expect(result).toBe(true);
+  });
+
+  it("blocks the configured short domain to prevent redirect loops", () => {
+    //* Arrange
+    const prev = process.env.NEXT_PUBLIC_SHORT_DOMAIN;
+    process.env.NEXT_PUBLIC_SHORT_DOMAIN = "anch.to";
+
+    //* Act
+    const result = isSafeUrl("https://anch.to/foo");
+    const wwwResult = isSafeUrl("https://www.anch.to/foo");
+
+    //* Assert — preventing loop: short_link destinations that point back at
+    //  the short-URL host itself would bounce through the middleware forever
+    //  until the browser's max-redirects kicks in.
+    expect(result).toBe(false);
+    expect(wwwResult).toBe(false);
+
+    //* Cleanup
+    if (prev == null) {
+      delete process.env.NEXT_PUBLIC_SHORT_DOMAIN;
+    } else {
+      process.env.NEXT_PUBLIC_SHORT_DOMAIN = prev;
+    }
+  });
 });
 
 describe("generateSlug", () => {

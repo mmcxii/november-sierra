@@ -6,11 +6,11 @@ import { ThemeProvider } from "@/components/link-page/theme-provider";
 import { LinkPageThemeToggle } from "@/components/link-page/theme-toggle";
 import { Container } from "@/components/ui/container";
 import { db } from "@/lib/db/client";
-import { clicksTable } from "@/lib/db/schema/click";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
 import { usersTable } from "@/lib/db/schema/user";
 import { buildGroupJsonLd } from "@/lib/json-ld";
+import { recordClick } from "@/lib/services/click-tracking";
 import { type ThemeId, isValidThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
 import { and, asc, eq } from "drizzle-orm";
@@ -19,22 +19,11 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { after } from "next/server";
 import * as React from "react";
-import { UAParser } from "ua-parser-js";
 
 export const revalidate = 60;
 export const dynamicParams = true;
 
 type Params = { slug: string; username: string };
-
-function resolveDeviceType(type: undefined | string): string {
-  if (type === "mobile") {
-    return "mobile";
-  }
-  if (type === "tablet") {
-    return "tablet";
-  }
-  return "desktop";
-}
 
 async function resolveSlug(username: string, slug: string) {
   const normalizedSlug = slug.toLowerCase();
@@ -137,20 +126,19 @@ const SlugPage: React.FC<SlugPageProps> = async (props) => {
 
     const headerList = await headers();
 
-    after(async () => {
-      const ua = new UAParser(headerList.get("user-agent") ?? "");
-      const deviceType = ua.getDevice().type;
+    after(() => {
+      // Determine click source: if the referrer matches the user's profile page, it's a profile click
+      const referrer = headerList.get("referer") ?? null;
+      const customDomainHeader = headerList.get("x-custom-domain");
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://anchr.to";
+      const profilePatterns = [`${appUrl}/${username}`, `anchr.to/${username}`];
+      if (customDomainHeader != null) {
+        profilePatterns.push(customDomainHeader);
+      }
+      const source =
+        referrer != null && profilePatterns.some((pattern) => referrer.includes(pattern)) ? "profile" : "direct";
 
-      await db.insert(clicksTable).values({
-        browser: ua.getBrowser().name ?? null,
-        city: headerList.get("x-vercel-ip-city") ?? null,
-        country: headerList.get("x-vercel-ip-country") ?? null,
-        device: resolveDeviceType(deviceType),
-        linkId: link.id,
-        os: ua.getOS().name ?? null,
-        referrer: headerList.get("referer") ?? null,
-        userId: link.userId,
-      });
+      return recordClick(headerList, { linkId: link.id, source, userId: link.userId });
     });
 
     redirect(link.url);

@@ -263,3 +263,33 @@ test.describe("advanced link features", () => {
     await page.getByRole("dialog").waitFor({ state: "hidden" });
   });
 });
+
+test.describe("bio link short URL", () => {
+  test.describe.configure({ mode: "serial" });
+
+  test("new bio link gets an anch.to short URL in its Copy dropdown", async ({ context, proUser: page }) => {
+    //* Arrange — grant clipboard permissions so the copy handler can write.
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/dashboard");
+    const title = `Short URL Test ${Date.now().toString(36)}`;
+    await createLink(page, title, "https://example.com/short-url-test");
+
+    //* Act — open the Actions dropdown on the new link and click Copy short URL.
+    //  If ANC-174's bio-link creation path forgets to call assignBioLinkShortSlug
+    //  (as the initial PR did), the "Copy short URL" menu item won't render
+    //  because link.shortSlug is null, and this assertion will fail loud.
+    const linkCard = page.locator("li", { hasText: title });
+    await linkCard.getByRole("button", { name: "Actions" }).click();
+    await page.getByRole("menuitem", { name: t.copyShortUrl }).click();
+
+    //* Assert — toast confirms the copy, and the clipboard holds a
+    //  well-formed anch.to short URL (proving the short_slug was populated
+    //  and the copy handler read the current value).
+    await expect(page.getByText(t.shortUrlCopied)).toBeVisible();
+    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardText).toMatch(/^https:\/\/anch\.to\/[a-z0-9]+$/);
+
+    //* Arrange — cleanup
+    await deleteLink(page, title);
+  });
+});

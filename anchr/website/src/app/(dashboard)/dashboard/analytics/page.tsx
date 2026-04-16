@@ -61,6 +61,9 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = async (props) => {
 
   const sparklineMap = new Map<string, { clicks: number; date: string }[]>();
   for (const row of sparklineRows) {
+    if (row.linkId == null) {
+      continue;
+    }
     const existing = sparklineMap.get(row.linkId);
     if (existing != null) {
       existing.push({ clicks: row.clicks, date: row.date });
@@ -71,6 +74,9 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = async (props) => {
 
   const trendMap = new Map<string, number>();
   for (const row of perLinkTrends) {
+    if (row.linkId == null) {
+      continue;
+    }
     trendMap.set(row.linkId, computeTrendPercent(Number(row.clicks), Number(row.previousClicks)));
   }
 

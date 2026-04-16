@@ -30,6 +30,8 @@ export const usersTable = pgTable("users", {
   preferences: jsonb("preferences").$type<UserPreferences>().default({}).notNull(),
   proExpiresAt: timestamp("pro_expires_at"),
   referredBy: text("referred_by"),
+  shortDomain: text("short_domain").unique(),
+  shortDomainVerified: boolean("short_domain_verified").default(false).notNull(),
   stripeCustomerId: text("stripe_customer_id").unique(),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionCancelAt: timestamp("subscription_cancel_at"),

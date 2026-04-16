@@ -15,6 +15,7 @@ export NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/dashboard"
 export NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_mock"
 export NEXT_PUBLIC_POSTHOG_KEY="phc_mock"
 export NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com"
+export NEXT_PUBLIC_SHORT_DOMAIN="test.short.domain"
 
 # Server
 export DATABASE_URL="postgresql://mock:mock@localhost:5432/mock"

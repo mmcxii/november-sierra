@@ -19,10 +19,14 @@ test.describe("custom domain", () => {
     }
 
     //* Act
-    const domainInput = page.getByPlaceholder("yourdomain.com");
+    // exact:true needed because the short-domain input uses "go.yourdomain.com"
+    // which partially matches "yourdomain.com" without an exact constraint.
+    const domainInput = page.getByPlaceholder("yourdomain.com", { exact: true });
     await domainInput.clear();
     await domainInput.pressSequentially(testDomain.subdomain, { delay: 20 });
-    await page.getByRole("button", { name: t.addDomain }).click();
+    // Scope the click to the profile section — the Short Links section has its
+    // own "Add domain" button with the same accessible name.
+    await domainInput.locator("xpath=ancestor::div[1]").getByRole("button", { name: t.addDomain }).click();
     await page.waitForTimeout(2000);
     await page.reload();
     await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
@@ -101,6 +105,6 @@ test.describe("custom domain", () => {
 
     //* Assert — domain removed, input reappears
     await expect(page.getByText(t.domainRemoved)).toBeVisible();
-    await expect(page.getByPlaceholder("yourdomain.com")).toBeVisible();
+    await expect(page.getByPlaceholder("yourdomain.com", { exact: true })).toBeVisible();
   });
 });

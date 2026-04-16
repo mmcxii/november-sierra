@@ -16,11 +16,12 @@ export type DashboardContentProps = {
   groups: GroupItem[];
   links: LinkItem[];
   previewKey: string;
+  shortDomain: string;
   user: SessionUser;
 };
 
 export const DashboardContent: React.FC<DashboardContentProps> = (props) => {
-  const { groups, links, previewKey, user } = props;
+  const { groups, links, previewKey, shortDomain, user } = props;
 
   //* State
   const { t } = useTranslation();
@@ -71,6 +72,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = (props) => {
         isPro={isPro}
         links={links}
         onQrCode={handleQrCode}
+        shortDomain={shortDomain}
         username={user.username}
       />
 

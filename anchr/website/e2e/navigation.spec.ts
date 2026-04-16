@@ -18,7 +18,7 @@ test.describe("sidebar navigation", () => {
     await expect(page.getByRole("heading", { exact: true, name: t.settings })).toBeVisible();
 
     //* Act — navigate back to Links
-    await page.getByRole("link", { name: t.links }).click();
+    await page.getByRole("link", { exact: true, name: t.links }).click();
 
     //* Assert
     await expect(page).toHaveURL(/\/dashboard$/);
@@ -47,7 +47,7 @@ test.describe("sidebar navigation", () => {
   test("pro-tier user does not see sidebar upgrade card", async ({ proUser: page }) => {
     //* Act
     const sidebar = page.locator("aside").first();
-    await sidebar.getByRole("link", { name: t.links }).waitFor();
+    await sidebar.getByRole("link", { exact: true, name: t.links }).waitFor();
 
     //* Assert
     await expect(sidebar.getByText(t.unlockMoreWithPro)).toBeHidden();

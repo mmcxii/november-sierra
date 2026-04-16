@@ -62,12 +62,13 @@ export type LinkListProps = {
   groups: GroupItem[];
   isPro: boolean;
   links: LinkItem[];
+  shortDomain?: string;
   username: string;
   onQrCode?: (link: LinkItem) => void;
 };
 
 export const LinkList: React.FC<LinkListProps> = (props) => {
-  const { customDomain, groups: initialGroups, isPro, links, onQrCode, username } = props;
+  const { customDomain, groups: initialGroups, isPro, links, onQrCode, shortDomain, username } = props;
 
   //* State
   const { t } = useTranslation();
@@ -543,6 +544,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                 onToggleGroupVisibility={handleToggleGroupVisibility}
                 onToggleLinkVisibility={handleToggleLinkVisibility}
                 selectedIds={selectedIds}
+                shortDomain={shortDomain}
                 username={username}
               />
             )}
@@ -561,6 +563,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                   onToggleFeatured={handleToggleFeatured}
                   onToggleVisibility={handleToggleLinkVisibility}
                   selected={selectedIds.has(featuredLink.id)}
+                  shortDomain={shortDomain}
                   username={username}
                 />
               </ul>
@@ -583,6 +586,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                         onToggleFeatured={isPro ? handleToggleFeatured : undefined}
                         onToggleVisibility={handleToggleLinkVisibility}
                         selected={selectedIds.has(link.id)}
+                        shortDomain={shortDomain}
                         username={username}
                       />
                     ))}
@@ -614,6 +618,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                     onToggleGroupVisibility={handleToggleGroupVisibility}
                     onToggleLinkVisibility={handleToggleLinkVisibility}
                     selectedIds={selectedIds}
+                    shortDomain={shortDomain}
                     username={username}
                   />
                 );
@@ -639,6 +644,7 @@ export const LinkList: React.FC<LinkListProps> = (props) => {
                     onToggleFeatured={isPro ? handleToggleFeatured : undefined}
                     onToggleVisibility={handleToggleLinkVisibility}
                     selected={selectedIds.has(draggedLink.id)}
+                    shortDomain={shortDomain}
                     username={username}
                   />
                 );

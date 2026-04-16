@@ -10,6 +10,7 @@ import { linksTable } from "@/lib/db/schema/link";
 import { usersTable } from "@/lib/db/schema/user";
 import { detectPlatform } from "@/lib/platforms";
 import { linkSchema } from "@/lib/schemas/link";
+import { assignBioLinkShortSlug } from "@/lib/services/bio-link-short-slug";
 import { auth } from "@clerk/nextjs/server";
 import { eq, sql } from "drizzle-orm";
 
@@ -72,8 +73,10 @@ export async function addFirstLink(title: string, url: string): Promise<AddLinkR
     .where(eq(linksTable.userId, userId));
 
   const platform = detectPlatform(result.data.url);
+  const linkId = crypto.randomUUID();
 
   await db.insert(linksTable).values({
+    id: linkId,
     platform,
     position: (maxPosition[0]?.max ?? -1) + 1,
     slug,
@@ -81,6 +84,10 @@ export async function addFirstLink(title: string, url: string): Promise<AddLinkR
     url: result.data.url,
     userId,
   });
+
+  // Auto-generate an anch.to short URL so bio links created during onboarding
+  // match what the backfill produces for pre-migration links.
+  await assignBioLinkShortSlug({ linkId, userId });
 
   return { success: true };
 }

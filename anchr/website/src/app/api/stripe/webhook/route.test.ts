@@ -441,7 +441,7 @@ describe("POST /api/stripe/webhook", () => {
       //* Arrange
       emitUpdated("unpaid");
       mockSelect.mockReturnValueOnce(
-        buildSelectChain([{ customDomain: null, id: "user-99", proExpiresAt: null }]).root,
+        buildSelectChain([{ customDomain: null, id: "user-99", proExpiresAt: null, shortDomain: null }]).root,
       );
       const downgradeUpdate = buildUpdateChain();
       mockUpdate.mockReturnValueOnce(downgradeUpdate.root);
@@ -450,12 +450,16 @@ describe("POST /api/stripe/webhook", () => {
       //* Act
       const res = await POST(buildRequest());
 
-      //* Assert
+      //* Assert — Pro-only domains (profile + short URL) are torn down in the
+      //  same transaction as tier → free so a canceled user can't keep their
+      //  custom short-URL host resolving.
       expect(res.status).toBe(200);
       expect(downgradeUpdate.set).toHaveBeenCalledWith(
         expect.objectContaining({
           customDomain: null,
           customDomainVerified: false,
+          shortDomain: null,
+          shortDomainVerified: false,
           stripeSubscriptionId: null,
           tier: "free",
         }),
@@ -494,7 +498,9 @@ describe("POST /api/stripe/webhook", () => {
       //* Arrange
       emitDeleted();
       mockSelect.mockReturnValueOnce(
-        buildSelectChain([{ customDomain: "example.com", id: "user-1", proExpiresAt: null }]).root,
+        buildSelectChain([
+          { customDomain: "example.com", id: "user-1", proExpiresAt: null, shortDomain: "go.example.com" },
+        ]).root,
       );
       const downgradeUpdate = buildUpdateChain();
       mockUpdate.mockReturnValueOnce(downgradeUpdate.root);
@@ -503,14 +509,18 @@ describe("POST /api/stripe/webhook", () => {
       //* Act
       const res = await POST(buildRequest());
 
-      //* Assert
+      //* Assert — both Pro-only domains are removed from Vercel and cleared
+      //  from the DB in one shot.
       expect(res.status).toBe(200);
       expect(mockRemoveDomain).toHaveBeenCalledWith("example.com");
+      expect(mockRemoveDomain).toHaveBeenCalledWith("go.example.com");
       expect(downgradeUpdate.set).toHaveBeenCalledWith(
         expect.objectContaining({
           customDomain: null,
           customDomainVerified: false,
           proExpiresAt: null,
+          shortDomain: null,
+          shortDomainVerified: false,
           stripeSubscriptionId: null,
           tier: "free",
         }),

@@ -1,6 +1,7 @@
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { PagePreview } from "@/components/dashboard/page-preview";
 import { requireUser } from "@/lib/auth";
+import { SHORT_DOMAIN } from "@/lib/constants/short-domain";
 import { db } from "@/lib/db/client";
 import { ensureQuickLinksGroup } from "@/lib/db/queries/quick-links";
 import { linksTable } from "@/lib/db/schema/link";
@@ -45,7 +46,13 @@ const DashboardPage: React.FC = async () => {
     <div className="flex gap-8">
       {/* Link management */}
       <div className="min-w-0 flex-1">
-        <DashboardContent groups={groups} links={links} previewKey={previewKey} user={user} />
+        <DashboardContent
+          groups={groups}
+          links={links}
+          previewKey={previewKey}
+          shortDomain={SHORT_DOMAIN}
+          user={user}
+        />
       </div>
 
       {/* Desktop preview panel */}

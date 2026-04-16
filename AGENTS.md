@@ -33,9 +33,9 @@ ANC-95: feat(agents): add initial skills and initialize AGENTS.md
 ## Database
 
 - **Never use `drizzle-kit push` (or `pnpm db:push`) against deployed databases** (stage, production). It computes a runtime diff and can silently skip changes.
-- Use **`drizzle-kit migrate` (`pnpm db:migrate`)** for all deployed environments. Migrations are versioned SQL files in `drizzle/` and are idempotent.
+- Use **`drizzle-kit migrate` (`pnpm db:migrate`)** for all deployed environments AND for the Neon E2E ephemeral branches in CI. `db:push` was observed silently skipping new columns against Neon branches (see ANC-174 history), so CI now runs `db:migrate` against the ephemeral branch to match stage/prod semantics.
 - After modifying any schema file in `src/lib/db/schema/`, run `pnpm drizzle-kit generate` to create a new migration file, and commit it alongside the schema change.
-- `db:push` is acceptable **only** for local development and CI ephemeral databases (e.g., Neon E2E branches).
+- `db:push` is acceptable **only** for local development. Do not use it in CI or against deployed databases.
 
 ## Corrections
 
