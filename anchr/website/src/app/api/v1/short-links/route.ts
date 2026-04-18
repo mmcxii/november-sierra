@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   }
   const result = await listShortLinks(auth.user);
   if (result.error != null) {
-    return apiError(result.error.code, result.error.message, result.error.status);
+    return apiError(result.error.code, result.error.message, result.error.status, result.error.details);
   }
   return apiSuccess(result.data);
 }
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   }
   const result = await createShortLink(auth.user, parsed.data);
   if (result.error != null) {
-    return apiError(result.error.code, result.error.message, result.error.status);
+    return apiError(result.error.code, result.error.message, result.error.status, result.error.details);
   }
   after(() => {
     void dispatchWebhookEvent({

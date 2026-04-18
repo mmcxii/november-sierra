@@ -532,6 +532,7 @@
   "updateYourWebhookEndpointUrlOrEvents": "Update your webhook endpoint URL or events.",
   "upgrade": "Upgrade",
   "upgradeToPro": "Upgrade to Pro",
+  "upgradeToProForUnlimitedShortUrls": "Upgrade to Pro for unlimited short URLs.",
   "upgradeToProToHideBranding": "Upgrade to Pro to hide branding.",
   "upgradeToProToManageCustomThemes": "Upgrade to Pro to manage custom themes.",
   "upgradeToProToUseACustomDomain": "Upgrade to Pro to use a custom domain.",
@@ -556,6 +557,7 @@
   "verifyViaEmail": "Verify via email",
   "viewLivePage": "View live page",
   "viewOnGithub": "View on GitHub",
+  "viewPricing": "View pricing",
   "weCouldntFindAnyLinksOnThatPage": "We couldn't find any links on that page.",
   "weHitUnexpectedWatersPleaseTryAgainAndIfTheIssuePersistsWereAlreadyOnIt": "We hit unexpected waters. Please try again, and if the issue persists, we're already on it.",
   "weUseCookiesForAnalyticsToImproveYourExperience": "We use cookies for analytics to improve your experience.",
@@ -596,6 +598,7 @@
   "youreReadyToChartYourOwnCourse": "You're ready to chart your own course.",
   "youveReachedTheApiKeyLimitUpgradeToProForUnlimitedKeys": "You've reached the API key limit. Upgrade to Pro for unlimited keys.",
   "youveReachedTheFreeLimitUpgradeToProForUnlimitedLinks": "You've reached the free limit. Upgrade to Pro for unlimited links.",
+  "youveReachedTheFreeTierLimitOf20ShortUrlsThisMonthQuotaResetsOn{{date}}": "You've reached the free tier limit of 20 short URLs this month. Quota resets on {{date}}.",
   "youveReachedTheWebhookLimitOf10": "You've reached the webhook limit of 10.",
   "{{attempt}}{{maxAttempts}}": "{{attempt}}/{{maxAttempts}}",
   "{{count}}Days": "{{count}} days",
@@ -613,6 +616,7 @@
   "{{title}}IsNowHidden": "{{title}} is now hidden.",
   "{{title}}IsNowVisible": "{{title}} is now visible.",
   "{{title}}RedirectUrlCopied": "{{title}} redirect URL copied.",
+  "{{used}}Of{{total}}ShortUrlsThisMonth": "{{used}} of {{total}} short URLs this month",
   "{{value}}Px": "{{value}}px",
   "{{years}}Years{{months}}Months": "{{years}} years, {{months}} months"
 }

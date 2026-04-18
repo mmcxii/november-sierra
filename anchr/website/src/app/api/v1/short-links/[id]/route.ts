@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: RouteParams) {
   const { id } = await params;
   const result = await getShortLink(auth.user, id);
   if (result.error != null) {
-    return apiError(result.error.code, result.error.message, result.error.status);
+    return apiError(result.error.code, result.error.message, result.error.status, result.error.details);
   }
   return apiSuccess(result.data);
 }
@@ -40,7 +40,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
   const result = await updateShortLink(auth.user, id, parsed.data);
   if (result.error != null) {
-    return apiError(result.error.code, result.error.message, result.error.status);
+    return apiError(result.error.code, result.error.message, result.error.status, result.error.details);
   }
   after(() => {
     void dispatchWebhookEvent({
@@ -60,7 +60,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   const { id } = await params;
   const result = await deleteShortLink(auth.user, id);
   if (result.error != null) {
-    return apiError(result.error.code, result.error.message, result.error.status);
+    return apiError(result.error.code, result.error.message, result.error.status, result.error.details);
   }
   after(() => {
     void dispatchWebhookEvent({

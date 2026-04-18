@@ -10,8 +10,14 @@ export function apiSuccess(data: unknown, status = 200): Response {
   return Response.json({ data }, { headers: CORS_HEADERS, status });
 }
 
-export function apiError(code: ApiErrorCode, message: string, status: number): Response {
-  return Response.json({ error: { code, message } }, { headers: CORS_HEADERS, status });
+export function apiError(
+  code: ApiErrorCode,
+  message: string,
+  status: number,
+  details?: Record<string, unknown>,
+): Response {
+  const body = details != null ? { error: { code, details, message } } : { error: { code, message } };
+  return Response.json(body, { headers: CORS_HEADERS, status });
 }
 
 export function apiOptions(): Response {

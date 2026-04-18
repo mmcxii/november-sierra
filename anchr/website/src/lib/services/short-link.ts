@@ -6,10 +6,11 @@ import { db } from "@/lib/db/client";
 import { shortLinksTable } from "@/lib/db/schema/short-link";
 import { shortSlugsTable } from "@/lib/db/schema/short-slug";
 import { usersTable } from "@/lib/db/schema/user";
+import { FREE_TIER_SHORT_LINK_MONTHLY_CAP, getShortLinkQuotaResetsAt } from "@/lib/tier";
 import { hashPassword } from "@/lib/utils/password";
 import { generateUniqueShortSlug } from "@/lib/utils/short-slug";
 import { ensureProtocol, isSafeUrl, urlResolves } from "@/lib/utils/url";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { serviceError, serviceSuccess, type ServiceResult } from "./types";
 
@@ -35,6 +36,27 @@ function toShortLinkResponse(row: typeof shortLinksTable.$inferSelect): ShortLin
     slug: row.slug,
     url: row.url,
   };
+}
+
+/** Count short links a user has created since the first instant of the current
+ *  UTC calendar month. Strict counting: tombstoned (deleted) short links still
+ *  leave their `short_slugs` row in place with `type = 'transitory'`, so a
+ *  create + delete cycle does NOT refund quota within the month. The query
+ *  therefore runs against `short_slugs` rather than `short_links` so the count
+ *  survives deletion. Type filter excludes `profile` slugs (bio-page short
+ *  slugs, which are a different product and not capped). */
+export async function countShortLinksThisMonth(userId: string): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(shortSlugsTable)
+    .where(
+      and(
+        eq(shortSlugsTable.userId, userId),
+        eq(shortSlugsTable.type, "transitory"),
+        sql`${shortSlugsTable.createdAt} >= date_trunc('month', (now() AT TIME ZONE 'UTC'))`,
+      ),
+    );
+  return Number(row?.count ?? 0);
 }
 
 export async function listShortLinks(user: ApiKeyUser): Promise<ServiceResult<ShortLinkResponse[]>> {
@@ -69,6 +91,22 @@ export async function createShortLink(
 
   if (!isSafeUrl(fullUrl)) {
     return serviceError(API_ERROR_CODES.UNSAFE_URL, "This URL is not allowed.", 400);
+  }
+
+  // Free-tier monthly cap. Runs before the network check in urlResolves so a
+  // capped user gets a fast rejection without a wasted HEAD request. Pro users
+  // bypass unconditionally. Strict counting — tombstoned rows still count.
+  if (user.tier !== "pro") {
+    const usedThisMonth = await countShortLinksThisMonth(user.id);
+    if (usedThisMonth >= FREE_TIER_SHORT_LINK_MONTHLY_CAP) {
+      const resetsAt = getShortLinkQuotaResetsAt();
+      return serviceError(
+        API_ERROR_CODES.SHORT_LINK_LIMIT_REACHED,
+        `Free tier limit of ${FREE_TIER_SHORT_LINK_MONTHLY_CAP} short URLs per month reached. Quota resets on ${resetsAt.toISOString().slice(0, 10)}. Upgrade to Pro at https://anchr.to/pricing for unlimited short URLs.`,
+        403,
+        { limit: FREE_TIER_SHORT_LINK_MONTHLY_CAP, resetsAt: resetsAt.toISOString(), used: usedThisMonth },
+      );
+    }
   }
 
   if (!(await urlResolves(fullUrl))) {
@@ -321,7 +359,7 @@ export async function bulkCreateShortLinks(
   for (const item of urls) {
     const result = await createShortLink(user, { url: item.url });
     if (result.error != null) {
-      return serviceError(result.error.code, result.error.message, result.error.status);
+      return serviceError(result.error.code, result.error.message, result.error.status, result.error.details);
     }
     results.push(result.data);
   }
