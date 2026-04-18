@@ -99,13 +99,27 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
 
   const handleSubmit = async (keepOpen: boolean) => {
     setError(null);
+
+    // Guard against a datetime-local value that's already in the past — picking
+    // a date-only entry commits midnight, which is usually behind "now" and
+    // creates a short link that instantly redirects to the main app.
+    let expiresAtIso: undefined | string;
+    if (expiresAt.length > 0) {
+      const parsed = new Date(expiresAt);
+      if (Number.isNaN(parsed.getTime()) || parsed <= new Date()) {
+        setError(t("expirationMustBeInTheFuture"));
+        return;
+      }
+      expiresAtIso = parsed.toISOString();
+    }
+
     setLoading(true);
 
     try {
       const finalUrl = buildUrlWithUtm(url);
       const result = await createShortLinkAction({
         customSlug: customSlug.length > 0 ? customSlug : undefined,
-        expiresAt: expiresAt.length > 0 ? new Date(expiresAt).toISOString() : undefined,
+        expiresAt: expiresAtIso,
         password: password.length > 0 ? password : undefined,
         url: finalUrl,
       });

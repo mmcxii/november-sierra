@@ -249,6 +249,20 @@ describe("createShortLink", () => {
     //* Assert
     expect(result.error?.code).toBe(API_ERROR_CODES.VALIDATION_ERROR);
   });
+
+  it("rejects expiresAt in the past to prevent creating an already-expired link", async () => {
+    //* Arrange — regression: the datetime-local picker could commit a date-only
+    //  value which defaults to midnight (already past). Previously we'd store it
+    //  and every click would bounce through /r/[slug] to the main app.
+    const past = new Date(Date.now() - 60_000).toISOString();
+    const { createShortLink } = await import("./short-link");
+
+    //* Act
+    const result = await createShortLink(PRO_USER, { expiresAt: past, url: "https://example.com" });
+
+    //* Assert
+    expect(result.error?.code).toBe(API_ERROR_CODES.VALIDATION_ERROR);
+  });
 });
 
 describe("getShortLink", () => {
@@ -340,5 +354,40 @@ describe("updateShortLink", () => {
 
     //* Assert
     expect(result.error?.code).toBe(API_ERROR_CODES.PRO_REQUIRED);
+  });
+
+  it("rejects expiresAt in the past", async () => {
+    //* Arrange — the same create-time guard applies to updates so a caller
+    //  can't move a live link into an already-expired state.
+    setupSelectReturning([MOCK_SHORT_LINK]);
+    const past = new Date(Date.now() - 60_000).toISOString();
+    const { updateShortLink } = await import("./short-link");
+
+    //* Act
+    const result = await updateShortLink(PRO_USER, "sl-1", { expiresAt: past });
+
+    //* Assert
+    expect(result.error?.code).toBe(API_ERROR_CODES.VALIDATION_ERROR);
+  });
+
+  it("allows clearing expiresAt by passing null", async () => {
+    //* Arrange — null explicitly unsets the expiry. The past-date guard should
+    //  not reject this.
+    setupSelectReturning([MOCK_SHORT_LINK]);
+    mockUpdate.mockReturnValueOnce({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ ...MOCK_SHORT_LINK, expiresAt: null }]),
+        }),
+      }),
+    });
+    const { updateShortLink } = await import("./short-link");
+
+    //* Act
+    const result = await updateShortLink(PRO_USER, "sl-1", { expiresAt: null });
+
+    //* Assert
+    expect(result.error).toBeNull();
+    expect(result.data?.expiresAt).toBeNull();
   });
 });

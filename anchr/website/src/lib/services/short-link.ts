@@ -120,6 +120,14 @@ export async function createShortLink(
   const passwordHash = input.password != null && input.password.length > 0 ? await hashPassword(input.password) : null;
   const expiresAt = input.expiresAt != null ? new Date(input.expiresAt) : null;
 
+  // The datetime-local input has a soft `min` attribute for today, but browsers
+  // don't enforce it on keyboard entry and a picker that commits only the date
+  // portion stores midnight (already past). Guard here so we never persist an
+  // already-expired link, which would redirect to the main app on every click.
+  if (expiresAt != null && expiresAt <= new Date()) {
+    return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "Expiration must be in the future.", 400);
+  }
+
   // Generate the short link ID upfront so we can wire up the back-reference.
   const shortLinkId = crypto.randomUUID();
 
@@ -240,7 +248,13 @@ export async function updateShortLink(
   }
 
   if (input.expiresAt !== undefined) {
-    updates.expiresAt = input.expiresAt != null ? new Date(input.expiresAt) : null;
+    const nextExpiresAt = input.expiresAt != null ? new Date(input.expiresAt) : null;
+    // Same guard as createShortLink — refuse to move a link into an already-
+    // expired state via update. Allowing null through clears the expiry.
+    if (nextExpiresAt != null && nextExpiresAt <= new Date()) {
+      return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "Expiration must be in the future.", 400);
+    }
+    updates.expiresAt = nextExpiresAt;
   }
 
   if (input.password !== undefined) {
