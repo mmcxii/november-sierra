@@ -166,7 +166,9 @@ test.describe("stage deployment smoke tests", () => {
     const domainInput = page.getByPlaceholder("yourdomain.com", { exact: true });
     await domainInput.clear();
     await domainInput.pressSequentially(testDomain.subdomain, { delay: 20 });
-    await page.getByRole("button", { name: t.addDomain }).click();
+    // Scope the button click to the input's parent row so it doesn't collide
+    // with the short-domain section's identically-named "Add domain" button.
+    await domainInput.locator("..").getByRole("button", { name: t.addDomain }).click();
     await page.waitForTimeout(2000);
     await page.reload();
     await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
