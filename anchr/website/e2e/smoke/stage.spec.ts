@@ -455,9 +455,9 @@ baseTest.describe("MCP server smoke tests", () => {
       //* Act — list available tools
       const toolsBody = await mcp.rpc("tools/list", {});
 
-      //* Assert — all 24 tools are listed (3 profile + 7 link + 4 group + 4 short-link + 5 analytics + 1 discovery)
+      //* Assert — all 29 tools are listed (2 profile + 7 link + 4 group + 4 short-link + 5 analytics + 6 theme + 1 discovery)
       const toolNames: string[] = toolsBody.result.tools.map((tool: { name: string }) => tool.name);
-      baseExpect(toolNames).toHaveLength(24);
+      baseExpect(toolNames).toHaveLength(29);
       baseExpect(toolNames).toContain("get_profile");
       baseExpect(toolNames).toContain("create_link");
       baseExpect(toolNames).toContain("list_groups");
@@ -467,6 +467,12 @@ baseTest.describe("MCP server smoke tests", () => {
       baseExpect(toolNames).toContain("create_short_link");
       baseExpect(toolNames).toContain("update_short_link");
       baseExpect(toolNames).toContain("delete_short_link");
+      baseExpect(toolNames).toContain("list_themes");
+      baseExpect(toolNames).toContain("get_theme");
+      baseExpect(toolNames).toContain("create_custom_theme");
+      baseExpect(toolNames).toContain("update_custom_theme");
+      baseExpect(toolNames).toContain("delete_custom_theme");
+      baseExpect(toolNames).toContain("assign_theme");
     } finally {
       //* Cleanup
       await mcp.cleanup();

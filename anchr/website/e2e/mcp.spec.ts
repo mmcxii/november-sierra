@@ -111,28 +111,26 @@ test.describe("MCP server", () => {
     expect(err.code).toBe("VALIDATION_ERROR");
   });
 
-  test("update_theme changes page themes", async () => {
+  test("assign_theme changes a single slot", async () => {
     //* Act
-    const updated = await mcp.callTool("update_theme", {
-      pageDarkTheme: "obsidian",
-      pageLightTheme: "stateroom",
+    const updated = await mcp.callTool("assign_theme", {
+      slot: "dark",
+      themeId: "obsidian",
     });
 
     //* Assert
     expect(updated.pageDarkTheme).toBe("obsidian");
-    expect(updated.pageLightTheme).toBe("stateroom");
+    expect(updated.pageDarkEnabled).toBe(true);
 
-    //* Cleanup — reset to defaults
-    await mcp.callTool("update_theme", {
-      pageDarkTheme: "dark-depths",
-      pageLightTheme: "stateroom",
-    });
+    //* Cleanup — reset to default
+    await mcp.callTool("assign_theme", { slot: "dark", themeId: "dark-depths" });
   });
 
-  test("update_theme rejects invalid theme ID", async () => {
+  test("assign_theme rejects invalid theme ID", async () => {
     //* Act
-    const result = await mcp.callToolRaw("update_theme", {
-      pageDarkTheme: "nonexistent-theme",
+    const result = await mcp.callToolRaw("assign_theme", {
+      slot: "dark",
+      themeId: "nonexistent-theme",
     });
 
     //* Assert

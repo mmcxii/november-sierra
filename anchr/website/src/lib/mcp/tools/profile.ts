@@ -1,6 +1,5 @@
 import type { ApiKeyUser } from "@/lib/api/auth";
-import { getProfile, updateProfile, updateTheme } from "@/lib/services/profile";
-import { DARK_THEME_ID_LIST, LIGHT_THEME_ID_LIST, THEME_IDS } from "@/lib/themes";
+import { getProfile, updateProfile } from "@/lib/services/profile";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { toToolResult } from "../tool-result";
@@ -42,29 +41,6 @@ export function registerProfileTools(server: McpServer, user: ApiKeyUser): void 
     },
     async ({ bio, displayName }) => {
       const result = await updateProfile(user, { bio, displayName });
-      return toToolResult(result);
-    },
-  );
-
-  server.registerTool(
-    "update_theme",
-    {
-      annotations: { readOnlyHint: false },
-      description: `Change the page theme for dark and/or light mode. Available theme IDs: ${THEME_IDS.join(", ")}. Dark themes: ${DARK_THEME_ID_LIST.join(", ")}. Light themes: ${LIGHT_THEME_ID_LIST.join(", ")}.`,
-      inputSchema: {
-        pageDarkTheme: z
-          .string()
-          .optional()
-          .describe(`Dark mode theme ID. Options: ${DARK_THEME_ID_LIST.join(", ")}`),
-        pageLightTheme: z
-          .string()
-          .optional()
-          .describe(`Light mode theme ID. Options: ${LIGHT_THEME_ID_LIST.join(", ")}`),
-      },
-      title: "Update Theme",
-    },
-    async ({ pageDarkTheme, pageLightTheme }) => {
-      const result = await updateTheme(user, { pageDarkTheme, pageLightTheme });
       return toToolResult(result);
     },
   );

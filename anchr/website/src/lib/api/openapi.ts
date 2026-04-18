@@ -39,16 +39,27 @@ export function generateOpenApiSpec(baseUrl: string) {
             schema: z.object({
               bio: z.string().max(500).optional(),
               displayName: z.string().max(100).optional(),
-              pageDarkTheme: z.string().optional(),
-              pageLightTheme: z.string().optional(),
+              pageDarkTheme: z
+                .string()
+                .nullable()
+                .optional()
+                .describe("Preset ID, custom theme UUID, or null to disable the slot."),
+              pageLightTheme: z
+                .string()
+                .nullable()
+                .optional()
+                .describe("Preset ID, custom theme UUID, or null to disable the slot."),
             }),
           },
         },
       },
     },
     responses: {
-      200: { description: "Updated profile" },
-      400: { description: "Validation error" },
+      200: {
+        description:
+          "Updated profile. Response includes pageDarkEnabled/pageLightEnabled so clients can see the slot-enabled state.",
+      },
+      400: { description: "Validation error (e.g. invalid theme ID, both slots disabled)" },
       401: { description: "Unauthorized" },
     },
     security: bearerAuth,
@@ -396,6 +407,125 @@ export function generateOpenApiSpec(baseUrl: string) {
     security: bearerAuth,
     summary: "Toggle group visibility (Pro)",
     tags: ["Groups"],
+  });
+
+  // ─── Themes ─────────────────────────────────────────────────────────────────
+
+  registry.registerPath({
+    method: "get",
+    operationId: "listThemes",
+    path: "/api/v1/themes",
+    responses: {
+      200: { description: "All available themes, grouped into presets and custom" },
+      401: { description: "Unauthorized" },
+    },
+    security: bearerAuth,
+    summary: "List presets and custom themes",
+    tags: ["Themes"],
+  });
+
+  registry.registerPath({
+    method: "post",
+    operationId: "createCustomTheme",
+    path: "/api/v1/themes",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              backgroundImage: z.string().url().nullable().optional(),
+              borderRadius: z.number().int().min(0).max(50).nullable().optional(),
+              font: z.string().max(100).nullable().optional(),
+              name: z.string().min(1).max(30),
+              overlayColor: z.string().nullable().optional(),
+              overlayOpacity: z.number().min(0).max(1).nullable().optional(),
+              rawCss: z.string().max(10_000).nullable().optional(),
+              variables: z.record(z.string(), z.string()),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      201: { description: "Custom theme created; may include a `warnings` array if CSS sanitization stripped rules" },
+      400: { description: "Validation error or theme limit reached" },
+      401: { description: "Unauthorized" },
+      403: { description: "Pro required" },
+      409: { description: "A theme with this name already exists" },
+    },
+    security: bearerAuth,
+    summary: "Create a custom theme (Pro)",
+    tags: ["Themes"],
+  });
+
+  registry.registerPath({
+    method: "get",
+    operationId: "getTheme",
+    path: "/api/v1/themes/{id}",
+    request: {
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Theme detail. Response includes a `type` discriminator of `preset` or `custom`." },
+      401: { description: "Unauthorized" },
+      404: { description: "Theme not found" },
+    },
+    security: bearerAuth,
+    summary: "Get a theme by ID",
+    tags: ["Themes"],
+  });
+
+  registry.registerPath({
+    method: "patch",
+    operationId: "updateCustomTheme",
+    path: "/api/v1/themes/{id}",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              backgroundImage: z.string().url().nullable().optional(),
+              borderRadius: z.number().int().min(0).max(50).nullable().optional(),
+              font: z.string().max(100).nullable().optional(),
+              name: z.string().min(1).max(30).optional(),
+              overlayColor: z.string().nullable().optional(),
+              overlayOpacity: z.number().min(0).max(1).nullable().optional(),
+              rawCss: z.string().max(10_000).nullable().optional(),
+              variables: z.record(z.string(), z.string()).optional(),
+            }),
+          },
+        },
+      },
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Custom theme updated; may include a `warnings` array if CSS sanitization stripped rules" },
+      400: { description: "Validation error" },
+      401: { description: "Unauthorized" },
+      403: { description: "Pro required" },
+      404: { description: "Theme not found" },
+      409: { description: "A theme with this name already exists" },
+    },
+    security: bearerAuth,
+    summary: "Update a custom theme (Pro)",
+    tags: ["Themes"],
+  });
+
+  registry.registerPath({
+    method: "delete",
+    operationId: "deleteCustomTheme",
+    path: "/api/v1/themes/{id}",
+    request: {
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      204: { description: "Theme deleted. Any bio-page slot pointing at the theme is reset to a preset default." },
+      401: { description: "Unauthorized" },
+      404: { description: "Theme not found" },
+    },
+    security: bearerAuth,
+    summary: "Delete a custom theme",
+    tags: ["Themes"],
   });
 
   // ─── Short Links ────────────────────────────────────────────────────────────
