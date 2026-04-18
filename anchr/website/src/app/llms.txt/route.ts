@@ -43,7 +43,12 @@ Anchr exposes a hosted [Model Context Protocol](https://modelcontextprotocol.io)
 |---|---|
 | get_profile | Get your Anchr profile |
 | update_profile | Update display name and bio |
-| update_theme | Change page theme |
+| list_themes | List preset and custom themes |
+| get_theme | Get a theme by ID (preset or custom) |
+| create_custom_theme | Create a custom theme (Pro) |
+| update_custom_theme | Update a custom theme (Pro) |
+| delete_custom_theme | Delete a custom theme |
+| assign_theme | Assign a theme to the dark or light slot (or null to disable) |
 | list_links | List all links |
 | create_link | Create a new link |
 | update_link | Update an existing link |

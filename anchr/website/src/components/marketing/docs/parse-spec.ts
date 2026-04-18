@@ -30,7 +30,7 @@ type OpenApiOperation = {
 };
 
 const METHOD_ORDER: HttpMethod[] = ["get", "post", "patch", "delete"];
-const TAG_ORDER = ["Profile", "Links", "Groups", "Short Links", "Analytics", "Webhooks"];
+const TAG_ORDER = ["Profile", "Links", "Groups", "Themes", "Short Links", "Analytics", "Webhooks"];
 
 function buildCodeExamples(
   method: HttpMethod,

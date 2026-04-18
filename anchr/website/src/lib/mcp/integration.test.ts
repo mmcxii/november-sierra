@@ -128,6 +128,29 @@ vi.mock("@/lib/services/short-link", () => ({
   },
 }));
 
+const mockListThemes = vi.fn();
+const mockGetTheme = vi.fn();
+const mockCreateCustomTheme = vi.fn();
+const mockUpdateCustomTheme = vi.fn();
+const mockDeleteCustomTheme = vi.fn();
+vi.mock("@/lib/services/custom-theme", () => ({
+  createCustomTheme: (...a: unknown[]) => {
+    return mockCreateCustomTheme(...a);
+  },
+  deleteCustomTheme: (...a: unknown[]) => {
+    return mockDeleteCustomTheme(...a);
+  },
+  getTheme: (...a: unknown[]) => {
+    return mockGetTheme(...a);
+  },
+  listThemes: (...a: unknown[]) => {
+    return mockListThemes(...a);
+  },
+  updateCustomTheme: (...a: unknown[]) => {
+    return mockUpdateCustomTheme(...a);
+  },
+}));
+
 // Still need these for tool registration (description generation)
 vi.mock("@/lib/themes", () => ({
   DARK_THEME_ID_LIST: ["dark-depths", "midnight-glow"],

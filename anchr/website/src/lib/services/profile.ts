@@ -1,6 +1,7 @@
 import type { ApiKeyUser } from "@/lib/api/auth";
 import { API_ERROR_CODES } from "@/lib/api/errors";
 import { db } from "@/lib/db/client";
+import { getCustomThemeById } from "@/lib/db/queries/custom-theme";
 import { clicksTable } from "@/lib/db/schema/click";
 import { linksTable } from "@/lib/db/schema/link";
 import { linkGroupsTable } from "@/lib/db/schema/link-group";
@@ -20,7 +21,9 @@ export type ProfileResponse = {
   displayName: null | string;
   groupCount: number;
   linkCount: number;
+  pageDarkEnabled: boolean;
   pageDarkTheme: null | string;
+  pageLightEnabled: boolean;
   pageLightTheme: null | string;
   profileUrl: string;
   tier: Tier;
@@ -32,7 +35,9 @@ export type ProfileMutationResponse = {
   avatarUrl: null | string;
   bio: null | string;
   displayName: null | string;
+  pageDarkEnabled: boolean;
   pageDarkTheme: null | string;
+  pageLightEnabled: boolean;
   pageLightTheme: null | string;
   username: string;
 };
@@ -60,7 +65,9 @@ export async function getProfile(user: ApiKeyUser): Promise<ServiceResult<Profil
     displayName: dbUser.displayName,
     groupCount: groupResult?.count ?? 0,
     linkCount: linkResult?.count ?? 0,
+    pageDarkEnabled: dbUser.pageDarkEnabled,
     pageDarkTheme: dbUser.pageDarkTheme,
+    pageLightEnabled: dbUser.pageLightEnabled,
     pageLightTheme: dbUser.pageLightTheme,
     profileUrl:
       dbUser.customDomain != null && dbUser.customDomainVerified
@@ -99,7 +106,9 @@ export async function updateProfile(
     avatarUrl: usersTable.avatarUrl,
     bio: usersTable.bio,
     displayName: usersTable.displayName,
+    pageDarkEnabled: usersTable.pageDarkEnabled,
     pageDarkTheme: usersTable.pageDarkTheme,
+    pageLightEnabled: usersTable.pageLightEnabled,
     pageLightTheme: usersTable.pageLightTheme,
     username: usersTable.username,
   });
@@ -115,48 +124,90 @@ export async function updateProfile(
     avatarUrl: updated.avatarUrl,
     bio: updated.bio,
     displayName: updated.displayName,
+    pageDarkEnabled: updated.pageDarkEnabled,
     pageDarkTheme: updated.pageDarkTheme,
+    pageLightEnabled: updated.pageLightEnabled,
     pageLightTheme: updated.pageLightTheme,
     username: updated.username,
   });
 }
 
 export type UpdateThemeInput = {
-  pageDarkTheme?: string;
-  pageLightTheme?: string;
+  pageDarkTheme?: null | string;
+  pageLightTheme?: null | string;
 };
 
 export async function updateTheme(
   user: ApiKeyUser,
   input: UpdateThemeInput,
 ): Promise<ServiceResult<ProfileMutationResponse>> {
-  if (input.pageDarkTheme != null && !isValidThemeId(input.pageDarkTheme)) {
-    return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "Invalid dark theme ID.", 400);
+  const darkProvided = input.pageDarkTheme !== undefined;
+  const lightProvided = input.pageLightTheme !== undefined;
+
+  if (!darkProvided && !lightProvided) {
+    return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "No fields to update.", 400);
   }
 
-  if (input.pageLightTheme != null && !isValidThemeId(input.pageLightTheme)) {
-    return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "Invalid light theme ID.", 400);
+  // Validate each provided slot: preset ID, a custom theme owned by the caller, or null (disable).
+  if (darkProvided && input.pageDarkTheme != null) {
+    const valid = await isAssignableThemeId(user.id, input.pageDarkTheme);
+    if (!valid) {
+      return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "Invalid dark theme ID.", 400);
+    }
+  }
+
+  if (lightProvided && input.pageLightTheme != null) {
+    const valid = await isAssignableThemeId(user.id, input.pageLightTheme);
+    if (!valid) {
+      return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "Invalid light theme ID.", 400);
+    }
+  }
+
+  const [existing] = await db
+    .select({ pageDarkEnabled: usersTable.pageDarkEnabled, pageLightEnabled: usersTable.pageLightEnabled })
+    .from(usersTable)
+    .where(eq(usersTable.id, user.id))
+    .limit(1);
+
+  if (existing == null) {
+    return serviceError(API_ERROR_CODES.NOT_FOUND, "User not found.", 404);
+  }
+
+  // Compute the post-update enabled state so we can enforce the "at least one enabled" invariant.
+  const nextDarkEnabled = darkProvided ? input.pageDarkTheme !== null : existing.pageDarkEnabled;
+  const nextLightEnabled = lightProvided ? input.pageLightTheme !== null : existing.pageLightEnabled;
+
+  if (!nextDarkEnabled && !nextLightEnabled) {
+    return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "At least one theme slot must remain enabled.", 400);
   }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
 
-  if (input.pageDarkTheme !== undefined) {
-    updates.pageDarkTheme = input.pageDarkTheme;
+  if (darkProvided) {
+    if (input.pageDarkTheme == null) {
+      updates.pageDarkEnabled = false;
+    } else {
+      updates.pageDarkEnabled = true;
+      updates.pageDarkTheme = input.pageDarkTheme;
+    }
   }
 
-  if (input.pageLightTheme !== undefined) {
-    updates.pageLightTheme = input.pageLightTheme;
-  }
-
-  if (Object.keys(updates).length <= 1) {
-    return serviceError(API_ERROR_CODES.VALIDATION_ERROR, "No fields to update.", 400);
+  if (lightProvided) {
+    if (input.pageLightTheme == null) {
+      updates.pageLightEnabled = false;
+    } else {
+      updates.pageLightEnabled = true;
+      updates.pageLightTheme = input.pageLightTheme;
+    }
   }
 
   const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, user.id)).returning({
     avatarUrl: usersTable.avatarUrl,
     bio: usersTable.bio,
     displayName: usersTable.displayName,
+    pageDarkEnabled: usersTable.pageDarkEnabled,
     pageDarkTheme: usersTable.pageDarkTheme,
+    pageLightEnabled: usersTable.pageLightEnabled,
     pageLightTheme: usersTable.pageLightTheme,
     username: usersTable.username,
   });
@@ -172,8 +223,18 @@ export async function updateTheme(
     avatarUrl: updated.avatarUrl,
     bio: updated.bio,
     displayName: updated.displayName,
+    pageDarkEnabled: updated.pageDarkEnabled,
     pageDarkTheme: updated.pageDarkTheme,
+    pageLightEnabled: updated.pageLightEnabled,
     pageLightTheme: updated.pageLightTheme,
     username: updated.username,
   });
+}
+
+async function isAssignableThemeId(userId: string, themeId: string): Promise<boolean> {
+  if (isValidThemeId(themeId)) {
+    return true;
+  }
+  const custom = await getCustomThemeById(themeId, userId);
+  return custom != null;
 }
