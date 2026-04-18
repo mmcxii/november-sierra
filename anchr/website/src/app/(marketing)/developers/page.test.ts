@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { metadata } from "./page";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/env", () => ({
+  envSchema: { NEXT_PUBLIC_APP_URL: "https://anchr.to" },
+}));
+
+const { metadata } = await import("./page");
 
 describe("/developers page", () => {
   it("exports correct metadata title", () => {
@@ -44,16 +49,16 @@ describe("/developers page", () => {
     //* Assert
     expect(result).toMatchInlineSnapshot(`
       {
-        "description": "Anchr is the link-in-bio platform built for AI agents. Public REST API, JSON-LD structured data, MCP server, and discovery files.",
+        "description": "Anchr is the link platform built for AI agents. Public REST API, JSON-LD structured data, MCP server, and discovery files.",
         "openGraph": {
-          "description": "Public REST API, JSON-LD structured data, MCP server, and discovery files. The link-in-bio your AI assistant can manage.",
+          "description": "A public REST API and MCP server. Use Anchr from your code or from your AI. Compatible with OpenClaw, ChatGPT, Claude, Gemini, and every MCP client.",
           "title": "Anchr for Developers",
           "type": "website",
         },
         "title": "Developers",
         "twitter": {
           "card": "summary_large_image",
-          "description": "Public REST API, JSON-LD structured data, MCP server, and discovery files. The link-in-bio your AI assistant can manage.",
+          "description": "A public REST API and MCP server. Use Anchr from your code or from your AI. Compatible with OpenClaw, ChatGPT, Claude, Gemini, and every MCP client.",
           "title": "Anchr for Developers",
         },
       }

@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { changeFrequency: "weekly", url: baseUrl },
+    { changeFrequency: "monthly", url: `${baseUrl}/short-links` },
     { changeFrequency: "monthly", url: `${baseUrl}/developers` },
     { changeFrequency: "weekly", url: `${baseUrl}/docs` },
     { changeFrequency: "monthly", url: `${baseUrl}/pricing` },

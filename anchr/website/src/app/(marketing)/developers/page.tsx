@@ -1,3 +1,4 @@
+import { JsonLd } from "@/components/json-ld";
 import { CodeTabs } from "@/components/marketing/code-tabs";
 import { CODE_SOURCES, LANG_MAP, TABS, type TabId } from "@/components/marketing/code-tabs/constants";
 import { FadeIn } from "@/components/marketing/fade-in";
@@ -5,19 +6,20 @@ import { Footer } from "@/components/marketing/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { TryApi } from "@/components/marketing/try-api";
 import { Container } from "@/components/ui/container";
+import { envSchema } from "@/lib/env";
 import { initTranslations } from "@/lib/i18n/server";
 import { highlight } from "@/lib/shiki";
 import { Check, Minus, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CAPABILITIES, COMPARISON_ROWS } from "./constants";
+import { CAPABILITIES, COMPARISON_ROWS, COMPATIBLE_CLIENTS } from "./constants";
 
 export const metadata: Metadata = {
   description:
-    "Anchr is the link-in-bio platform built for AI agents. Public REST API, JSON-LD structured data, MCP server, and discovery files.",
+    "Anchr is the link platform built for AI agents. Public REST API, JSON-LD structured data, MCP server, and discovery files.",
   openGraph: {
     description:
-      "Public REST API, JSON-LD structured data, MCP server, and discovery files. The link-in-bio your AI assistant can manage.",
+      "A public REST API and MCP server. Use Anchr from your code or from your AI. Compatible with OpenClaw, ChatGPT, Claude, Gemini, and every MCP client.",
     title: "Anchr for Developers",
     type: "website",
   },
@@ -25,13 +27,14 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     description:
-      "Public REST API, JSON-LD structured data, MCP server, and discovery files. The link-in-bio your AI assistant can manage.",
+      "A public REST API and MCP server. Use Anchr from your code or from your AI. Compatible with OpenClaw, ChatGPT, Claude, Gemini, and every MCP client.",
     title: "Anchr for Developers",
   },
 };
 
 const DevelopersPage: React.FC = async () => {
   const { t } = await initTranslations("en-US");
+  const baseUrl = envSchema.NEXT_PUBLIC_APP_URL;
 
   // Highlight code examples at the server level
   const highlightedHtml = {} as Record<TabId, string>;
@@ -39,8 +42,32 @@ const DevelopersPage: React.FC = async () => {
     highlightedHtml[tab] = await highlight(CODE_SOURCES[tab], LANG_MAP[tab] as Parameters<typeof highlight>[1]);
   }
 
+  // SoftwareApplication JSON-LD. The featureList concentrates the OpenClaw /
+  // ChatGPT / Claude / Gemini keyword density in one machine-readable payload
+  // that Google indexes as structured data for developer-tool search.
+  const softwareApplicationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    applicationCategory: "DeveloperApplication",
+    description:
+      "Anchr is the link platform built for AI agents. Public REST API, JSON-LD structured data, MCP server, and discovery files.",
+    featureList: [
+      "URL shortener",
+      "Link-in-bio",
+      "MCP server",
+      "Public REST API",
+      "Webhooks",
+      "Compatible with OpenClaw, ChatGPT, Claude, Google Gemini, Cursor, Windsurf, Zed, Goose, Cline, OpenAI Agents SDK, Claude Agent SDK, and Microsoft Copilot Studio",
+    ],
+    name: "Anchr",
+    offers: { "@type": "Offer", price: "7", priceCurrency: "USD" },
+    operatingSystem: "Web",
+    url: baseUrl,
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
+      <JsonLd data={softwareApplicationJsonLd} />
       <SiteHeader />
 
       <Container as="main" className="max-w-4xl flex-1 py-16 xl:max-w-4xl">
@@ -48,7 +75,7 @@ const DevelopersPage: React.FC = async () => {
         <FadeIn>
           <div className="mx-auto mb-24 max-w-2xl text-center">
             <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">{t("builtForTheAiAgentEra")}</h1>
-            <p className="m-muted-70 text-lg">{t("theLinkInBioYourAiAssistantCanManage")}</p>
+            <p className="m-muted-70 text-lg">{t("aPublicRestApiAndMcpServerUseAnchrFromYourCodeOrFromYourAi")}</p>
           </div>
         </FadeIn>
 
@@ -71,7 +98,30 @@ const DevelopersPage: React.FC = async () => {
           </section>
         </FadeIn>
 
-        {/* 3. Code Examples */}
+        {/* 3. Works With — OpenClaw-first compatible clients grid. */}
+        <FadeIn delay={150}>
+          <section className="mb-24">
+            <h2 className="mb-6 text-2xl font-bold tracking-tight">
+              {t("worksWithOpenclawChatgptClaudeGeminiAndEveryMcpClient")}
+            </h2>
+            <div className="m-accent-05-bg m-accent-18-border mb-6 rounded-xl border p-5">
+              <p className="text-sm leading-relaxed">{t("connectYourOpenclawToAnchrsMcpServerNoGlueCodeNoAdapters")}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {COMPATIBLE_CLIENTS.map((client) => (
+                <span
+                  className="m-card-bg-bg m-muted-12-border inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium"
+                  key={client}
+                >
+                  { }
+                  {client}
+                </span>
+              ))}
+            </div>
+          </section>
+        </FadeIn>
+
+        {/* 4. Code Examples */}
         <FadeIn delay={200}>
           <section className="mb-24">
             <h2 className="mb-8 text-2xl font-bold tracking-tight">{t("codeExamples")}</h2>
@@ -113,7 +163,7 @@ const DevelopersPage: React.FC = async () => {
         {/* 5. Comparison */}
         <FadeIn delay={400}>
           <section className="mb-24">
-            <h2 className="mb-8 text-2xl font-bold tracking-tight">{t("otherLinkInBioToolsWerentBuiltForTheAiEra")}</h2>
+            <h2 className="mb-8 text-2xl font-bold tracking-tight">{t("otherLinkPlatformsWerentBuiltForTheAiEra")}</h2>
             <div className="m-card-bg-bg m-card-border overflow-hidden rounded-xl">
               <table className="w-full text-sm">
                 <thead>
@@ -149,7 +199,7 @@ const DevelopersPage: React.FC = async () => {
         <FadeIn delay={500}>
           <section className="mb-24">
             <h2 className="mb-4 text-2xl font-bold tracking-tight">{t("tryTheLiveApi")}</h2>
-            <p className="m-muted-70 mb-8 text-sm">{t("theLinkInBioYourAiAssistantCanManage")}</p>
+            <p className="m-muted-70 mb-8 text-sm">{t("aPublicRestApiAndMcpServerUseAnchrFromYourCodeOrFromYourAi")}</p>
             <TryApi />
           </section>
         </FadeIn>

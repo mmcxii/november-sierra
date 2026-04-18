@@ -11,7 +11,7 @@ test.describe("developers page", () => {
     await expect(page.getByRole("heading", { exact: true, name: t.keyCapabilities })).toBeVisible();
     await expect(page.getByRole("heading", { exact: true, name: t.codeExamples })).toBeVisible();
     await expect(
-      page.getByRole("heading", { exact: true, name: t.otherLinkInBioToolsWerentBuiltForTheAiEra }),
+      page.getByRole("heading", { exact: true, name: t.otherLinkPlatformsWerentBuiltForTheAiEra }),
     ).toBeVisible();
     await expect(page.getByRole("heading", { exact: true, name: t.getYourApiKey })).toBeVisible();
   });

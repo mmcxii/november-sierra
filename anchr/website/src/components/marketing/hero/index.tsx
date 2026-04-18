@@ -19,7 +19,7 @@ export const Hero: React.FC<HeroProps> = (props) => {
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_auto] lg:gap-20">
           {/* Headline — row 1 on mobile, col 1 row 1 on desktop */}
           <h1 className="text-center text-4xl leading-tight font-bold tracking-tight sm:text-5xl lg:col-start-1 lg:row-start-1 lg:text-left lg:text-6xl">
-            {t("finallyALinkInBioWorthSharing")}
+            {t("yourLinkInBioAndYourUrlShortenerAllInOneTool")}
           </h1>
 
           {/* Mockup — row 2 on mobile, col 2 spanning rows 1–2 on desktop */}
@@ -30,7 +30,7 @@ export const Hero: React.FC<HeroProps> = (props) => {
           {/* Subtext + auth links — row 3 on mobile, col 1 row 2 on desktop */}
           <div className="flex flex-col items-center gap-10 lg:col-start-1 lg:row-start-2 lg:items-start">
             <p className="m-muted-80 mx-auto max-w-lg text-lg leading-relaxed sm:text-xl lg:mx-0">
-              {t("everythingThatMattersToYouAllInOnePlace")}
+              {t("everyLinkYouShareAllInOnePlace")}
             </p>
             <div className="flex items-center gap-4">
               <Link

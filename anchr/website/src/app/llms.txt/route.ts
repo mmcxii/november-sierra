@@ -5,16 +5,22 @@ export function GET() {
 
   const text = `# Anchr
 
-> Anchr is a link-in-bio platform that brings your scattered profiles, payment handles, and important links into one beautiful, blazing-fast page you actually own.
+> Anchr is a link-in-bio and URL shortener that brings your scattered profiles, payment handles, and short links into one beautiful, blazing-fast platform you actually own.
 
 Every user has a public profile at \`${baseUrl}/{username}\`. Each profile page includes rich JSON-LD structured data (schema.org \`ProfilePage\`, \`Person\` with \`sameAs\`, and \`ItemList\` of all links).
 
-Profiles can also be accessed via custom domains (e.g., \`https://alice.com\`).
+Profiles can also be accessed via custom domains (e.g., \`https://alice.com\`). Short URLs live at \`https://anch.to/{slug}\` or on the user's own short domain (e.g., \`https://go.alice.com/{slug}\`).
 
-## Profiles
+## Products
 
+- [Link-in-bio](${baseUrl}): Profile pages with themes, analytics, and custom domains
+- [URL Shortener](${baseUrl}/short-links): anch.to short links with passwords, expiry, and custom slugs
 - [Sitemap](${baseUrl}/sitemap.xml): Discover all public Anchr profiles
 - [Pricing](${baseUrl}/pricing): Free and Pro tier details
+
+## Compatible agent clients
+
+Anchr's MCP server is compatible with OpenClaw, ChatGPT Desktop, Claude Desktop, Claude Code, Claude Agent SDK, Google Gemini, OpenAI Agents SDK, Cursor, Windsurf, Zed, Goose, Cline, and Microsoft Copilot Studio. Any other agent that speaks MCP or calls REST APIs can use Anchr too.
 
 ## API
 
@@ -25,6 +31,7 @@ Anchr provides a public REST API at \`${baseUrl}/api/v1\`. Authenticate with an 
 - \`GET /api/v1/me\` — Authenticated user profile
 - \`GET /api/v1/users/{username}\` — Public user profile with links and groups
 - \`GET /api/v1/links\` — List, create, update, delete links
+- \`GET /api/v1/short-links\` — List, create, update, delete short URLs (POST also accepts \`customSlug\`, \`expiresAt\`, \`password\`)
 - \`GET /api/v1/groups\` — List, create, update, delete groups (Pro)
 - \`GET /api/v1/analytics\` — Click analytics summary (Pro)
 - \`GET /api/v1/openapi.json\` — Full OpenAPI specification

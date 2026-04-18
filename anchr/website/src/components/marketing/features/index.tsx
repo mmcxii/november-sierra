@@ -20,7 +20,7 @@ export const Features: React.FC = () => {
     <Container as="section" className="py-24">
       <div className="mx-auto max-w-4xl">
         <h2 className="mb-12 text-center text-2xl font-bold tracking-tight sm:text-3xl">
-          {t("everythingYourLinkInBioShouldBe")}
+          {t("linksThatActuallyConnect")}
         </h2>
 
         <div className="grid gap-4 sm:grid-cols-2">

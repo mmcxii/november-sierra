@@ -21,6 +21,9 @@ export const Footer: React.FC<FooterProps> = (props) => {
       </div>
       <div className="flex items-center gap-6">
         <nav aria-label="Footer" className="flex items-center gap-6">
+          <Link className="m-muted-40 text-xs transition-colors" href="/short-links">
+            {t("shortLinks")}
+          </Link>
           <Link className="m-muted-40 text-xs transition-colors" href="/pricing">
             {t("pricing")}
           </Link>

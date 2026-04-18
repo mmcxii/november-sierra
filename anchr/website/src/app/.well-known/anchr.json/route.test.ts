@@ -21,7 +21,22 @@ describe("GET /.well-known/anchr.json", () => {
         docs: `${TEST_BASE_URL}/docs`,
         openApiSpec: `${TEST_BASE_URL}/api/v1/openapi.json`,
       },
-      description: "Link-in-bio platform for the AI agent era",
+      compatibleClients: [
+        "OpenClaw",
+        "ChatGPT Desktop",
+        "Claude Desktop",
+        "Claude Code",
+        "Claude Agent SDK",
+        "Google Gemini",
+        "OpenAI Agents SDK",
+        "Cursor",
+        "Windsurf",
+        "Zed",
+        "Goose",
+        "Cline",
+        "Copilot Studio",
+      ],
+      description: "Link-in-bio and URL shortener for the AI agent era",
       mcp: {
         hosted: `${TEST_BASE_URL}/api/v1/mcp`,
         npm: "@anthropic/anchr-mcp",
@@ -33,8 +48,23 @@ describe("GET /.well-known/anchr.json", () => {
         structuredData: "JSON-LD (schema.org ProfilePage, Person, ItemList)",
         urlPattern: `${TEST_BASE_URL}/{username}`,
       },
+      shortLinks: {
+        domain: "anch.to",
+        urlPattern: "https://anch.to/{slug}",
+      },
       version: "1.0",
     });
+  });
+
+  it("advertises OpenClaw as a compatible client first for SEO weighting", async () => {
+    //* Act
+    const response = GET();
+    const body = (await response.json()) as { compatibleClients: string[] };
+
+    //* Assert — OpenClaw leads the discovery list so agents crawling this
+    //  well-known file (and search engines indexing it) see the high-value
+    //  keyword first.
+    expect(body.compatibleClients[0]).toBe("OpenClaw");
   });
 
   it("returns application/json content type", () => {

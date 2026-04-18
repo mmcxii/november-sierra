@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   applicationName: "Anchr",
   description:
-    "Anchr is a link-in-bio tool that brings your scattered profiles, payment handles, and important links into one beautiful, blazing-fast page you actually own.",
+    "Anchr is a link-in-bio and URL shortener that brings your scattered profiles, payment handles, and short links into one beautiful, blazing-fast platform you actually own.",
   metadataBase: new URL(envSchema.NEXT_PUBLIC_APP_URL),
   openGraph: {
     locale: "en_US",
