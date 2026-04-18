@@ -6,7 +6,9 @@ import { ShortLinkRow } from "@/components/dashboard/short-links-content/short-l
 import { SuccessToast } from "@/components/dashboard/short-links-content/success-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -30,7 +32,13 @@ type ShortLinksContentProps = {
   customShortDomain: null | string;
   /** Pro-tier user; unlocks the UI even for auto-gen slugs. */
   isPro: boolean;
+  /** Free-tier monthly cap. Rendered next to the current-month count for
+   *  free users; ignored for Pro. */
+  monthlyCap: number;
   shortLinks: ShortLinkItem[];
+  /** Current user's count of short links created this UTC month. Drives the
+   *  quota badge for free users; Pro users receive 0 and the badge is hidden. */
+  usedThisMonth: number;
 };
 
 type SuccessMessage = {
@@ -39,18 +47,39 @@ type SuccessMessage = {
 };
 
 export const ShortLinksContent: React.FC<ShortLinksContentProps> = (props) => {
-  const { customShortDomain, isPro, shortLinks: initialShortLinks } = props;
+  const { customShortDomain, isPro, monthlyCap, shortLinks: initialShortLinks, usedThisMonth: initialUsed } = props;
 
   //* State
   const { t } = useTranslation();
   const [shortLinks, setShortLinks] = React.useState(initialShortLinks);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [successMessages, setSuccessMessages] = React.useState<SuccessMessage[]>([]);
+  // Track optimistically so the badge reflects newly-created links before the
+  // server component re-renders.
+  const [usedThisMonth, setUsedThisMonth] = React.useState(initialUsed);
+
+  //* Variables
+  const atCap = !isPro && usedThisMonth >= monthlyCap;
+  const quotaBadge = !isPro ? (
+    <Link
+      aria-label={t("viewPricing")}
+      className={cn("rounded-full px-3 py-1 text-xs font-medium transition-colors", {
+        "bg-destructive/10 text-destructive hover:bg-destructive/15": atCap,
+        "bg-muted text-muted-foreground hover:bg-muted/80": !atCap,
+      })}
+      href="/pricing"
+    >
+      {t("{{used}}Of{{total}}ShortUrlsThisMonth", { total: monthlyCap, used: usedThisMonth })}
+    </Link>
+  ) : null;
 
   //* Handlers
   const handleCreated = (shortLink: ShortLinkItem, keepOpen: boolean) => {
     setShortLinks((prev) => [shortLink, ...prev]);
     setSuccessMessages((prev) => [{ id: shortLink.id, shortUrl: shortLink.shortUrl }, ...prev]);
+    if (!isPro) {
+      setUsedThisMonth((prev) => prev + 1);
+    }
 
     if (!keepOpen) {
       setModalOpen(false);
@@ -76,11 +105,16 @@ export const ShortLinksContent: React.FC<ShortLinksContentProps> = (props) => {
     setShortLinks(initialShortLinks);
   }, [initialShortLinks]);
 
+  React.useEffect(() => {
+    setUsedThisMonth(initialUsed);
+  }, [initialUsed]);
+
   // ─── Empty State ──────────────────────────────────────────────────────────
 
   if (shortLinks.length === 0 && successMessages.length === 0) {
     return (
       <div className="space-y-4">
+        {quotaBadge != null && <div className="flex justify-end">{quotaBadge}</div>}
         {successMessages.map((msg) => (
           <SuccessToast id={msg.id} key={msg.id} onDismiss={dismissSuccess} shortUrl={msg.shortUrl} />
         ))}
@@ -96,20 +130,23 @@ export const ShortLinksContent: React.FC<ShortLinksContentProps> = (props) => {
         <SuccessToast id={msg.id} key={msg.id} onDismiss={dismissSuccess} shortUrl={msg.shortUrl} />
       ))}
 
-      <Dialog onOpenChange={setModalOpen} open={modalOpen}>
-        <DialogTrigger asChild>
-          <Button size="sm">
-            <Plus className="mr-2 size-4" />
-            {t("newShortLink")}
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("createShortLink")}</DialogTitle>
-          </DialogHeader>
-          <CreateShortLinkForm customShortDomain={customShortDomain} isPro={isPro} onCreated={handleCreated} />
-        </DialogContent>
-      </Dialog>
+      <div className="flex items-center justify-between gap-4">
+        <Dialog onOpenChange={setModalOpen} open={modalOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-2 size-4" />
+              {t("newShortLink")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("createShortLink")}</DialogTitle>
+            </DialogHeader>
+            <CreateShortLinkForm customShortDomain={customShortDomain} isPro={isPro} onCreated={handleCreated} />
+          </DialogContent>
+        </Dialog>
+        {quotaBadge}
+      </div>
 
       <div className="border-border overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">

@@ -7,6 +7,12 @@ import {
 } from "@/lib/services/short-link";
 import { isProUser } from "@/lib/tier";
 
+export type ShortLinkActionError = {
+  code: string;
+  details?: Record<string, unknown>;
+  message: string;
+};
+
 export type ShortLinkActionResult =
   | {
       shortLink: {
@@ -21,7 +27,7 @@ export type ShortLinkActionResult =
       };
       success: true;
     }
-  | { error: string; success: false };
+  | { error: ShortLinkActionError; success: false };
 
 export async function createShortLinkAction(formData: {
   customSlug?: string;
@@ -31,7 +37,7 @@ export async function createShortLinkAction(formData: {
 }): Promise<ShortLinkActionResult> {
   const user = await getCurrentUser();
   if (user == null) {
-    return { error: "unauthorized", success: false };
+    return { error: { code: "UNAUTHORIZED", message: "Unauthorized." }, success: false };
   }
 
   const result = await createShortLinkService(
@@ -40,7 +46,10 @@ export async function createShortLinkAction(formData: {
   );
 
   if (result.error != null) {
-    return { error: result.error.message, success: false };
+    return {
+      error: { code: result.error.code, details: result.error.details, message: result.error.message },
+      success: false,
+    };
   }
 
   return { shortLink: result.data, success: true };

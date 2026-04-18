@@ -1,4 +1,4 @@
-import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
+import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { expect, test as base, type Page } from "@playwright/test";
 import { testUsers } from "./test-users";
 
@@ -8,46 +8,91 @@ type AuthFixtures = {
   freshUser: Page;
   /**
    * Signs in as the passwordPro user (has +clerk_test email).
-   * Uses a direct Clerk REST API call instead of clerk.signIn() since
-   * getUserList can't find emails with + in them.
+   * Reaches Clerk via username lookup + ticket strategy, the same path
+   * every other fixture uses — see the migration note on `signInByUsername`.
    */
   passwordProUser: Page;
   proUser: Page;
 };
 
-const signInAs = async (page: Page, emailAddress: string) => {
-  await page.goto("/");
-  await clerk.signIn({ emailAddress, page });
-  await page.goto("/dashboard");
-  await page.waitForLoadState("domcontentloaded");
-};
+/**
+ * Fetch with a few retries on network / 5xx / connection errors. Clerk's
+ * REST API is generally reliable but has occasional blips under load; a
+ * small backoff here makes the e2e harness resilient without making real
+ * failures hide longer than they should. 4xx responses short-circuit so
+ * genuine configuration problems (bad secret key, bad username) still fail
+ * fast and clearly.
+ */
+async function fetchWithRetry(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  label: string,
+  maxAttempts = 3,
+): Promise<Response> {
+  let lastError: unknown;
 
-const signInOnly = async (page: Page, emailAddress: string) => {
-  await page.goto("/");
-  await clerk.signIn({ emailAddress, page });
-};
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch(input, init);
+
+      if (res.ok) {
+        return res;
+      }
+
+      if (res.status >= 400 && res.status < 500) {
+        // 4xx: caller's fault. Surface immediately with the response body
+        // so the thrown error carries Clerk's diagnostic.
+        const body = await res.text().catch(() => "<unreadable>");
+        throw new Error(`${label} failed with ${res.status}: ${body}`);
+      }
+
+      // 5xx: transient. Fall through to retry.
+      lastError = new Error(`${label} failed with ${res.status}`);
+    } catch (err: unknown) {
+      lastError = err;
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 2 ** (attempt - 1) * 300));
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
 
 /**
- * Sign in as a user by username via Clerk REST API + testing token.
- * This bypasses clerk.signIn()'s getUserList which can't find +clerk_test emails.
- * Exported so smoke tests that spin up transient users can reuse it without
- * rebuilding the ticket-strategy dance from scratch.
+ * Sign in as a user by username via Clerk REST API + ticket strategy.
+ *
+ * Migration note: prior to this refactor every fixture except
+ * `passwordProUser` used `clerk.signIn({ emailAddress })` from
+ * `@clerk/testing/playwright`, which in turn uses `getUserList` to
+ * resolve the email → userId. `getUserList` has two known problems:
+ *
+ *   1. Emails containing `+` (e.g. `+clerk_test` addresses) don't resolve.
+ *   2. Under load it occasionally returns empty results for valid emails,
+ *      producing flaky `No user found with email` failures across unrelated
+ *      specs (theme, webhooks, update-password, short-links).
+ *
+ * Both problems vanish if we skip `getUserList` entirely and look up the
+ * user by `username` via the authenticated REST API, then complete the
+ * sign-in via the ticket strategy — exactly what this function does. Every
+ * fixture now takes this path, so the flakiness stops being visible to
+ * test authors.
+ *
+ * Exported so smoke tests that spin up transient users can reuse it.
  */
-export const signInByUsername = async (page: Page, username: string) => {
+export const signInByUsername = async (page: Page, username: string): Promise<void> => {
   const secretKey = process.env.CLERK_SECRET_KEY;
 
   if (secretKey == null) {
     throw new Error("CLERK_SECRET_KEY is required for signInByUsername");
   }
 
-  // Find user by username via Clerk REST API
-  const listRes = await fetch(`https://api.clerk.com/v1/users?username=${encodeURIComponent(username)}&limit=1`, {
-    headers: { Authorization: `Bearer ${secretKey}` },
-  });
-
-  if (!listRes.ok) {
-    throw new Error(`Failed to find user by username ${username}: ${listRes.status}`);
-  }
+  const listRes = await fetchWithRetry(
+    `https://api.clerk.com/v1/users?username=${encodeURIComponent(username)}&limit=1`,
+    { headers: { Authorization: `Bearer ${secretKey}` } },
+    `Find user by username ${username}`,
+  );
 
   const users = (await listRes.json()) as { id: string }[];
 
@@ -55,19 +100,18 @@ export const signInByUsername = async (page: Page, username: string) => {
     throw new Error(`No user found with username: ${username}`);
   }
 
-  // Create sign-in token
-  const tokenRes = await fetch("https://api.clerk.com/v1/sign_in_tokens", {
-    body: JSON.stringify({ expires_in_seconds: 300, user_id: users[0].id }),
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/json",
+  const tokenRes = await fetchWithRetry(
+    "https://api.clerk.com/v1/sign_in_tokens",
+    {
+      body: JSON.stringify({ expires_in_seconds: 300, user_id: users[0].id }),
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
     },
-    method: "POST",
-  });
-
-  if (!tokenRes.ok) {
-    throw new Error(`Failed to create sign-in token: ${tokenRes.status}`);
-  }
+    "Create sign-in token",
+  );
 
   const { token } = (await tokenRes.json()) as { token: string };
 
@@ -102,6 +146,18 @@ export const signInByUsername = async (page: Page, username: string) => {
   }
 
   await page.waitForFunction(() => window.Clerk?.user !== null, undefined, { timeout: 15_000 });
+};
+
+/**
+ * Sign in by username AND navigate to /dashboard. Every fixture that
+ * expects to land on the dashboard should prefer this over calling
+ * signInByUsername directly and navigating itself — keeps the sequence
+ * (sign in → navigate → wait for hydration) consistent.
+ */
+const signInByUsernameToDashboard = async (page: Page, username: string): Promise<void> => {
+  await signInByUsername(page, username);
+  await page.goto("/dashboard");
+  await page.waitForLoadState("domcontentloaded");
 };
 
 /**
@@ -200,25 +256,23 @@ export async function restorePasswordByUsername(username: string, password: stri
 
 export const test = base.extend<AuthFixtures>({
   adminUser: async ({ page }, use) => {
-    await signInAs(page, testUsers.admin.email);
+    await signInByUsernameToDashboard(page, testUsers.admin.username);
     await use(page);
   },
   freeUser: async ({ page }, use) => {
-    await signInAs(page, testUsers.admin.email);
+    await signInByUsernameToDashboard(page, testUsers.admin.username);
     await use(page);
   },
   freshUser: async ({ page }, use) => {
-    await signInOnly(page, testUsers.fresh.email);
+    await signInByUsername(page, testUsers.fresh.username);
     await use(page);
   },
   passwordProUser: async ({ page }, use) => {
-    await signInByUsername(page, testUsers.passwordPro.username);
-    await page.goto("/dashboard");
-    await page.waitForLoadState("domcontentloaded");
+    await signInByUsernameToDashboard(page, testUsers.passwordPro.username);
     await use(page);
   },
   proUser: async ({ page }, use) => {
-    await signInAs(page, testUsers.pro.email);
+    await signInByUsernameToDashboard(page, testUsers.pro.username);
     await use(page);
   },
 });

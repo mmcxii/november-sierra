@@ -28,7 +28,7 @@ vi.mock("@/lib/db/schema/short-link", () => ({
 }));
 
 vi.mock("@/lib/db/schema/short-slug", () => ({
-  shortSlugsTable: { slug: "slug", userId: "user_id" },
+  shortSlugsTable: { createdAt: "created_at", slug: "slug", type: "type", userId: "user_id" },
 }));
 
 vi.mock("@/lib/utils/short-slug", () => ({
@@ -77,6 +77,21 @@ function setupSelectReturning(rows: unknown[]) {
       where: vi.fn().mockReturnValue({
         limit: vi.fn().mockResolvedValue(rows),
       }),
+    }),
+  });
+}
+
+/**
+ * Queue the current-month short-link count for the free-tier cap check. The
+ * countShortLinksThisMonth helper issues a SELECT ... FROM short_slugs WHERE
+ * ... with no .limit() call (it expects a single aggregate row). Using a
+ * mockReturnValueOnce lets callers stack this before other select mocks so the
+ * cap check runs against the provided count first.
+ */
+function setupCountReturning(count: number) {
+  mockSelect.mockReturnValueOnce({
+    from: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue([{ count }]),
     }),
   });
 }
@@ -202,7 +217,10 @@ describe("createShortLink", () => {
   });
 
   it("rejects custom slug for free users", async () => {
-    //* Arrange
+    //* Arrange — free-tier cap check runs before the Pro-gated customSlug
+    //  check. Keep the count below the cap so the test reaches the customSlug
+    //  guard and asserts the expected PRO_REQUIRED code.
+    setupCountReturning(0);
     const { createShortLink } = await import("./short-link");
 
     //* Act
@@ -213,7 +231,8 @@ describe("createShortLink", () => {
   });
 
   it("rejects password for free users", async () => {
-    //* Arrange
+    //* Arrange — same cap-before-Pro-gate ordering applies to passwords.
+    setupCountReturning(0);
     const { createShortLink } = await import("./short-link");
 
     //* Act
@@ -221,6 +240,54 @@ describe("createShortLink", () => {
 
     //* Assert
     expect(result.error?.code).toBe(API_ERROR_CODES.PRO_REQUIRED);
+  });
+
+  it("rejects create when free-tier monthly cap is reached", async () => {
+    //* Arrange — 20 creations this month already. The cap is defined in
+    //  lib/tier.ts as FREE_TIER_SHORT_LINK_MONTHLY_CAP; any at-or-above value
+    //  should produce SHORT_LINK_LIMIT_REACHED without issuing a urlResolves
+    //  check (intentionally ordered to short-circuit the network call).
+    setupCountReturning(20);
+    const { createShortLink } = await import("./short-link");
+
+    //* Act
+    const result = await createShortLink(FREE_USER, { url: "https://example.com" });
+
+    //* Assert
+    expect(result.error?.code).toBe(API_ERROR_CODES.SHORT_LINK_LIMIT_REACHED);
+    expect(result.error?.status).toBe(403);
+    expect(result.error?.details).toMatchObject({ limit: 20, used: 20 });
+    expect(typeof result.error?.details?.resetsAt).toBe("string");
+  });
+
+  it("allows create when free-tier user is under the cap", async () => {
+    //* Arrange — 19 creations this month; still room for one more.
+    setupCountReturning(19);
+    setupInsertSuccess(MOCK_SHORT_LINK);
+    const { createShortLink } = await import("./short-link");
+
+    //* Act
+    const result = await createShortLink(FREE_USER, { url: "https://example.com" });
+
+    //* Assert
+    expect(result.error).toBeNull();
+    expect(result.data?.slug).toBe("abc23");
+  });
+
+  it("Pro users bypass the monthly cap entirely (no count query)", async () => {
+    //* Arrange — no setupCountReturning call. If createShortLink tried to run
+    //  the count query for a Pro user the mockSelect would return undefined
+    //  and the test would crash. Intentionally relying on that to prove the
+    //  guard is tier-based.
+    setupInsertSuccess(MOCK_SHORT_LINK);
+    const { createShortLink } = await import("./short-link");
+
+    //* Act
+    const result = await createShortLink(PRO_USER, { url: "https://example.com" });
+
+    //* Assert
+    expect(result.error).toBeNull();
+    expect(result.data?.slug).toBe("abc23");
   });
 
   it("rejects duplicate custom slug", async () => {

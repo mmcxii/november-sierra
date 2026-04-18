@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { TranslationKey } from "@/lib/i18n/i18next.d";
 import { X } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -50,6 +51,7 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
   const [customParams, setCustomParams] = React.useState<CustomParam[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<null | string>(null);
+  const [showUpgradeLink, setShowUpgradeLink] = React.useState(false);
 
   //* Handlers
   const buildUrlWithUtm = (baseUrl: string) => {
@@ -95,10 +97,12 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
     setUtmContent("");
     setCustomParams([]);
     setError(null);
+    setShowUpgradeLink(false);
   };
 
   const handleSubmit = async (keepOpen: boolean) => {
     setError(null);
+    setShowUpgradeLink(false);
 
     // Guard against a datetime-local value that's already in the past — picking
     // a date-only entry commits midnight, which is usually behind "now" and
@@ -127,8 +131,17 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
       if (result.success) {
         onCreated(result.shortLink, keepOpen);
         resetForm();
+      } else if (result.error.code === "SHORT_LINK_LIMIT_REACHED") {
+        const resetsAt =
+          typeof result.error.details?.resetsAt === "string" ? new Date(result.error.details.resetsAt) : null;
+        const formattedDate =
+          resetsAt != null && !Number.isNaN(resetsAt.getTime())
+            ? resetsAt.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })
+            : "";
+        setError(t("youveReachedTheFreeTierLimitOf20ShortUrlsThisMonthQuotaResetsOn{{date}}", { date: formattedDate }));
+        setShowUpgradeLink(true);
       } else {
-        setError(t(result.error as TranslationKey));
+        setError(t(result.error.message as TranslationKey));
       }
     } catch {
       setError(t("somethingWentWrong"));
@@ -372,7 +385,18 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
         </>
       )}
 
-      {error != null && <p className="text-destructive text-sm">{error}</p>}
+      {error != null && (
+        <div className="text-destructive space-y-1 text-sm">
+          <p>{error}</p>
+          {showUpgradeLink && (
+            <p>
+              <Link className="underline hover:no-underline" href="/pricing">
+                {t("upgradeToProForUnlimitedShortUrls")}
+              </Link>
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button disabled={loading || url.length === 0} onClick={handleShortenClick}>

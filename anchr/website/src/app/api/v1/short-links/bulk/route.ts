@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   }
   const result = await bulkCreateShortLinks(auth.user, parsed.data.urls);
   if (result.error != null) {
-    return apiError(result.error.code, result.error.message, result.error.status);
+    return apiError(result.error.code, result.error.message, result.error.status, result.error.details);
   }
   after(() => {
     for (const shortLink of result.data) {
