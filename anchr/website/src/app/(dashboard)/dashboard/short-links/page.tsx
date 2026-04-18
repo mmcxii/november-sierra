@@ -1,6 +1,6 @@
 import { ShortLinksContent } from "@/components/dashboard/short-links-content";
 import { requireUser } from "@/lib/auth";
-import { SHORT_DOMAIN, shortDomainUrl } from "@/lib/constants/short-domain";
+import { shortDomainUrl } from "@/lib/constants/short-domain";
 import { db } from "@/lib/db/client";
 import { shortLinksTable } from "@/lib/db/schema/short-link";
 import { initTranslations } from "@/lib/i18n/server";
@@ -38,9 +38,8 @@ const ShortLinksPage: React.FC = async () => {
     <div>
       <h1 className="mb-6 text-2xl font-bold">{t("shortLinks")}</h1>
       <ShortLinksContent
-        hasCustomShortDomain={user.shortDomain != null && user.shortDomainVerified}
+        customShortDomain={user.shortDomain != null && user.shortDomainVerified ? user.shortDomain : null}
         isPro={isProUser(user)}
-        shortDomain={SHORT_DOMAIN}
         shortLinks={shortLinks}
       />
     </div>

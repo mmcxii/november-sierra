@@ -23,14 +23,13 @@ export type ShortLinkItem = {
 };
 
 type ShortLinksContentProps = {
-  /** User-configured short domain (users.short_domain) — verified flag is
-   *  passed via `hasCustomShortDomain` rather than the raw domain to keep the
-   *  gating contract explicit. Custom slugs are only surfaceable via a
-   *  user-owned short domain, so we gate the UI on the verified flag. */
-  hasCustomShortDomain: boolean;
+  /** The user's verified short domain (non-null only when configured AND
+   *  verified). Custom slugs are only surfaceable via a user-owned short
+   *  domain, so we gate the UI on the presence of this value and also use it
+   *  as the prefix shown next to the custom-slug input. */
+  customShortDomain: null | string;
   /** Pro-tier user; unlocks the UI even for auto-gen slugs. */
   isPro: boolean;
-  shortDomain: string;
   shortLinks: ShortLinkItem[];
 };
 
@@ -40,7 +39,7 @@ type SuccessMessage = {
 };
 
 export const ShortLinksContent: React.FC<ShortLinksContentProps> = (props) => {
-  const { hasCustomShortDomain, isPro, shortDomain, shortLinks: initialShortLinks } = props;
+  const { customShortDomain, isPro, shortLinks: initialShortLinks } = props;
 
   //* State
   const { t } = useTranslation();
@@ -85,12 +84,7 @@ export const ShortLinksContent: React.FC<ShortLinksContentProps> = (props) => {
         {successMessages.map((msg) => (
           <SuccessToast id={msg.id} key={msg.id} onDismiss={dismissSuccess} shortUrl={msg.shortUrl} />
         ))}
-        <CreateShortLinkForm
-          hasCustomShortDomain={hasCustomShortDomain}
-          isPro={isPro}
-          onCreated={handleCreated}
-          shortDomain={shortDomain}
-        />
+        <CreateShortLinkForm customShortDomain={customShortDomain} isPro={isPro} onCreated={handleCreated} />
       </div>
     );
   }
@@ -113,12 +107,7 @@ export const ShortLinksContent: React.FC<ShortLinksContentProps> = (props) => {
           <DialogHeader>
             <DialogTitle>{t("createShortLink")}</DialogTitle>
           </DialogHeader>
-          <CreateShortLinkForm
-            hasCustomShortDomain={hasCustomShortDomain}
-            isPro={isPro}
-            onCreated={handleCreated}
-            shortDomain={shortDomain}
-          />
+          <CreateShortLinkForm customShortDomain={customShortDomain} isPro={isPro} onCreated={handleCreated} />
         </DialogContent>
       </Dialog>
 

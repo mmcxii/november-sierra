@@ -17,22 +17,22 @@ type CustomParam = {
 };
 
 type CreateShortLinkFormProps = {
-  /** True when the user has a verified users.short_domain configured. Custom
-   *  slugs are only resolvable via the custom-short-domain middleware path —
-   *  for users on the default anch.to domain the field would be write-only.
-   *  We gate the UI behind verified ownership to avoid that confusion and to
-   *  prevent users from "reserving" a path on anch.to they don't actually own. */
-  hasCustomShortDomain: boolean;
+  /** The user's verified short domain, or null when the user is on the default
+   *  anch.to domain (or hasn't verified their configured one). Custom slugs are
+   *  only resolvable via the custom-short-domain middleware path — for users
+   *  without a verified domain the field would be write-only, so we gate the
+   *  UI on the presence of the verified domain and also use it to display the
+   *  domain as a prefix to make the final short URL obvious. */
+  customShortDomain: null | string;
   /** Pro-tier user — unlocks the password field. */
   isPro: boolean;
-  shortDomain: string;
   onCreated: (shortLink: ShortLinkItem, keepOpen: boolean) => void;
 };
 
 export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) => {
-  const { hasCustomShortDomain, isPro, onCreated, shortDomain } = props;
+  const { customShortDomain, isPro, onCreated } = props;
 
-  const customSlugAllowed = isPro && hasCustomShortDomain;
+  const customSlugAllowed = isPro && customShortDomain != null;
 
   //* State
   const { t } = useTranslation();
@@ -157,6 +157,10 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
     setExpiresAt(e.target.value);
   };
 
+  const handleClearExpiresAt = () => {
+    setExpiresAt("");
+  };
+
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
   };
@@ -207,7 +211,7 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
 
   return (
     <div className="space-y-4">
-      <div>
+      <div className="space-y-1">
         <Label htmlFor="short-link-url">{t("destinationUrl")}</Label>
         <Input
           autoFocus
@@ -221,7 +225,7 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
 
       {/* Options */}
       <button
-        className="text-muted-foreground hover:text-foreground text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground block w-fit text-sm font-medium"
         onClick={handleToggleOptions}
         type="button"
       >
@@ -231,13 +235,13 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
 
       {showOptions && (
         <div className="space-y-3 pl-2">
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="custom-slug">
               {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- parentheses wrapping translated label */}
               {t("customShortUrl")} {!isPro && <span className="text-muted-foreground">({t("pro")})</span>}
             </Label>
             <div className="flex items-center gap-1">
-              <span className="text-muted-foreground text-sm">{shortDomain}/</span>
+              {customShortDomain != null && <span className="text-muted-foreground text-sm">{customShortDomain}/</span>}
               <Input
                 className="flex-1"
                 disabled={!customSlugAllowed}
@@ -247,25 +251,39 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
                 value={customSlug}
               />
             </div>
-            {isPro && !hasCustomShortDomain && (
-              <p className="text-muted-foreground mt-1 text-xs">
+            {isPro && customShortDomain == null && (
+              <p className="text-muted-foreground text-xs">
                 {t("customPathsRequireAVerifiedShortDomainConfigureOneInSettings")}
               </p>
             )}
           </div>
 
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="expires-at">{t("expires")}</Label>
-            <Input
-              id="expires-at"
-              min={new Date().toISOString().slice(0, 16)}
-              onChange={handleExpiresAtChange}
-              type="datetime-local"
-              value={expiresAt}
-            />
+            <div className="flex items-center gap-1">
+              <Input
+                className="flex-1"
+                id="expires-at"
+                min={new Date().toISOString().slice(0, 16)}
+                onChange={handleExpiresAtChange}
+                type="datetime-local"
+                value={expiresAt}
+              />
+              {expiresAt.length > 0 && (
+                <Button
+                  aria-label={t("clear")}
+                  onClick={handleClearExpiresAt}
+                  size="sm"
+                  type="button"
+                  variant="tertiary"
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
-          <div>
+          <div className="space-y-1">
             <Label htmlFor="password">
               {/* eslint-disable-next-line november-sierra/no-raw-string-jsx -- parentheses wrapping translated label */}
               {t("password")} {!isPro && <span className="text-muted-foreground">({t("pro")})</span>}
@@ -286,7 +304,7 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
       {isPro && (
         <>
           <button
-            className="text-muted-foreground hover:text-foreground text-sm font-medium"
+            className="text-muted-foreground hover:text-foreground block w-fit text-sm font-medium"
             onClick={handleToggleUtm}
             type="button"
           >
@@ -297,16 +315,16 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
           {showUtm && (
             <div className="space-y-3 pl-2">
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="utm-source">{t("source")}</Label>
                   <Input id="utm-source" onChange={handleUtmSourceChange} placeholder="twitter" value={utmSource} />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="utm-medium">{t("medium")}</Label>
                   <Input id="utm-medium" onChange={handleUtmMediumChange} placeholder="social" value={utmMedium} />
                 </div>
               </div>
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="utm-campaign">{t("campaign")}</Label>
                 <Input
                   id="utm-campaign"
@@ -316,11 +334,11 @@ export const CreateShortLinkForm: React.FC<CreateShortLinkFormProps> = (props) =
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="utm-term">{t("term")}</Label>
                   <Input id="utm-term" onChange={handleUtmTermChange} placeholder="keyword" value={utmTerm} />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <Label htmlFor="utm-content">{t("content")}</Label>
                   <Input
                     id="utm-content"
