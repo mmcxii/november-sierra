@@ -1,6 +1,7 @@
 import type { ApiKeyUser } from "@/lib/api/auth";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAnalyticsTools } from "./tools/analytics";
+import { registerCustomThemeTools } from "./tools/custom-theme";
 import { registerDiscoveryTools } from "./tools/discovery";
 import { registerGroupTools } from "./tools/group";
 import { registerLinkTools } from "./tools/link";
@@ -18,6 +19,7 @@ export function createMcpServer(user: ApiKeyUser): McpServer {
   registerGroupTools(server, user);
   registerShortLinkTools(server, user);
   registerAnalyticsTools(server, user);
+  registerCustomThemeTools(server, user);
   registerDiscoveryTools(server);
 
   return server;

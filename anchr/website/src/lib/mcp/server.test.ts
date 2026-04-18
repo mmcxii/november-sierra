@@ -13,7 +13,6 @@ const FREE_USER: ApiKeyUser = { id: "user-2", tier: "free", username: "freeuser"
 const ALL_TOOL_NAMES = [
   "get_profile",
   "update_profile",
-  "update_theme",
   "list_links",
   "create_link",
   "update_link",
@@ -34,11 +33,17 @@ const ALL_TOOL_NAMES = [
   "get_referrer_analytics",
   "get_device_analytics",
   "get_click_history",
+  "list_themes",
+  "get_theme",
+  "create_custom_theme",
+  "update_custom_theme",
+  "delete_custom_theme",
+  "assign_theme",
   "lookup_profile",
 ];
 
 describe("createMcpServer", () => {
-  it("registers exactly the 24 expected tools", () => {
+  it("registers exactly the expected tools", () => {
     //* Act
     const server = createMcpServer(PRO_USER);
 
