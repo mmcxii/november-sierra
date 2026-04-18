@@ -53,7 +53,7 @@ export const ShortLinkRow: React.FC<ShortLinkRowProps> = (props) => {
   };
 
   return (
-    <tr className="border-b last:border-b-0">
+    <tr className="border-border border-b last:border-b-0">
       <td className="px-4 py-3">
         <div className="flex items-center gap-1">
           <span className="font-mono text-sm">{shortLink.shortUrl.replace("https://", "")}</span>
@@ -73,8 +73,8 @@ export const ShortLinkRow: React.FC<ShortLinkRowProps> = (props) => {
           <ExternalLink className="size-3 shrink-0" />
         </a>
       </td>
-      <td className="text-muted-foreground hidden px-4 py-3 sm:table-cell">{relativeTime(shortLink.createdAt)}</td>
-      <td className="text-muted-foreground hidden px-4 py-3 md:table-cell">
+      <td className="text-muted-foreground px-4 py-3 text-xs">{relativeTime(shortLink.createdAt)}</td>
+      <td className="text-muted-foreground px-4 py-3 text-xs">
         {shortLink.expiresAt != null ? new Date(shortLink.expiresAt).toLocaleDateString() : t("never")}
       </td>
       <td className="px-4 py-3">

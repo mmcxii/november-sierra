@@ -111,16 +111,16 @@ export const ShortLinksContent: React.FC<ShortLinksContentProps> = (props) => {
         </DialogContent>
       </Dialog>
 
-      <div className="rounded-md border">
+      <div className="border-border overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b">
-              <th className="px-4 py-3 text-left font-medium">{t("shortUrl")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("destination")}</th>
-              <th className="hidden px-4 py-3 text-left font-medium sm:table-cell">{t("created")}</th>
-              <th className="hidden px-4 py-3 text-left font-medium md:table-cell">{t("expires")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("status")}</th>
-              <th className="px-4 py-3 text-right font-medium">{t("actions")}</th>
+            <tr className="border-border border-b">
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">{t("shortUrl")}</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">{t("destination")}</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">{t("created")}</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">{t("expires")}</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">{t("status")}</th>
+              <th className="text-muted-foreground px-4 py-3 text-right font-medium">{t("actions")}</th>
             </tr>
           </thead>
           <tbody>
