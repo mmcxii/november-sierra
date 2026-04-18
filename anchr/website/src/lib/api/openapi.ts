@@ -398,6 +398,140 @@ export function generateOpenApiSpec(baseUrl: string) {
     tags: ["Groups"],
   });
 
+  // ─── Short Links ────────────────────────────────────────────────────────────
+
+  registry.registerPath({
+    method: "get",
+    operationId: "listShortLinks",
+    path: "/api/v1/short-links",
+    responses: {
+      200: { description: "List of all short links for the authenticated user" },
+      401: { description: "Unauthorized" },
+    },
+    security: bearerAuth,
+    summary: "List all short links",
+    tags: ["Short Links"],
+  });
+
+  registry.registerPath({
+    method: "post",
+    operationId: "createShortLink",
+    path: "/api/v1/short-links",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              customSlug: z.string().optional(),
+              expiresAt: z.string().datetime().optional(),
+              password: z.string().optional(),
+              url: z.string(),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      201: { description: "Created short link" },
+      400: { description: "Validation error" },
+      401: { description: "Unauthorized" },
+      403: { description: "Short link limit reached" },
+    },
+    security: bearerAuth,
+    summary: "Create a short link",
+    tags: ["Short Links"],
+  });
+
+  registry.registerPath({
+    method: "get",
+    operationId: "getShortLink",
+    path: "/api/v1/short-links/{id}",
+    request: {
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Short link" },
+      401: { description: "Unauthorized" },
+      404: { description: "Short link not found" },
+    },
+    security: bearerAuth,
+    summary: "Get a short link",
+    tags: ["Short Links"],
+  });
+
+  registry.registerPath({
+    method: "patch",
+    operationId: "updateShortLink",
+    path: "/api/v1/short-links/{id}",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              customSlug: z.string().nullable().optional(),
+              expiresAt: z.string().datetime().nullable().optional(),
+              password: z.string().nullable().optional(),
+              url: z.string().optional(),
+            }),
+          },
+        },
+      },
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Updated short link" },
+      400: { description: "Validation error" },
+      401: { description: "Unauthorized" },
+      404: { description: "Short link not found" },
+    },
+    security: bearerAuth,
+    summary: "Update a short link",
+    tags: ["Short Links"],
+  });
+
+  registry.registerPath({
+    method: "delete",
+    operationId: "deleteShortLink",
+    path: "/api/v1/short-links/{id}",
+    request: {
+      params: z.object({ id: z.string() }),
+    },
+    responses: {
+      200: { description: "Short link deleted" },
+      401: { description: "Unauthorized" },
+      404: { description: "Short link not found" },
+    },
+    security: bearerAuth,
+    summary: "Delete a short link",
+    tags: ["Short Links"],
+  });
+
+  registry.registerPath({
+    method: "post",
+    operationId: "bulkCreateShortLinks",
+    path: "/api/v1/short-links/bulk",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              urls: z.array(z.object({ url: z.string() })),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      201: { description: "Created short links" },
+      400: { description: "Validation error" },
+      401: { description: "Unauthorized" },
+      403: { description: "Pro required" },
+    },
+    security: bearerAuth,
+    summary: "Bulk create short links (Pro)",
+    tags: ["Short Links"],
+  });
+
   // ─── Analytics ──────────────────────────────────────────────────────────────
 
   const dateRangeParams = z.object({
@@ -489,6 +623,9 @@ export function generateOpenApiSpec(baseUrl: string) {
     "group.created",
     "group.updated",
     "group.deleted",
+    "short_link.created",
+    "short_link.updated",
+    "short_link.deleted",
   ]);
 
   registry.registerPath({
