@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
           </svg>
         </a>
 
-        <p className="text-ns-footer-text text-center text-sm">{t("©2026NovemberSierra·BuiltInThePacificNorthwest")}</p>
+        <p className="text-ns-footer-text text-center text-sm">{t("2026NovemberSierraBuiltInThePacificNorthwest")}</p>
       </div>
     </footer>
   );

@@ -44,7 +44,9 @@ export const Products: React.FC = () => {
               />
             </div>
             <p className="text-ns-text text-lg">
-              {t("aCustomizableLinkInBioWithAFullThemeStudioBuiltInAnalyticsADeveloperApiAndAiAgentIntegrationViaMcp")}
+              {t(
+                "aLinkInBioAndUrlShortenerWithAFullThemeStudioBuiltInAnalyticsADeveloperApiAndAiAgentIntegrationViaMcp",
+              )}
             </p>
           </div>
         </a>

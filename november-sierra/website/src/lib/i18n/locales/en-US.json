@@ -1,5 +1,6 @@
 {
-  "aCustomizableLinkInBioWithAFullThemeStudioBuiltInAnalyticsADeveloperApiAndAiAgentIntegrationViaMcp": "A customizable link-in-bio with a full theme studio, built-in analytics, a developer API, and AI agent integration via MCP.",
+  "2026NovemberSierraBuiltInThePacificNorthwest": "© 2026 November Sierra · Built in the Pacific Northwest",
+  "aLinkInBioAndUrlShortenerWithAFullThemeStudioBuiltInAnalyticsADeveloperApiAndAiAgentIntegrationViaMcp": "A link-in-bio and URL shortener with a full theme studio, built-in analytics, a developer API, and AI agent integration via MCP.",
   "about": "About",
   "anchr": "Anchr",
   "buildingProductsWithIntuitiveInterfacesDesignedForPeopleAndCleanApisDesignedForAgents": "Building products with intuitive interfaces designed for people and clean APIs designed for agents.",
@@ -15,7 +16,6 @@
   "messageSent": "Message sent",
   "name": "Name",
   "novemberSierraBuildsProductsWithIntuitiveInterfacesDesignedForPeopleAndCleanApisDesignedForAgents": "November Sierra builds products with intuitive interfaces designed for people and clean APIs designed for agents.",
-  "novemberSierra—Thoughtful.Intentional.Software.": "November Sierra — Thoughtful. Intentional. Software.",
   "products": "Products",
   "scrollToAboutSection": "Scroll to about section",
   "selectATopic": "Select a topic",
@@ -27,13 +27,11 @@
   "switchTo{{theme}}Theme": "Switch to {{theme}} theme",
   "thanksForReachingOutWellGetBackToYouSoon": "Thanks for reaching out! We'll get back to you soon.",
   "thoughtful": "Thoughtful.",
-  "thoughtful.Intentional.Software.": "Thoughtful. Intentional. Software.",
   "whatsThisAbout": "What's this about?",
   "workingTogether": "Working together",
   "youExampleCom": "you@example.com",
   "yourHarborForEveryConnection": "Your harbor for every connection",
   "yourMessage": "Your message…",
   "yourName": "Your name",
-  "yourProducts": "Your products",
-  "©2026NovemberSierra·BuiltInThePacificNorthwest": "© 2026 November Sierra · Built in the Pacific Northwest"
+  "yourProducts": "Your products"
 }

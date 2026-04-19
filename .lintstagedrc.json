@@ -10,5 +10,8 @@
   "anchr/website/src/lib/i18n/locales/*.json": ["node --no-warnings scripts/validate-i18n-keys.ts anchr/website"],
   "november-sierra/website/**/*.{ts,tsx,js,cjs,mjs}": [
     "bash -c 'cd november-sierra/website && ../../node_modules/.bin/eslint --fix \"$@\"' --"
+  ],
+  "november-sierra/website/src/lib/i18n/locales/*.json": [
+    "node --no-warnings scripts/validate-i18n-keys.ts november-sierra/website"
   ]
 }
