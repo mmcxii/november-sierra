@@ -200,6 +200,9 @@ export const SignUpForm: React.FC = () => {
       <CardHeader className="mt-[8vh] w-full max-w-sm items-center text-center">
         <CardTitle className="text-xl text-[rgb(var(--m-text))]">{t("createAnAccount")}</CardTitle>
         <CardDescription className="text-[rgb(var(--m-muted))]">{t("startBuildingYourPage")}</CardDescription>
+        <p className="tracking-anc-caps-extra mt-3 text-xs text-[rgb(var(--m-accent))] uppercase">
+          {t("signUpAndGetYourFirstMonthOfProFree")}
+        </p>
       </CardHeader>
       <CardContent className="w-full max-w-sm pt-6">
         <form className="flex flex-col gap-4" onSubmit={signUpForm.handleSubmit(onSignUp)}>

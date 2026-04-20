@@ -5,6 +5,16 @@ import { usersTable } from "./db/schema/user";
 import { removeDomain } from "./vercel";
 
 /**
+ * Duration of the unconditional Pro grant every new user receives at signup
+ * (and that backfill-migrates to existing free users on rollout). Referenced
+ * by the Clerk `user.created` webhook, the backfill migration, the dashboard
+ * welcome banner's countdown, and any marketing copy surfaces that advertise
+ * the free first month. Changing this value is a conscious launch-day decision
+ * — every consumer reads from here, so a single edit flows everywhere.
+ */
+export const SIGNUP_GRANT_DAYS = 30;
+
+/**
  * Grant Pro access to a user.
  *
  * - `durationDays === null` → lifetime pro. Single UPDATE, clears expiry.

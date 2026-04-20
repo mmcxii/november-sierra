@@ -102,7 +102,7 @@ const PricingPage: React.FC = async () => {
                   <h3 className="font-medium">{t("referFriends")}</h3>
                 </div>
                 <p className="m-muted-70 text-sm leading-relaxed">
-                  {t("referAFriendYouBothGet1FreeMonthOfProWhenTheySubscribe")}
+                  {t("referAFriendTheyGetAnExtraFreeMonthOfProOnTopOfTheirFirstMonthYouGetAFreeMonthWhenTheySubscribe")}
                 </p>
               </div>
               <div className="m-card-bg-bg m-card-border flex flex-1 flex-col gap-3 rounded-2xl p-6">
@@ -111,7 +111,7 @@ const PricingPage: React.FC = async () => {
                   <h3 className="font-medium">{t("switchFromACompetitor")}</h3>
                 </div>
                 <p className="m-muted-70 text-sm leading-relaxed">
-                  {t("importYourLinksFromAnotherPlatformAndGet1FreeMonthOfPro")}
+                  {t("importYourLinksFromAnotherPlatformAndGetAnExtraFreeMonthOfProOnTopOfYourFirstMonth")}
                 </p>
               </div>
             </div>

@@ -1,11 +1,28 @@
 import { db } from "@/lib/db/client";
 import { usersTable } from "@/lib/db/schema/user";
 import { envSchema } from "@/lib/env";
+import { SIGNUP_GRANT_DAYS, grantPro } from "@/lib/tier.server";
 import type { WebhookEvent } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { generateUsername } from "./utils";
+
+// Emit a PostHog event from the webhook without forcing posthog-node into the
+// client/edge bundles that import @/lib/db via shared modules. Import is lazy
+// so build-time bundle analyzers don't trace through to the node-only SDK.
+async function capturePosthog(distinctId: string, event: string, properties: Record<string, unknown>): Promise<void> {
+  try {
+    const { PostHog } = await import("posthog-node");
+    const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY ?? "", {
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    });
+    posthog.capture({ distinctId, event, properties });
+    await posthog.shutdown();
+  } catch (error) {
+    console.error(`[clerk webhook] PostHog capture failed for ${event}:`, error);
+  }
+}
 
 export async function POST(req: Request) {
   const headerPayload = await headers();
@@ -46,6 +63,12 @@ export async function POST(req: Request) {
         id,
         username,
       });
+
+      // Every new signup gets an unconditional first month of Pro. `grantPro`
+      // stacks via its CASE expression, so any referral-bonus grant that lands
+      // before or after this call adds on top rather than overwriting.
+      await grantPro(id, SIGNUP_GRANT_DAYS);
+      await capturePosthog(id, "signup_grant_issued", { durationDays: SIGNUP_GRANT_DAYS });
 
       break;
     }

@@ -76,6 +76,7 @@
   "scripts": {
     "build": "next build",
     "db:backfill-group-slugs": "npx tsx ../../scripts/backfill-group-slugs.ts",
+    "db:backfill-signup-grant": "npx tsx ../../scripts/backfill-signup-grant.ts",
     "db:check": "drizzle-kit check",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

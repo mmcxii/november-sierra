@@ -8,6 +8,22 @@ import { removeDomain } from "@/lib/vercel";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 
+// Fire a PostHog event from the Stripe webhook. Lazy import mirrors
+// account-deletion-cleanup so posthog-node stays out of any bundles that
+// transitively import this file.
+async function capturePosthog(distinctId: string, event: string, properties: Record<string, unknown>): Promise<void> {
+  try {
+    const { PostHog } = await import("posthog-node");
+    const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY ?? "", {
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    });
+    posthog.capture({ distinctId, event, properties });
+    await posthog.shutdown();
+  } catch (error) {
+    console.error(`[stripe webhook] PostHog capture failed for ${event}:`, error);
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
@@ -144,6 +160,15 @@ export async function POST(req: Request) {
         break;
       }
 
+      // Snapshot the pre-conversion state so we can fire signup_grant_converted
+      // with `daysRemaining` computed against the grant that the UPDATE below
+      // is about to wipe out (proExpiresAt → null).
+      const [preUpdate] = await db
+        .select({ proExpiresAt: usersTable.proExpiresAt, referredBy: usersTable.referredBy })
+        .from(usersTable)
+        .where(eq(usersTable.id, userId))
+        .limit(1);
+
       await db
         .update(usersTable)
         .set({
@@ -179,15 +204,17 @@ export async function POST(req: Request) {
       await ensureQuickLinksGroup(userId);
 
       // Reward referrer if user was referred
-      const [user] = await db
-        .select({ referredBy: usersTable.referredBy })
-        .from(usersTable)
-        .where(eq(usersTable.id, userId))
-        .limit(1);
-
-      if (user?.referredBy != null) {
-        await grantPro(user.referredBy, 30);
+      if (preUpdate?.referredBy != null) {
+        await grantPro(preUpdate.referredBy, 30);
         await db.update(usersTable).set({ referredBy: null, updatedAt: new Date() }).where(eq(usersTable.id, userId));
+      }
+
+      // If this user still had an unexpired signup/referral grant on the clock,
+      // they're a trial-to-paid conversion — fire the funnel event so we can
+      // plot conversion rate against days-remaining in PostHog.
+      if (preUpdate?.proExpiresAt != null && preUpdate.proExpiresAt > new Date()) {
+        const daysRemaining = Math.ceil((preUpdate.proExpiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+        await capturePosthog(userId, "signup_grant_converted", { daysRemaining });
       }
 
       break;

@@ -32,19 +32,24 @@ export const Hero: React.FC<HeroProps> = (props) => {
             <p className="m-muted-80 mx-auto max-w-lg text-lg leading-relaxed sm:text-xl lg:mx-0">
               {t("everyLinkYouShareAllInOnePlace")}
             </p>
-            <div className="flex items-center gap-4">
-              <Link
-                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center rounded-md px-6 text-sm font-medium transition-colors"
-                href="/sign-up"
-              >
-                {t("getStarted")}
-              </Link>
-              <Link
-                className="border-primary/40 text-primary hover:border-primary hover:bg-primary hover:text-primary-foreground inline-flex h-10 items-center rounded-md border bg-transparent px-6 text-sm font-medium transition-colors"
-                href="/sign-in"
-              >
-                {t("signIn")}
-              </Link>
+            <div className="flex flex-col items-center gap-4 lg:items-start">
+              <span className="m-accent-12-bg m-accent-color rounded-full px-3 py-1 text-xs font-semibold">
+                {t("signUpAndGetYourFirstMonthOfProFree")}
+              </span>
+              <div className="flex items-center gap-4">
+                <Link
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center rounded-md px-6 text-sm font-medium transition-colors"
+                  href="/sign-up"
+                >
+                  {t("getStarted")}
+                </Link>
+                <Link
+                  className="border-primary/40 text-primary hover:border-primary hover:bg-primary hover:text-primary-foreground inline-flex h-10 items-center rounded-md border bg-transparent px-6 text-sm font-medium transition-colors"
+                  href="/sign-in"
+                >
+                  {t("signIn")}
+                </Link>
+              </div>
             </div>
           </div>
         </div>

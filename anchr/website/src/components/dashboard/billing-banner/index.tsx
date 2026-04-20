@@ -1,5 +1,6 @@
 "use client";
 
+import { dismissAlert } from "@/app/(dashboard)/dashboard/import-actions";
 import { dismissDomainRemovedBanner } from "@/app/(dashboard)/dashboard/settings/actions";
 import { Button } from "@/components/ui/button";
 import type { SessionUser } from "@/lib/auth";
@@ -9,7 +10,7 @@ import { Loader2, X } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { VARIANT_CONFIG, resolveVariant } from "./utils";
+import { SIGNUP_GRANT_WELCOME_ALERT_ID, VARIANT_CONFIG, resolveVariant } from "./utils";
 
 export type BillingBannerProps = {
   user: SessionUser;
@@ -19,9 +20,10 @@ export type BillingBannerProps = {
  * Global dashboard billing banner shown at the top of every dashboard page.
  *
  * Renders at most ONE banner at a time, prioritized by urgency:
- *   1. payment-failed (red)    — Stripe is retrying the card, user must act
- *   2. domain-removed (amber)  — user's custom domain was removed on downgrade
- *   3. referral-expiring (gold) — referral Pro expires within 7 days
+ *   1. payment-failed (red)       — Stripe is retrying the card, user must act
+ *   2. domain-removed (amber)     — user's custom domain was removed on downgrade
+ *   3. referral-expiring (gold)   — referral/signup Pro expires within 7 days
+ *   4. signup-grant-welcome (gold) — first week of signup grant, dismissible
  *
  * Renders nothing for healthy Pro or normal free-tier users.
  */
@@ -31,6 +33,7 @@ export const BillingBanner: React.FC<BillingBannerProps> = (props) => {
   //* State
   const { t } = useTranslation();
   const [dismissed, setDismissed] = React.useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = React.useState(false);
   const { loading: upgradeLoading, startCheckout } = useStripeCheckout();
 
   //* Variables
@@ -45,11 +48,20 @@ export const BillingBanner: React.FC<BillingBannerProps> = (props) => {
     void dismissDomainRemovedBanner();
   };
 
+  const handleDismissWelcomeBanner = () => {
+    setWelcomeDismissed(true);
+    void dismissAlert(SIGNUP_GRANT_WELCOME_ALERT_ID);
+  };
+
   const handleUpgradeClick = () => {
     void startCheckout();
   };
 
   if (variant == null || config == null || Icon == null || dismissed) {
+    return null;
+  }
+
+  if (variant === "signup-grant-welcome" && welcomeDismissed) {
     return null;
   }
 
@@ -84,6 +96,16 @@ export const BillingBanner: React.FC<BillingBannerProps> = (props) => {
               <X className="size-4" />
             </button>
           </>
+        )}
+        {variant === "signup-grant-welcome" && (
+          <button
+            aria-label={t("dismiss")}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            onClick={handleDismissWelcomeBanner}
+            type="button"
+          >
+            <X className="size-4" />
+          </button>
         )}
       </div>
     </div>

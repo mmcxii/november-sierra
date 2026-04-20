@@ -102,9 +102,10 @@ export const PricingCards: React.FC<PricingCardsProps> = (props) => {
           </div>
           <p className="m-muted-50 mb-6 text-sm">{t("youreReadyToChartYourOwnCourse")}</p>
           <div className="mb-2 text-4xl font-bold">{interval === "monthly" ? t("$7Mo") : t("$5Mo")}</div>
-          <p className={cn("m-muted-50 mb-8 text-sm", { invisible: interval !== "annual" })}>
+          <p className={cn("m-muted-50 mb-2 text-sm", { invisible: interval !== "annual" })}>
             {t("$60BilledAnnually")}
           </p>
+          <p className="m-accent-color mb-6 text-sm font-semibold">{t("freeForYourFirstMonth")}</p>
           <p className="m-muted-50 mb-4 text-sm font-medium">{t("everythingInFreePlus")}</p>
           <ul className="flex flex-col gap-3">
             {PRO_FEATURES.map((key) => (

@@ -172,6 +172,17 @@ export async function createCheckoutSession(interval: CheckoutInterval = "monthl
 
   const priceId = interval === "annual" ? envSchema.STRIPE_PRO_PRICE_ID_ANNUAL : envSchema.STRIPE_PRO_PRICE_ID_MONTHLY;
 
+  // Honor any remaining signup/referral Pro grant by delaying the first Stripe
+  // charge until the grant's natural expiry. Without this, a user who upgrades
+  // on day 10 of their free month would forfeit the remaining 20 days — paying
+  // early would cost them time, which breaks the "your first month is free"
+  // marketing promise. The `trial_end` Unix timestamp is only set when the
+  // user has unexpired grant time on the clock.
+  const trialEnd =
+    user.proExpiresAt != null && user.proExpiresAt.getTime() > Date.now()
+      ? Math.floor(user.proExpiresAt.getTime() / 1000)
+      : undefined;
+
   try {
     const session = await stripe.checkout.sessions.create({
       client_reference_id: userId,
@@ -179,6 +190,7 @@ export async function createCheckoutSession(interval: CheckoutInterval = "monthl
       cancel_url: `${envSchema.NEXT_PUBLIC_APP_URL}/dashboard/settings?checkout=cancelled`,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
+      ...(trialEnd != null && { subscription_data: { trial_end: trialEnd } }),
       success_url: `${envSchema.NEXT_PUBLIC_APP_URL}/dashboard/settings?checkout=success`,
     });
 
