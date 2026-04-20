@@ -1,13 +1,33 @@
+import { auth as betterAuth } from "@/lib/better-auth/server";
+import { isWhitelistedForBetterAuth } from "@/lib/better-auth/whitelist";
 import { db } from "@/lib/db/client";
 import { usersTable } from "@/lib/db/schema/user";
 import { envSchema } from "@/lib/env";
 import { cleanupExpiredPro } from "@/lib/tier.server";
-import { auth } from "@clerk/nextjs/server";
+import { auth as clerkAuth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import * as React from "react";
 
 export type SessionUser = typeof usersTable.$inferSelect;
+
+// Shim matching Clerk's `auth()` shape. Whitelisted users resolve via Better
+// Auth; everyone else stays on Clerk. Zero changes at the ~25 call sites of
+// `auth()`/`getCurrentUser()` — they keep their existing `{ userId }` contract.
+export async function auth(): Promise<{ userId: null | string }> {
+  const clerkUserId = (await clerkAuth()).userId;
+  if (isWhitelistedForBetterAuth(clerkUserId)) {
+    return { userId: clerkUserId };
+  }
+
+  const session = await betterAuth.api.getSession({ headers: await headers() });
+  if (session?.user.id != null && isWhitelistedForBetterAuth(session.user.id)) {
+    return { userId: session.user.id };
+  }
+
+  return { userId: clerkUserId };
+}
 
 export const getCurrentUser = React.cache(async (): Promise<null | SessionUser> => {
   const { userId } = await auth();

@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "@electric-sql/pglite": "^0.4.4",
     "commitlint": "20.5.0",
     "eslint": "^10.2.1",
     "husky": "9.1.7",

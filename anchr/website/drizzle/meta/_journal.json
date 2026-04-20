@@ -91,6 +91,13 @@
       "tag": "0012_sour_marauders",
       "version": "7",
       "when": 1776338097994
+    },
+    {
+      "breakpoints": true,
+      "idx": 13,
+      "tag": "0013_better-auth-init",
+      "version": "7",
+      "when": 1776660953796
     }
   ],
   "version": "7"

@@ -224,3 +224,132 @@ export async function rateLimitShortUrlRedirect(
     return { limited: false, response: null };
   }
 }
+
+// ─── Auth Rate Limiter ──────────────────────────────────────────────────────
+//
+// Auth endpoints (/api/v1/auth/*) get dedicated per-path IP-keyed buckets
+// instead of the data-plane Free/Pro/Unauth tiers used by rateLimitRequest.
+// Windows are tighter than the data-plane defaults because auth routes are
+// brute-force targets and have no legitimate high-throughput caller.
+//
+// Per-email and per-user scoping is done in-handler (the recovery-code
+// redeem route; BA's built-in rateLimit covers the per-email path for
+// BA-owned endpoints since it runs after body parse where the email is
+// available). These IP-keyed buckets are brute-force defense at the edge.
+
+export type AuthBucket = "auth-default" | "email-otp" | "password-reset" | "recovery-codes" | "sign-in" | "two-factor";
+
+const AUTH_RATE_LIMITS: Record<AuthBucket, { limit: number; window: `${number} ${"h" | "m"}` }> = {
+  "auth-default": { limit: 100, window: "1 m" },
+  "email-otp": { limit: 30, window: "15 m" },
+  "password-reset": { limit: 20, window: "1 h" },
+  "recovery-codes": { limit: 20, window: "1 h" },
+  "sign-in": { limit: 30, window: "15 m" },
+  "two-factor": { limit: 30, window: "15 m" },
+};
+
+const authLimiters = new Map<AuthBucket, Ratelimit>();
+
+function getAuthLimiter(bucket: AuthBucket): Ratelimit {
+  let limiter = authLimiters.get(bucket);
+  if (limiter == null) {
+    const { limit, window } = AUTH_RATE_LIMITS[bucket];
+    limiter = new Ratelimit({
+      limiter: Ratelimit.slidingWindow(limit, window),
+      redis: createRedis(),
+    });
+    authLimiters.set(bucket, limiter);
+  }
+  return limiter;
+}
+
+export function bucketForAuthPath(pathname: string): AuthBucket {
+  // Strip a trailing slash so /sign-in/email and /sign-in/email/ both match.
+  const path = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  if (path.startsWith("/api/v1/auth/sign-in") || path.startsWith("/api/v1/auth/sign-up")) {
+    return "sign-in";
+  }
+  if (
+    path.startsWith("/api/v1/auth/request-password-reset") ||
+    path.startsWith("/api/v1/auth/reset-password") ||
+    path.startsWith("/api/v1/auth/forget-password")
+  ) {
+    return "password-reset";
+  }
+  if (path.startsWith("/api/v1/auth/two-factor")) {
+    return "two-factor";
+  }
+  if (path.startsWith("/api/v1/auth/email-otp") || path.startsWith("/api/v1/auth/send-verification-email")) {
+    return "email-otp";
+  }
+  if (path.startsWith("/api/v1/auth/recovery-codes")) {
+    return "recovery-codes";
+  }
+  return "auth-default";
+}
+
+export async function rateLimitAuthRequest(request: Request): Promise<RateLimitResult> {
+  try {
+    const url = new URL(request.url);
+    const bucket = bucketForAuthPath(url.pathname);
+    const { identifier } = resolveIdentifierFromRequest(request);
+    const key = `auth:${bucket}:${identifier}`;
+    const limiter = getAuthLimiter(bucket);
+    const { remaining, reset, success } = await limiter.limit(key);
+
+    const resetSeconds = Math.ceil((reset - Date.now()) / 1000);
+    const headers = buildRateLimitHeaders(AUTH_RATE_LIMITS[bucket].limit, remaining, resetSeconds);
+
+    if (!success) {
+      return {
+        headers,
+        limited: true,
+        response: buildRateLimitResponse(headers, resetSeconds),
+      };
+    }
+    return { headers, limited: false, response: null };
+  } catch (error) {
+    // Fail open on Redis outage — lockout would break legitimate sign-ins
+    // across the whole user base. Auth-level in-handler limits (BA's built-in
+    // + recovery-code per-user) stay in play as defense-in-depth.
+    console.error("[rate-limit] auth limiter failed, allowing request:", error);
+    return { headers: {}, limited: false, response: null };
+  }
+}
+
+// ─── Per-user recovery-code limiter ──────────────────────────────────────────
+//
+// Layered on top of the middleware-level recovery-codes bucket (20/IP/hour).
+// Ticket spec: "5 recovery-code attempts per user-identifier per hour". Keyed
+// on the authenticated userId (available in-handler), not IP — so an attacker
+// spreading IPs doesn't bypass the per-account cap.
+
+const RECOVERY_USER_LIMIT = { limit: 5, window: "1 h" } as const;
+let recoveryUserLimiter: null | Ratelimit = null;
+
+function getRecoveryUserLimiter(): Ratelimit {
+  if (recoveryUserLimiter == null) {
+    recoveryUserLimiter = new Ratelimit({
+      limiter: Ratelimit.slidingWindow(RECOVERY_USER_LIMIT.limit, RECOVERY_USER_LIMIT.window),
+      redis: createRedis(),
+    });
+  }
+  return recoveryUserLimiter;
+}
+
+export async function checkRecoveryCodePerUserRateLimit(
+  userId: string,
+): Promise<{ limited: boolean; response: null | Response }> {
+  try {
+    const { remaining, reset, success } = await getRecoveryUserLimiter().limit(`recovery-user:${userId}`);
+    if (!success) {
+      const resetSeconds = Math.ceil((reset - Date.now()) / 1000);
+      const headers = buildRateLimitHeaders(RECOVERY_USER_LIMIT.limit, remaining, resetSeconds);
+      return { limited: true, response: buildRateLimitResponse(headers, resetSeconds) };
+    }
+    return { limited: false, response: null };
+  } catch (error) {
+    console.error("[rate-limit] recovery-user limiter failed, allowing request:", error);
+    return { limited: false, response: null };
+  }
+}

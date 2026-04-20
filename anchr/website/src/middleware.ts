@@ -1,10 +1,13 @@
-import { rateLimitRequest, rateLimitShortUrlRedirect } from "@/lib/api/rate-limit";
+import { rateLimitAuthRequest, rateLimitRequest, rateLimitShortUrlRedirect } from "@/lib/api/rate-limit";
+import { isWhitelistedForBetterAuth } from "@/lib/better-auth/whitelist";
 import { defaultLocale } from "@/lib/i18n/config";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { neon } from "@neondatabase/serverless";
+import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/onboarding(.*)"]);
+const isAuthApiRoute = createRouteMatcher(["/api/v1/auth(.*)"]);
 const isApiV1Route = createRouteMatcher(["/api/v1(.*)"]);
 
 // ─── Custom Domain Cache ─────────────────────────────────────────────────────
@@ -169,7 +172,26 @@ export default clerkMiddleware(async (auth, req) => {
     }
   }
 
-  // ─── Rate Limiting (API v1 only) ────────────────────────────────────────────
+  // ─── Rate Limiting (API v1) ─────────────────────────────────────────────────
+  // /api/v1/auth/* goes through a dedicated per-endpoint auth bucket that is
+  // IP-keyed and tighter than the data-plane Free/Pro/Unauth tiers — auth
+  // endpoints are brute-force targets with no high-throughput legitimate use.
+  // Everything else under /api/v1/* uses the existing tier-based limiter.
+  if (isAuthApiRoute(req)) {
+    const { headers: rateLimitHeaders, limited, response } = await rateLimitAuthRequest(req);
+
+    if (limited && response != null) {
+      return response;
+    }
+
+    const next = NextResponse.next();
+    for (const [key, value] of Object.entries(rateLimitHeaders)) {
+      next.headers.set(key, value);
+    }
+    next.headers.set("x-next-i18n-router-locale", defaultLocale);
+    return next;
+  }
+
   if (isApiV1Route(req)) {
     const { headers: rateLimitHeaders, limited, response } = await rateLimitRequest(req);
 
@@ -216,11 +238,32 @@ export default clerkMiddleware(async (auth, req) => {
     return response;
   }
 
+  // Whitelisted users carrying a BA session cookie are authenticated via BA.
+  // We can't call into the BA API from middleware (DB access in edge), so we
+  // trust the presence of the signed cookie for the route-gate decision and
+  // let the server-side `auth()` shim do the authoritative lookup.
+  const baCookie = getSessionCookie(req);
+  if (baCookie != null) {
+    if (isProtectedRoute(req)) {
+      const response = NextResponse.next();
+      response.headers.set("x-next-i18n-router-locale", defaultLocale);
+      return response;
+    }
+    const response = NextResponse.next();
+    response.headers.set("x-next-i18n-router-locale", defaultLocale);
+    return response;
+  }
+
   if (isProtectedRoute(req)) {
     await auth.protect();
   }
 
   const { userId } = await auth();
+
+  // If a Clerk-signed-in user is whitelisted for BA, preserve their Clerk
+  // session on this branch — the BA cutover only applies once they sign in
+  // via the BA flow (which sets baCookie). No forced reroute here.
+  void isWhitelistedForBetterAuth(userId);
 
   const isAuthRoute =
     req.nextUrl.pathname === "/" ||

@@ -18,6 +18,10 @@ const clientSchemaShape = {
 
 const serverSchemaShape = {
   ADMIN_USER_ID: z.string().optional(),
+  AUTH_EMAIL_FROM: z.string().default("auth@anchr.to"),
+  AUTH_WHITELIST_USER_IDS: z.string().optional(),
+  BETTER_AUTH_SECRET: z.string().min(32, "Must be a 32+ character random secret"),
+  BETTER_AUTH_URL: z.url().optional(),
   CLERK_SECRET_KEY: z.string(),
   CLERK_WEBHOOK_SECRET: z.string(),
   CRON_SECRET: z.string(),
@@ -69,6 +73,10 @@ export const envSchema = createEnv({
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 
     ADMIN_USER_ID: process.env.ADMIN_USER_ID,
+    AUTH_EMAIL_FROM: process.env.AUTH_EMAIL_FROM,
+    AUTH_WHITELIST_USER_IDS: process.env.AUTH_WHITELIST_USER_IDS,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,

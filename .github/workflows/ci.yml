@@ -275,6 +275,11 @@ jobs:
         working-directory: anchr/website
         run: pnpm test:e2e
         env:
+          # Whitelist the seeded BA test user so the @better-auth spec can
+          # route through the BA auth() shim. The seed script creates a user
+          # with this run-scoped id; AUTH_WHITELIST_USER_IDS gates the shim
+          # + middleware accepting that user's session cookie.
+          AUTH_WHITELIST_USER_IDS: e2e_ba_user_${{ github.run_id }}
           DATABASE_URL: ${{ steps.neon-branch.outputs.db_url_pooled }}
           E2E_USER_PASSWORD: e2e-test-password-ephemeral
           E2E_RUN_ID: ${{ github.run_id }}

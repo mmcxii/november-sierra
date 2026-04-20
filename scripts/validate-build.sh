@@ -25,6 +25,8 @@ export NEXT_PUBLIC_SHORT_DOMAIN="test.short.domain"
 # Server — each value embeds VALIDATE_BUILD_SERVER_ONLY__<KEY> so the scanner
 # can pinpoint which env var leaked if one appears in a client chunk.
 export ADMIN_USER_ID="VALIDATE_BUILD_SERVER_ONLY__ADMIN_USER_ID"
+# length>=32 required; sentinel is 44 chars, comfortably above the minimum
+export BETTER_AUTH_SECRET="VALIDATE_BUILD_SERVER_ONLY__BETTER_AUTH_SECRET"
 export CLERK_SECRET_KEY="sk_test_VALIDATE_BUILD_SERVER_ONLY__CLERK_SECRET_KEY"
 export CLERK_WEBHOOK_SECRET="whsec_VALIDATE_BUILD_SERVER_ONLY__CLERK_WEBHOOK_SECRET"
 export CRON_SECRET="VALIDATE_BUILD_SERVER_ONLY__CRON_SECRET"

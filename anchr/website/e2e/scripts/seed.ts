@@ -1,8 +1,9 @@
 import "dotenv/config";
 import { createClerkClient } from "@clerk/backend";
 import { neon } from "@neondatabase/serverless";
+import { hash as argon2Hash } from "@node-rs/argon2";
 import { drizzle } from "drizzle-orm/neon-http";
-import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -25,6 +26,26 @@ const referralCodesTable = pgTable("referral_codes", {
   note: text("note"),
   type: text("type").notNull(),
 });
+
+// Minimal BA schema mirror — only the columns the seeder writes.
+const baUserTable = pgTable("ba_user", {
+  email: text("email").notNull(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+});
+
+const baAccountTable = pgTable(
+  "ba_account",
+  {
+    accountId: text("account_id").notNull(),
+    id: text("id").primaryKey(),
+    password: text("password"),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id").notNull(),
+  },
+  (t) => [uniqueIndex("ba_account_provider_account_uniq").on(t.providerId, t.accountId)],
+);
 
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
 
@@ -121,6 +142,53 @@ async function main() {
   const seededUsersPath = path.join(clerkDir, "seeded-users.json");
   fs.writeFileSync(seededUsersPath, JSON.stringify(seededUsers, null, 2));
   console.log(`[e2e:seed] Wrote ${seededUsers.length} users to ${seededUsersPath} (run: ${RUN_ID})`);
+
+  // ─── Better Auth whitelisted test user ──────────────────────────────────
+  // Seeded directly via Drizzle to mirror the migration script's path. The
+  // user's id is fixed so AUTH_WHITELIST_USER_IDS can pre-include it.
+  const baUserId = `e2e_ba_user_${RUN_ID}`;
+  const baEmail = `e2e-ba-${RUN_ID}@anchr.to`;
+  const baUsername = `e2eba${RUN_ID}`;
+  const baPassword = `e2e-ba-password-${RUN_ID}`;
+  // OWASP params would take ~500ms; use weaker params here since the hash
+  // only ever protects the ephemeral CI user against in-repo plaintext.
+  const baPasswordHash = await argon2Hash(baPassword, { memoryCost: 8, outputLen: 32, parallelism: 1, timeCost: 1 });
+
+  await db
+    .insert(baUserTable)
+    .values({ email: baEmail, emailVerified: true, id: baUserId, name: "E2E BA User" })
+    .onConflictDoUpdate({ set: { email: baEmail, emailVerified: true, name: "E2E BA User" }, target: baUserTable.id });
+
+  await db
+    .insert(baAccountTable)
+    .values({
+      accountId: baUserId,
+      id: `ba-account-${baUserId}`,
+      password: baPasswordHash,
+      providerId: "credential",
+      userId: baUserId,
+    })
+    .onConflictDoUpdate({
+      set: { password: baPasswordHash },
+      target: [baAccountTable.providerId, baAccountTable.accountId],
+    });
+
+  await db
+    .insert(usersTable)
+    .values({
+      displayName: "E2E BA User",
+      id: baUserId,
+      onboardingComplete: true,
+      tier: "free",
+      username: baUsername,
+    })
+    .onConflictDoUpdate({
+      set: { displayName: "E2E BA User", onboardingComplete: true, tier: "free" },
+      target: usersTable.id,
+    });
+
+  console.log(`[e2e:seed] Seeded BA whitelisted user: ${baUserId} (email: ${baEmail})`);
+  console.log("[e2e:seed] Ensure AUTH_WHITELIST_USER_IDS includes this id in the test env.");
 
   // Seed a test referral code for sign-up E2E tests
   const E2E_REFERRAL_CODE = `ANCHR-E2E${RUN_ID.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;
