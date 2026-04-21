@@ -157,5 +157,30 @@ export function createConfig(options: CreateConfigOptions): Linter.Config[] {
         "react-hooks/rules-of-hooks": "off",
       },
     },
+
+    // next.config must not import envSchema or any module that re-exports it.
+    // Next inlines every key listed in its `env` config into the client bundle
+    // (webpack DefinePlugin), so importing envSchema here is a direct path to
+    // leaking server secrets — exactly what happened in ANC-191.
+    // @t3-oss/env-nextjs already enforces the client/server split on its own;
+    // there is no legitimate reason to reach into the envSchema module from
+    // next.config.
+    {
+      files: ["next.config.ts", "next.config.js", "next.config.mjs", "next.config.cjs"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: [
+              {
+                group: ["./src/lib/env", "./src/lib/env.ts", "@/lib/env"],
+                message:
+                  "next.config must not import envSchema. Next inlines values in its `env` config into the client bundle — spreading or referencing envSchema here leaks server secrets. See ANC-191.",
+              },
+            ],
+          },
+        ],
+      },
+    },
   ]);
 }

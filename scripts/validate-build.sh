@@ -4,8 +4,13 @@ set -euo pipefail
 # ─── Mock environment variables ───────────────────────────────────────────────
 # These satisfy @t3-oss/env-nextjs validation so the app can build and start.
 # None of these values are real credentials.
+#
+# Server-only mock values embed a unique per-key sentinel so the client-chunk
+# scanner can detect regressions of ANC-191 — if a server secret is ever
+# inlined into the client bundle again, the mock value will show up in
+# .next/static/chunks and the scanner will fail with the exact env var name.
 
-# Client (NEXT_PUBLIC_)
+# Client (NEXT_PUBLIC_) — these are expected to appear in client chunks
 export NEXT_PUBLIC_APP_URL="http://localhost:3000"
 export NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_bW9jay5jbGVyay5hY2NvdW50cy5kZXYk"
 export NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
@@ -17,26 +22,35 @@ export NEXT_PUBLIC_POSTHOG_KEY="phc_mock"
 export NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com"
 export NEXT_PUBLIC_SHORT_DOMAIN="test.short.domain"
 
-# Server
-export DATABASE_URL="postgresql://mock:mock@localhost:5432/mock"
-export CLERK_SECRET_KEY="sk_test_mock"
-export CLERK_WEBHOOK_SECRET="whsec_mock"
-export STRIPE_SECRET_KEY="sk_test_mock"
-export STRIPE_WEBHOOK_SECRET="whsec_mock"
-export STRIPE_PRO_PRICE_ID_MONTHLY="price_mock_monthly"
-export STRIPE_PRO_PRICE_ID_ANNUAL="price_mock_annual"
-export UPLOADTHING_TOKEN="mock"
-export RESEND_API_KEY="re_mock"
-export UPSTASH_REDIS_REST_URL="https://mock.upstash.io"
-export UPSTASH_REDIS_REST_TOKEN="mock"
-export VERCEL_API_TOKEN="mock"
-export VERCEL_PROJECT_ID="mock"
-export CRON_SECRET="mock"
-export WEBHOOK_SIGNING_ENCRYPTION_KEY="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+# Server — each value embeds VALIDATE_BUILD_SERVER_ONLY__<KEY> so the scanner
+# can pinpoint which env var leaked if one appears in a client chunk.
+export ADMIN_USER_ID="VALIDATE_BUILD_SERVER_ONLY__ADMIN_USER_ID"
+export CLERK_SECRET_KEY="sk_test_VALIDATE_BUILD_SERVER_ONLY__CLERK_SECRET_KEY"
+export CLERK_WEBHOOK_SECRET="whsec_VALIDATE_BUILD_SERVER_ONLY__CLERK_WEBHOOK_SECRET"
+export CRON_SECRET="VALIDATE_BUILD_SERVER_ONLY__CRON_SECRET"
+export DATABASE_URL="postgresql://mock:VALIDATE_BUILD_SERVER_ONLY__DATABASE_URL@localhost:5432/mock"
+export RESEND_API_KEY="re_VALIDATE_BUILD_SERVER_ONLY__RESEND_API_KEY"
+export STRIPE_PRO_PRICE_ID_ANNUAL="price_VALIDATE_BUILD_SERVER_ONLY_STRIPE_PRO_PRICE_ID_ANNUAL"
+export STRIPE_PRO_PRICE_ID_MONTHLY="price_VALIDATE_BUILD_SERVER_ONLY_STRIPE_PRO_PRICE_ID_MONTHLY"
+export STRIPE_SECRET_KEY="sk_test_VALIDATE_BUILD_SERVER_ONLY__STRIPE_SECRET_KEY"
+export STRIPE_WEBHOOK_SECRET="whsec_VALIDATE_BUILD_SERVER_ONLY__STRIPE_WEBHOOK_SECRET"
+export UPLOADTHING_TOKEN="VALIDATE_BUILD_SERVER_ONLY__UPLOADTHING_TOKEN"
+export UPSTASH_REDIS_REST_TOKEN="VALIDATE_BUILD_SERVER_ONLY__UPSTASH_REDIS_REST_TOKEN"
+export UPSTASH_REDIS_REST_URL="https://mock.upstash.io/VALIDATE_BUILD_SERVER_ONLY__UPSTASH_REDIS_REST_URL"
+export VERCEL_API_TOKEN="VALIDATE_BUILD_SERVER_ONLY__VERCEL_API_TOKEN"
+export VERCEL_PROJECT_ID="VALIDATE_BUILD_SERVER_ONLY__VERCEL_PROJECT_ID"
+# length(64) required; padded from 58 → 64 with 6 underscores
+export WEBHOOK_SIGNING_ENCRYPTION_KEY="VALIDATE_BUILD_SERVER_ONLY__WEBHOOK_SIGNING_ENCRYPTION_KEY______"
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 echo "▸ Building project…"
 pnpm build
+
+# ─── Scan client chunks for server-only env values ───────────────────────────
+# Guards against ANC-191 regressions: if any envSchema.server value is inlined
+# into .next/static/chunks, this step fails with the leaking key + file.
+echo "▸ Scanning client chunks for server-only env values…"
+node --no-warnings --experimental-strip-types scripts/scan-client-chunks-for-server-secrets.ts
 
 # ─── Start server in background ──────────────────────────────────────────────
 echo "▸ Starting production server…"
