@@ -1,22 +1,30 @@
 import { createLink, deleteLink, expect, test } from "./fixtures/auth";
+import { resetUserCustomDomain } from "./fixtures/db";
 import { t } from "./fixtures/i18n";
 import { testDomain, testUsers } from "./fixtures/test-users";
 
 test.describe("custom domain", () => {
   test.describe.configure({ mode: "serial" });
 
+  // Reset custom-domain DB state before and after this describe so:
+  //   1. A prior run's leftover domain can't affect the first test (replaces
+  //      the old in-test UI-level defensive cleanup — faster and more reliable
+  //      than probing the DOM for a 2s timeout).
+  //   2. A mid-serial failure (e.g. the DNS verify test timing out against
+  //      Vercel) doesn't leak `customDomain` into downstream specs like
+  //      settings.spec.ts, whose assertions gate on `customDomain == null`.
+  test.beforeAll(async () => {
+    await resetUserCustomDomain(testUsers.pro.username);
+  });
+
+  test.afterAll(async () => {
+    await resetUserCustomDomain(testUsers.pro.username);
+  });
+
   test("adds a custom domain and shows DNS instructions", async ({ proUser: page }) => {
     //* Arrange
     await page.goto("/dashboard/settings");
     await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
-
-    // If a domain is already configured from a previous run, remove it first
-    const removeButton = page.getByRole("button", { name: t.removeDomain });
-    if (await removeButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await removeButton.click();
-      await page.getByText(t.domainRemoved).waitFor();
-      await page.waitForTimeout(1000);
-    }
 
     //* Act
     // exact:true needed because the short-domain input uses "go.yourdomain.com"

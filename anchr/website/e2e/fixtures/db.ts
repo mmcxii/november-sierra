@@ -399,6 +399,33 @@ export async function setUserShortDomain(username: string, shortDomain: null | s
 }
 
 /**
+ * Reset a user's profile custom-domain state to the free-user default.
+ * Used as a fixture-level beforeAll/afterAll hook in `custom-domain.spec.ts`
+ * so a mid-serial failure (e.g. the Vercel DNS verify test timing out) can't
+ * leak `customDomain` state into downstream specs like `settings.spec.ts`,
+ * which gate their assertions on `user.customDomain == null`.
+ *
+ * Uses raw SQL rather than Drizzle column bindings because `custom_domain`
+ * and `custom_domain_verified` aren't on the fixture's minimal users schema
+ * shim — adding them just for this helper would pull more columns into every
+ * other db-fixture query.
+ *
+ * Intentionally does NOT call Vercel's domain DELETE API. Resource cleanup
+ * is already handled end-of-run by `e2e/scripts/teardown.ts`, and keeping
+ * db.ts free of HTTP dependencies keeps the fixture layer pure.
+ */
+export async function resetUserCustomDomain(username: string): Promise<void> {
+  const db = getDb();
+  await db.execute(sql`
+    UPDATE users
+    SET custom_domain = NULL,
+        custom_domain_verified = false,
+        domain_removed_at = NULL
+    WHERE username = ${username}
+  `);
+}
+
+/**
  * Directly insert a transitory short link into the database so redirect tests
  * can exercise expiry, password, and tombstone edge cases without going
  * through the creation UI (which does a urlResolves HEAD probe).
