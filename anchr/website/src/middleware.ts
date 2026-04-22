@@ -1,5 +1,4 @@
 import { rateLimitAuthRequest, rateLimitRequest, rateLimitShortUrlRedirect } from "@/lib/api/rate-limit";
-import { isWhitelistedForBetterAuth } from "@/lib/better-auth/whitelist";
 import { defaultLocale } from "@/lib/i18n/config";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { neon } from "@neondatabase/serverless";
@@ -259,11 +258,6 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   const { userId } = await auth();
-
-  // If a Clerk-signed-in user is whitelisted for BA, preserve their Clerk
-  // session on this branch — the BA cutover only applies once they sign in
-  // via the BA flow (which sets baCookie). No forced reroute here.
-  void isWhitelistedForBetterAuth(userId);
 
   const isAuthRoute =
     req.nextUrl.pathname === "/" ||

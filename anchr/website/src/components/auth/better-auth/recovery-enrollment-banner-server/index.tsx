@@ -1,8 +1,6 @@
 import { RecoveryEnrollmentBanner } from "@/components/auth/better-auth/recovery-enrollment-banner";
-import {
-  RECOVERY_ENROLLMENT_ALERT_ID,
-  dismissRecoveryEnrollmentBannerAction,
-} from "@/components/auth/better-auth/recovery-enrollment-banner/actions";
+import { dismissRecoveryEnrollmentBannerAction } from "@/components/auth/better-auth/recovery-enrollment-banner/actions";
+import { RECOVERY_ENROLLMENT_ALERT_ID } from "@/components/auth/better-auth/recovery-enrollment-banner/constants";
 import { getAlertDismissedAt } from "@/lib/better-auth/alert-dismissals";
 import { countUnusedRecoveryCodes } from "@/lib/better-auth/recovery-codes";
 import { auth as betterAuth } from "@/lib/better-auth/server";
@@ -13,8 +11,7 @@ import * as React from "react";
 // has any recovery codes enrolled, reads the dismissal timestamp from
 // preferences.alertDismissals, and hands the client banner the state it needs
 // to decide render / hide / re-nudge. Returning null skips rendering entirely
-// when there's no BA user (non-whitelisted Clerk users) or the user is
-// already enrolled.
+// when there's no BA user (Clerk-only users) or the user is already enrolled.
 export const RecoveryEnrollmentBannerServer: React.FC = async () => {
   const session = await betterAuth.api.getSession({ headers: await headers() });
   if (session?.user.id == null) {

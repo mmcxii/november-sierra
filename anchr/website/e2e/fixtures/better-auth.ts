@@ -11,11 +11,9 @@ import { testUsers } from "./test-users";
 //
 // Prerequisites for the test environment:
 //  - e2e/scripts/seed.ts has run against the same DATABASE_URL.
-//  - AUTH_WHITELIST_USER_IDS contains testUsers.betterAuth.id — without it,
-//    the middleware + auth() shim won't treat the seeded user as a BA user.
 
 type BetterAuthFixtures = {
-  baWhitelistedUser: Page;
+  baSessionUser: Page;
 };
 
 async function signInBetterAuthUser(context: BrowserContext, baseURL: string): Promise<void> {
@@ -42,7 +40,7 @@ async function signInBetterAuthUser(context: BrowserContext, baseURL: string): P
 }
 
 export const test = base.extend<BetterAuthFixtures>({
-  baWhitelistedUser: async ({ baseURL, browser }, use) => {
+  baSessionUser: async ({ baseURL, browser }, use) => {
     if (baseURL == null) {
       throw new Error("baseURL is required for the better-auth fixture");
     }

@@ -1,5 +1,4 @@
 import { auth as betterAuth } from "@/lib/better-auth/server";
-import { isWhitelistedForBetterAuth } from "@/lib/better-auth/whitelist";
 import { db } from "@/lib/db/client";
 import { usersTable } from "@/lib/db/schema/user";
 import { envSchema } from "@/lib/env";
@@ -12,20 +11,25 @@ import * as React from "react";
 
 export type SessionUser = typeof usersTable.$inferSelect;
 
-// Shim matching Clerk's `auth()` shape. Whitelisted users resolve via Better
-// Auth; everyone else stays on Clerk. Zero changes at the ~25 call sites of
-// `auth()`/`getCurrentUser()` — they keep their existing `{ userId }` contract.
+// Shim matching Clerk's `auth()` shape so the ~25 call sites of `auth()` /
+// `getCurrentUser()` keep their existing `{ userId }` contract.
+//
+// Resolution order:
+//   1. If a Better Auth session cookie is present and resolves to a user,
+//      that's the authoritative identity. The user opted into BA explicitly
+//      by signing in at /better-auth/sign-in (no other entrypoint exists).
+//   2. Otherwise fall back to Clerk's userId.
+//
+// Net effect during the Shot 1 bake window: Clerk users see Clerk; BA users
+// (the migrated set + anyone who chooses to sign in via /better-auth/*) see
+// BA. The existence of a `users` row is the real gate on dashboard access —
+// `requireUser()` redirects when no row matches the resolved id.
 export async function auth(): Promise<{ userId: null | string }> {
-  const clerkUserId = (await clerkAuth()).userId;
-  if (isWhitelistedForBetterAuth(clerkUserId)) {
-    return { userId: clerkUserId };
-  }
-
   const session = await betterAuth.api.getSession({ headers: await headers() });
-  if (session?.user.id != null && isWhitelistedForBetterAuth(session.user.id)) {
+  if (session?.user.id != null) {
     return { userId: session.user.id };
   }
-
+  const clerkUserId = (await clerkAuth()).userId;
   return { userId: clerkUserId };
 }
 

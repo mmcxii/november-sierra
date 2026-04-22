@@ -9,8 +9,8 @@ import { describe, expect, it } from "vitest";
 // email) can exist.
 //
 // Context for Shot 1: The ticket explicitly says this spike "blocks ANC-157's
-// design, not Shot 1 directly." Shot 1 is admin-whitelist only; nostr users
-// never enter the Shot 1 surface. The Shot 1 position is: email stays
+// design, not Shot 1 directly." Shot 1 rolled out as dual Clerk + BA; nostr
+// users never enter the Shot 1 surface. The Shot 1 position is: email stays
 // notNull in ba_user; ANC-157 re-opens this when nostr flows are built.
 //
 // This spike therefore asserts two things:
