@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures/better-auth";
 // @better-auth smoke suite.
 //
 // Tagged so CI can run it in parallel with the Clerk suite during Shot 1's
-// bake window. Scope: prove the whitelisted-user path boots end-to-end.
+// bake window. Scope: prove a BA-authenticated user path boots end-to-end.
 // Flows covered: sign-in via fixture → dashboard loads → sign-out clears
 // the session cookie.
 //
@@ -12,19 +12,19 @@ import { expect, test } from "./fixtures/better-auth";
 // the integration tests in src/lib/better-auth/* and a manual smoke step in
 // the Shot 1 runbook.
 
-test.describe("@better-auth whitelisted user", () => {
-  test("reaches /dashboard with a BA session cookie", async ({ baWhitelistedUser: page }) => {
+test.describe("@better-auth session user", () => {
+  test("reaches /dashboard with a BA session cookie", async ({ baSessionUser: page }) => {
     //* Act
     await page.goto("/dashboard");
 
     //* Assert
     // Clerk's sign-in gate would redirect unauthenticated traffic back to
     // /sign-in. Arriving at /dashboard proves our middleware accepted the BA
-    // session cookie and the auth() shim resolved the whitelisted id.
+    // session cookie and the auth() shim resolved the BA id.
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
-  test("signs out by hitting BA's sign-out endpoint", async ({ baWhitelistedUser: page, baseURL }) => {
+  test("signs out by hitting BA's sign-out endpoint", async ({ baSessionUser: page, baseURL }) => {
     //* Arrange
     if (baseURL == null) {
       throw new Error("baseURL is required");

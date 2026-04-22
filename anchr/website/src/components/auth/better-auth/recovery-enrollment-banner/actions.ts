@@ -3,8 +3,7 @@
 import { dismissAlertForUser } from "@/lib/better-auth/alert-dismissals";
 import { auth as betterAuth } from "@/lib/better-auth/server";
 import { headers } from "next/headers";
-
-export const RECOVERY_ENROLLMENT_ALERT_ID = "recovery-enrollment";
+import { RECOVERY_ENROLLMENT_ALERT_ID } from "./constants";
 
 export async function dismissRecoveryEnrollmentBannerAction(): Promise<{ ok: boolean }> {
   const session = await betterAuth.api.getSession({ headers: await headers() });

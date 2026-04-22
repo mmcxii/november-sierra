@@ -23,9 +23,9 @@ export const testUsers = {
     username: `e2eadmin${RUN_ID}`,
   },
   /**
-   * Better Auth whitelisted test user. Uses a fixed id suffix so
-   * AUTH_WHITELIST_USER_IDS in CI can be pre-seeded with the exact id.
-   * The id matches what the better-auth fixture writes into ba_user.
+   * Better Auth test user. The id is run-scoped so parallel CI runs don't
+   * collide on the same ba_user row. The id matches what the better-auth
+   * fixture writes into ba_user.
    */
   betterAuth: {
     email: `e2e-ba-${RUN_ID}@anchr.to`,

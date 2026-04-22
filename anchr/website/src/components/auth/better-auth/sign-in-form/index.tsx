@@ -98,6 +98,12 @@ export const BetterAuthSignInForm: React.FC = () => {
           >
             {t("forgotYourPassword")}
           </Link>
+          <Link
+            className="self-center text-sm font-medium text-[rgb(var(--m-accent))] underline underline-offset-4"
+            href="/account-recovery"
+          >
+            {t("iCantAccessMyAccount")}
+          </Link>
         </form>
       </CardContent>
       <CardFooter className="w-full max-w-sm justify-center pt-6">

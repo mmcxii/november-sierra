@@ -143,9 +143,9 @@ async function main() {
   fs.writeFileSync(seededUsersPath, JSON.stringify(seededUsers, null, 2));
   console.log(`[e2e:seed] Wrote ${seededUsers.length} users to ${seededUsersPath} (run: ${RUN_ID})`);
 
-  // ─── Better Auth whitelisted test user ──────────────────────────────────
+  // ─── Better Auth test user ──────────────────────────────────────────────
   // Seeded directly via Drizzle to mirror the migration script's path. The
-  // user's id is fixed so AUTH_WHITELIST_USER_IDS can pre-include it.
+  // id is run-scoped so parallel CI runs don't collide on ba_user.
   const baUserId = `e2e_ba_user_${RUN_ID}`;
   const baEmail = `e2e-ba-${RUN_ID}@anchr.to`;
   const baUsername = `e2eba${RUN_ID}`;
@@ -187,8 +187,7 @@ async function main() {
       target: usersTable.id,
     });
 
-  console.log(`[e2e:seed] Seeded BA whitelisted user: ${baUserId} (email: ${baEmail})`);
-  console.log("[e2e:seed] Ensure AUTH_WHITELIST_USER_IDS includes this id in the test env.");
+  console.log(`[e2e:seed] Seeded BA test user: ${baUserId} (email: ${baEmail})`);
 
   // Seed a test referral code for sign-up E2E tests
   const E2E_REFERRAL_CODE = `ANCHR-E2E${RUN_ID.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;

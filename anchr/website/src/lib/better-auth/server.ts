@@ -18,6 +18,7 @@ import {
   sendVerificationEmail,
 } from "./email";
 import { hashPassword, verifyPassword } from "./password";
+import { recoveryCode2faBypassPlugin } from "./recovery-code-2fa-bypass-plugin";
 
 // Session cookie cache TTL — BA default 60s. Accepts <1 min revocation latency
 // as the normal trade-off to keep the middleware hot path DB-free.
@@ -90,6 +91,7 @@ export const auth = betterAuth({
         },
       },
     }),
+    recoveryCode2faBypassPlugin(),
   ],
   rateLimit: {
     // Disabled deliberately. Our middleware (src/middleware.ts) routes every

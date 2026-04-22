@@ -1,3 +1,4 @@
+import { RecoveryEnrollmentBannerServer } from "@/components/auth/better-auth/recovery-enrollment-banner-server";
 import { BillingBanner } from "@/components/dashboard/billing-banner";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { Container } from "@/components/ui/container";
@@ -22,6 +23,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = async (props) => {
       <DashboardSidebar isAdmin={isAdmin(user.id)} user={user} />
       <Container as="main" className="flex-1 py-6">
         <BillingBanner user={user} />
+        <React.Suspense fallback={null}>
+          <RecoveryEnrollmentBannerServer />
+        </React.Suspense>
         {children}
       </Container>
     </div>
