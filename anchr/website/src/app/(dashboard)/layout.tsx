@@ -1,3 +1,4 @@
+import { RecoveryCodesLowBannerServer } from "@/components/auth/better-auth/recovery-codes-low-banner-server";
 import { RecoveryEnrollmentBannerServer } from "@/components/auth/better-auth/recovery-enrollment-banner-server";
 import { BillingBanner } from "@/components/dashboard/billing-banner";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
@@ -25,6 +26,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = async (props) => {
         <BillingBanner user={user} />
         <React.Suspense fallback={null}>
           <RecoveryEnrollmentBannerServer />
+        </React.Suspense>
+        <React.Suspense fallback={null}>
+          <RecoveryCodesLowBannerServer />
         </React.Suspense>
         {children}
       </Container>

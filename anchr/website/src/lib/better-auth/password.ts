@@ -36,8 +36,9 @@ export function isArgon2Hash(hash: string): boolean {
 }
 
 // Verifies a password against a stored hash, supporting both argon2id (native)
-// and bcrypt (migrated from Clerk). Callers should re-hash bcrypt passwords
-// with argon2id on successful verify so the next sign-in uses the modern algo.
+// and bcrypt (migrated from Clerk). The rehash side effect (upgrading bcrypt
+// → argon2id on successful verify) is wired in server.ts via verifyPasswordWithRehash
+// so this module stays pure and DB-free for unit tests.
 export async function verifyPassword({ hash, password }: { hash: string; password: string }): Promise<boolean> {
   if (isBcryptHash(hash)) {
     return bcryptCompare(password, hash);

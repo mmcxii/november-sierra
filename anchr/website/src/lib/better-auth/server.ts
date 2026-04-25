@@ -17,7 +17,8 @@ import {
   sendTwoFactorOtpEmail,
   sendVerificationEmail,
 } from "./email";
-import { hashPassword, verifyPassword } from "./password";
+import { hashPassword } from "./password";
+import { verifyPasswordWithRehash } from "./password-rehash";
 import { recoveryCode2faBypassPlugin } from "./recovery-code-2fa-bypass-plugin";
 
 // Session cookie cache TTL — BA default 60s. Accepts <1 min revocation latency
@@ -61,7 +62,7 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     password: {
       hash: hashPassword,
-      verify: verifyPassword,
+      verify: verifyPasswordWithRehash,
     },
     requireEmailVerification: true,
     // Invalidate all other sessions on password reset so a compromised device

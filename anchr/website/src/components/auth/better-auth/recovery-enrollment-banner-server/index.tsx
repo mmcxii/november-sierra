@@ -12,6 +12,14 @@ import * as React from "react";
 // preferences.alertDismissals, and hands the client banner the state it needs
 // to decide render / hide / re-nudge. Returning null skips rendering entirely
 // when there's no BA user (Clerk-only users) or the user is already enrolled.
+//
+// This banner doubles as the post-sign-up enrollment surface. ANC-149 spec
+// called for server-side auto-generation on email verification, but auto-
+// generated codes that the user never sees provide zero practical Flow A
+// protection (the user can't redeem a code they don't have). Generating at
+// the moment the user is ready to save them — via this banner — is both
+// security-equivalent and gives the user an explicit consent step before
+// the plaintext is shown.
 export const RecoveryEnrollmentBannerServer: React.FC = async () => {
   const session = await betterAuth.api.getSession({ headers: await headers() });
   if (session?.user.id == null) {
