@@ -4,6 +4,7 @@ import { RecoveryCodesDisplay } from "@/components/auth/better-auth/recovery-cod
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_RENUDGE_DAYS } from "./constants";
@@ -26,10 +27,18 @@ export const RecoveryEnrollmentBanner: React.FC<RecoveryEnrollmentBannerProps> =
 
   //* State
   const { t } = useTranslation();
+  const router = useRouter();
   const [codes, setCodes] = React.useState<null | string[]>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<null | string>(null);
   const [dismissing, setDismissing] = React.useState(false);
+  // Locally hide the banner the moment dismissal completes. The server
+  // component decides authoritatively on the next render (banner is null
+  // once recovery codes exist or the dismissedAt timestamp is fresh), but
+  // dismissedAt is a server prop so it doesn't change in-place — without
+  // this flag the banner snaps back to the generate prompt after closing
+  // the codes view.
+  const [hiddenLocally, setHiddenLocally] = React.useState(false);
 
   //* Variables
   const shouldShow = React.useMemo(() => {
@@ -62,6 +71,8 @@ export const RecoveryEnrollmentBanner: React.FC<RecoveryEnrollmentBannerProps> =
     setDismissing(true);
     try {
       await onDismissed();
+      setHiddenLocally(true);
+      router.refresh();
     } finally {
       setDismissing(false);
     }
@@ -69,15 +80,17 @@ export const RecoveryEnrollmentBanner: React.FC<RecoveryEnrollmentBannerProps> =
 
   const handleCodesClosed = async () => {
     setCodes(null);
+    setHiddenLocally(true);
     // Enrollment is a terminal dismissal — the user won't see the banner
     // again unless they explicitly regenerate from settings and then revisit
     // the migrated-user path, which doesn't happen.
     await onDismissed();
+    router.refresh();
   };
 
   //* Early return — nothing to show
 
-  if (!shouldShow) {
+  if (hiddenLocally || !shouldShow) {
     return null;
   }
 
