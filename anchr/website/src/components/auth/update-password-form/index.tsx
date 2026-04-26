@@ -4,16 +4,9 @@ import { SiteWordmark } from "@/components/marketing/site-wordmark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
-import {
-  type ForgotPasswordEmailValues,
-  type ResetPasswordValues,
-  forgotPasswordEmailSchema,
-  resetPasswordSchema,
-} from "@/lib/schemas/auth";
-import { useSignIn } from "@clerk/nextjs";
-import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
+import { authClient } from "@/lib/better-auth/client";
+import { type ResetPasswordValues, resetPasswordSchema } from "@/lib/schemas/auth";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -21,266 +14,118 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
 
-export const UpdatePasswordForm: React.FC = () => {
+type UpdatePasswordFormProps = {
+  // BA's email link drops the user at /update-password?token=… ; this prop
+  // is the token. Null when the user lands here without a token (we send
+  // them back to /forgot-password instead of trying to render a broken form).
+  token: null | string;
+};
+
+// Token-consuming half of the BA reset flow. The request half is
+// ForgotPasswordForm; that form fires off the email and BA sends a link
+// pointing here with `?token=…`. authClient.resetPassword consumes the token
+// and updates the password.
+export const UpdatePasswordForm: React.FC<UpdatePasswordFormProps> = (props) => {
+  const { token } = props;
+
   //* State
   const { t } = useTranslation();
-  const { isLoaded, signIn } = useSignIn();
-  const [step, setStep] = React.useState<"email" | "reset">("email");
-  const emailForm = useForm<ForgotPasswordEmailValues>({
-    resolver: standardSchemaResolver(forgotPasswordEmailSchema),
-  });
-  const resetForm = useForm<ResetPasswordValues>({
-    resolver: standardSchemaResolver(resetPasswordSchema),
-  });
+  const form = useForm<ResetPasswordValues>({ resolver: standardSchemaResolver(resetPasswordSchema) });
 
   //* Handlers
-  const onEmailSubmit = async (data: ForgotPasswordEmailValues) => {
-    if (!isLoaded) {
+  const onSubmit = async (data: ResetPasswordValues) => {
+    if (token == null) {
+      form.setError("root", { message: t("yourResetLinkIsInvalidOrExpired") });
       return;
     }
 
-    try {
-      await signIn.create({ identifier: data.email, strategy: "reset_password_email_code" });
-      setStep("reset");
-    } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        for (const e of err.errors) {
-          switch (e.meta?.paramName) {
-            case "identifier":
-              emailForm.setError("email", { message: e.longMessage ?? e.message });
-              break;
+    const result = await authClient.resetPassword({
+      newPassword: data.newPassword,
+      token,
+    });
 
-            default:
-              emailForm.setError("root", { message: e.longMessage ?? e.message });
-              break;
-          }
-        }
-      } else {
-        emailForm.setError("root", { message: t("somethingWentWrongPleaseTryAgain") });
-      }
-    }
-  };
-
-  const onResetSubmit = async (data: ResetPasswordValues) => {
-    if (!isLoaded) {
+    if (result.error != null) {
+      form.setError("root", { message: result.error.message ?? t("somethingWentWrongPleaseTryAgain") });
       return;
     }
 
-    try {
-      // Step 1: Verify the code
-      const codeResult = await signIn.attemptFirstFactor({
-        code: data.code,
-        strategy: "reset_password_email_code",
-      });
-
-      if (codeResult.status === "needs_new_password") {
-        // Step 2: Set the new password
-        const passwordResult = await signIn.resetPassword({ password: data.newPassword });
-
-        if (passwordResult.status === "complete") {
-          window.location.replace("/sign-in");
-          return;
-        }
-      }
-
-      if (codeResult.status === "complete") {
-        window.location.replace("/sign-in");
-        return;
-      }
-    } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        for (const e of err.errors) {
-          resetForm.setError("root", { message: e.longMessage ?? e.message });
-        }
-      } else {
-        resetForm.setError("root", { message: t("somethingWentWrongPleaseTryAgain") });
-      }
-      resetForm.setValue("code", "");
-    }
+    window.location.replace("/sign-in");
   };
 
-  const handleResendCode = async () => {
-    if (!isLoaded) {
-      return;
-    }
-
-    resetForm.clearErrors("root");
-
-    try {
-      await signIn.create({ identifier: emailForm.getValues("email"), strategy: "reset_password_email_code" });
-    } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        for (const e of err.errors) {
-          resetForm.setError("root", { message: e.longMessage ?? e.message });
-        }
-      } else {
-        resetForm.setError("root", { message: t("somethingWentWrongPleaseTryAgain") });
-      }
-    }
-  };
-
-  const codeValue = resetForm.watch("code");
-
-  const handleOtpOnChange = (value: string) => {
-    resetForm.setValue("code", value, { shouldValidate: true });
-  };
-
-  if (step === "reset") {
+  if (token == null) {
     return (
-      <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" key="reset" variant="featured">
+      <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" variant="featured">
         <div className="flex flex-col items-center">
           <span className="tracking-anc-caps-extra text-xs text-[rgb(var(--m-muted))] uppercase">{t("welcomeTo")}</span>
           <SiteWordmark size="xl" />
         </div>
         <CardHeader className="mt-[8vh] w-full max-w-sm items-center text-center">
-          <CardTitle className="text-xl text-[rgb(var(--m-text))]">{t("resetYourPassword")}</CardTitle>
+          <CardTitle className="text-xl text-[rgb(var(--m-text))]">{t("yourResetLinkIsInvalidOrExpired")}</CardTitle>
           <CardDescription className="text-[rgb(var(--m-muted))]">
-            {t("enterTheCodeWeSentToYourEmailAndYourNewPassword")}
+            {t("requestANewResetLinkAndTryAgain")}
           </CardDescription>
         </CardHeader>
-        <CardContent className="w-full max-w-sm pt-6">
-          <form className="flex flex-col gap-4" onSubmit={resetForm.handleSubmit(onResetSubmit)}>
-            <div className="flex flex-col items-center gap-2">
-              <Label className="self-start text-[rgb(var(--m-text))]">{t("verificationCode")}</Label>
-              <InputOTP
-                autoComplete="one-time-code"
-                disabled={resetForm.formState.isSubmitting}
-                maxLength={6}
-                onChange={handleOtpOnChange}
-                value={codeValue ?? ""}
-              >
-                <InputOTPGroup>
-                  {[0, 1, 2].map((i) => (
-                    <InputOTPSlot
-                      className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))]"
-                      index={i}
-                      key={i}
-                    />
-                  ))}
-                </InputOTPGroup>
-                <InputOTPSeparator className="text-[rgb(var(--m-muted))]" />
-                <InputOTPGroup>
-                  {[3, 4, 5].map((i) => (
-                    <InputOTPSlot
-                      className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))]"
-                      index={i}
-                      key={i}
-                    />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
-              {resetForm.formState.errors.code != null && (
-                <p className="text-xs text-[rgb(var(--m-accent))]">{resetForm.formState.errors.code.message}</p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label className="text-[rgb(var(--m-text))]" htmlFor="newPassword">
-                {t("newPassword")}
-              </Label>
-              <Input
-                autoComplete="new-password"
-                className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] placeholder:text-[rgb(var(--m-muted))]/50 focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
-                disabled={resetForm.formState.isSubmitting}
-                id="newPassword"
-                type="password"
-                {...resetForm.register("newPassword")}
-              />
-              {resetForm.formState.errors.newPassword != null && (
-                <p className="text-xs text-[rgb(var(--m-accent))]">{resetForm.formState.errors.newPassword.message}</p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label className="text-[rgb(var(--m-text))]" htmlFor="confirmPassword">
-                {t("confirmPassword")}
-              </Label>
-              <Input
-                autoComplete="new-password"
-                className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] placeholder:text-[rgb(var(--m-muted))]/50 focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
-                disabled={resetForm.formState.isSubmitting}
-                id="confirmPassword"
-                type="password"
-                {...resetForm.register("confirmPassword")}
-              />
-              {resetForm.formState.errors.confirmPassword != null && (
-                <p className="text-xs text-[rgb(var(--m-accent))]">
-                  {resetForm.formState.errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-            {resetForm.formState.errors.root != null && (
-              <p className="text-center text-xs text-[rgb(var(--m-accent))]">
-                {resetForm.formState.errors.root.message}
-              </p>
-            )}
-            <Button className="w-full" disabled={!isLoaded || resetForm.formState.isSubmitting} type="submit">
-              {resetForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("updatePassword")}
-            </Button>
-            <Button
-              className="w-full"
-              disabled={resetForm.formState.isSubmitting}
-              onClick={handleResendCode}
-              type="button"
-              variant="tertiary"
-            >
-              {t("resendCode")}
-            </Button>
-          </form>
-        </CardContent>
         <CardFooter className="w-full max-w-sm justify-center pt-6">
-          <p className="text-sm text-[rgb(var(--m-muted))]">
-            <Trans
-              components={{
-                1: (
-                  <Link
-                    className="font-medium text-[rgb(var(--m-accent))] underline underline-offset-4"
-                    href="/sign-in"
-                  />
-                ),
-              }}
-              i18nKey="backToSignIn"
-            />
-          </p>
+          <Link
+            className="text-sm font-medium text-[rgb(var(--m-accent))] underline underline-offset-4"
+            href="/forgot-password"
+          >
+            {t("requestANewLink")}
+          </Link>
         </CardFooter>
       </Card>
     );
   }
 
   return (
-    <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" key="email" variant="featured">
+    <Card className="h-full w-full items-center gap-0 rounded-none pt-8 pb-8" variant="featured">
       <div className="flex flex-col items-center">
         <span className="tracking-anc-caps-extra text-xs text-[rgb(var(--m-muted))] uppercase">{t("welcomeTo")}</span>
         <SiteWordmark size="xl" />
       </div>
       <CardHeader className="mt-[8vh] w-full max-w-sm items-center text-center">
-        <CardTitle className="text-xl text-[rgb(var(--m-text))]">{t("forgotYourPassword")}</CardTitle>
+        <CardTitle className="text-xl text-[rgb(var(--m-text))]">{t("setANewPassword")}</CardTitle>
         <CardDescription className="text-[rgb(var(--m-muted))]">
-          {t("enterYourEmailAndWellSendYouACodeToResetYourPassword")}
+          {t("chooseAStrongPasswordYouHaventUsedElsewhere")}
         </CardDescription>
       </CardHeader>
       <CardContent className="w-full max-w-sm pt-6">
-        <form className="flex flex-col gap-4" onSubmit={emailForm.handleSubmit(onEmailSubmit)}>
+        <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-2">
-            <Label className="text-[rgb(var(--m-text))]" htmlFor="email">
-              {t("email")}
+            <Label className="text-[rgb(var(--m-text))]" htmlFor="newPassword">
+              {t("newPassword")}
             </Label>
             <Input
-              autoComplete="email"
-              className="border-[rgb(var(--m-muted))]/20 bg-[var(--m-embed-bg)] text-[rgb(var(--m-text))] placeholder:text-[rgb(var(--m-muted))]/50 focus-visible:border-[rgb(var(--m-accent))]/50 focus-visible:ring-[rgb(var(--m-accent))]/20"
-              disabled={emailForm.formState.isSubmitting}
-              id="email"
-              placeholder="you@example.com"
-              type="email"
-              {...emailForm.register("email")}
+              autoComplete="new-password"
+              disabled={form.formState.isSubmitting}
+              id="newPassword"
+              type="password"
+              {...form.register("newPassword")}
             />
-            {emailForm.formState.errors.email != null && (
-              <p className="text-xs text-[rgb(var(--m-accent))]">{emailForm.formState.errors.email.message}</p>
+            {form.formState.errors.newPassword != null && (
+              <p className="text-xs text-[rgb(var(--m-accent))]">{form.formState.errors.newPassword.message}</p>
             )}
           </div>
-          {emailForm.formState.errors.root != null && (
-            <p className="text-center text-xs text-[rgb(var(--m-accent))]">{emailForm.formState.errors.root.message}</p>
+          <div className="flex flex-col gap-2">
+            <Label className="text-[rgb(var(--m-text))]" htmlFor="confirmPassword">
+              {t("confirmPassword")}
+            </Label>
+            <Input
+              autoComplete="new-password"
+              disabled={form.formState.isSubmitting}
+              id="confirmPassword"
+              type="password"
+              {...form.register("confirmPassword")}
+            />
+            {form.formState.errors.confirmPassword != null && (
+              <p className="text-xs text-[rgb(var(--m-accent))]">{form.formState.errors.confirmPassword.message}</p>
+            )}
+          </div>
+          {form.formState.errors.root != null && (
+            <p className="text-center text-xs text-[rgb(var(--m-accent))]">{form.formState.errors.root.message}</p>
           )}
-          <Button className="w-full" disabled={!isLoaded || emailForm.formState.isSubmitting} type="submit">
-            {emailForm.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("sendResetCode")}
+          <Button className="w-full" disabled={form.formState.isSubmitting} type="submit">
+            {form.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : t("updatePassword")}
           </Button>
         </form>
       </CardContent>

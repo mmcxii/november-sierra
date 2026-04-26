@@ -16,8 +16,9 @@ const mockSelect = vi.fn();
 const mockCheckoutSessionsCreate = vi.fn();
 const mockBillingPortalSessionsCreate = vi.fn();
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock("@/lib/auth", () => ({
   auth: (...args: unknown[]) => mockAuth(...args),
+  isAdmin: () => false,
 }));
 
 vi.mock("@/lib/db/client", () => ({
@@ -49,7 +50,6 @@ vi.mock("@/lib/env", () => ({
 
 // These imports would otherwise trigger the full actions.ts dependency graph.
 // Stub everything actions.ts pulls in but doesn't use in the billing paths.
-vi.mock("@/lib/auth", () => ({ isAdmin: vi.fn().mockReturnValue(false) }));
 vi.mock("@/lib/db/queries/username", () => ({
   checkUsernameAvailability: vi.fn(),
   updateUsername: vi.fn(),

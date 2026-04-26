@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { createClerkClient } from "@clerk/backend";
 import { neon } from "@neondatabase/serverless";
+import { hash as argon2Hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { boolean, pgTable, text } from "drizzle-orm/pg-core";
@@ -10,13 +10,14 @@ import Stripe from "stripe";
  * Transient-user lifecycle for smoke tests that need to drive a full purchase
  * flow end-to-end against real Stripe.
  *
- * Creates a throwaway Clerk user + DB row scoped to a single test run. The
- * destroy helper cleans up ALL side effects — Stripe customers (and their
- * subscriptions), the DB row, and the Clerk user — even if the test failed
- * mid-flow. Stripe lookup happens by email (not by DB-stored customer id) so
- * cleanup works even when the webhook hasn't round-tripped yet.
+ * Creates a throwaway BA user (ba_user + ba_account + users) scoped to a
+ * single test run. The destroy helper cleans up ALL side effects — Stripe
+ * customers (and their subscriptions), the application users row, and the
+ * BA identity row — even if the test failed mid-flow. Stripe lookup happens
+ * by email (not by DB-stored customer id) so cleanup works even when the
+ * webhook hasn't round-tripped yet.
  *
- * NEVER use this in non-smoke tests. It mutates real Clerk/Stripe state.
+ * NEVER use this in non-smoke tests. It mutates real Stripe state.
  */
 
 const usersTable = pgTable("users", {
@@ -29,20 +30,27 @@ const usersTable = pgTable("users", {
   username: text("username").unique().notNull(),
 });
 
+const baUserTable = pgTable("ba_user", {
+  email: text("email").notNull(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+});
+
+const baAccountTable = pgTable("ba_account", {
+  accountId: text("account_id").notNull(),
+  id: text("id").primaryKey(),
+  password: text("password"),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id").notNull(),
+});
+
 export type TransientUser = {
-  clerkId: string;
   email: string;
+  id: string;
   password: string;
   username: string;
 };
-
-function getClerk() {
-  const secretKey = process.env.CLERK_SECRET_KEY;
-  if (secretKey == null) {
-    throw new Error("CLERK_SECRET_KEY is required for transient-user helpers");
-  }
-  return createClerkClient({ secretKey });
-}
 
 function getDb() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -61,8 +69,8 @@ function getStripe(): null | Stripe {
 }
 
 /**
- * Short random token so usernames + emails collide across parallel runs.
- * Uses hex so it's always Clerk-username-safe.
+ * Short random token so usernames + emails don't collide across parallel runs.
+ * Hex so it's always BA-username-safe.
  */
 function shortId(): string {
   const bytes = new Uint8Array(4);
@@ -71,8 +79,8 @@ function shortId(): string {
 }
 
 /**
- * Create a fresh Clerk user + users-table row. Returns the info needed to
- * sign in and later clean up.
+ * Create a fresh BA + application user pair. Returns the info needed to
+ * sign in (via fixtures/auth.ts:signInUser) and later clean up.
  */
 export async function createTransientUser(): Promise<TransientUser> {
   const password = process.env.E2E_USER_PASSWORD;
@@ -80,52 +88,39 @@ export async function createTransientUser(): Promise<TransientUser> {
     throw new Error("E2E_USER_PASSWORD is required for transient-user helpers");
   }
 
-  const clerk = getClerk();
   const db = getDb();
 
-  const id = shortId();
-  const username = `smoke${id}`;
-  const email = `smoke-${id}@anchr.to`;
+  const sid = shortId();
+  const id = `smoke_${sid}`;
+  const username = `smoke${sid}`;
+  const email = `smoke-${sid}@anchr.to`;
 
-  const created = await clerk.users.createUser({
-    emailAddress: [email],
-    firstName: "Smoke",
-    lastName: "Test",
-    password,
-    skipPasswordChecks: true,
+  const passwordHash = await argon2Hash(password, { memoryCost: 8, outputLen: 32, parallelism: 1, timeCost: 1 });
+
+  await db.insert(baUserTable).values({
+    email,
+    emailVerified: true,
+    id,
+    name: "Smoke Test",
+  });
+
+  await db.insert(baAccountTable).values({
+    accountId: id,
+    id: `ba-account-${id}`,
+    password: passwordHash,
+    providerId: "credential",
+    userId: id,
+  });
+
+  await db.insert(usersTable).values({
+    displayName: "Smoke Test",
+    id,
+    onboardingComplete: true,
+    tier: "free",
     username,
   });
 
-  // Race with the Clerk `user.created` webhook, which auto-inserts a users
-  // row via `src/app/api/clerk/webhook/route.ts` with a generateUsername()
-  // -derived username and `onboardingComplete: false` (the column default).
-  // Whoever runs first, we want to land with our chosen username and
-  // `onboardingComplete: true` so the sign-in flow doesn't redirect us to
-  // /onboarding. `onConflictDoUpdate` handles both orderings:
-  //   • webhook first → we UPDATE to override username + onboardingComplete
-  //   • us first      → our INSERT wins; the webhook's later insert fails
-  //                     with duplicate-key (a pre-existing quirk of the
-  //                     webhook handler, unrelated to this test)
-  await db
-    .insert(usersTable)
-    .values({
-      displayName: "Smoke Test",
-      id: created.id,
-      onboardingComplete: true,
-      tier: "free",
-      username,
-    })
-    .onConflictDoUpdate({
-      set: {
-        displayName: "Smoke Test",
-        onboardingComplete: true,
-        tier: "free",
-        username,
-      },
-      target: usersTable.id,
-    });
-
-  return { clerkId: created.id, email, password, username };
+  return { email, id, password, username };
 }
 
 /**
@@ -136,15 +131,14 @@ export async function createTransientUser(): Promise<TransientUser> {
  *      never round-tripped, the DB row has no stripeSubscriptionId, so we
  *      list by email via the Stripe API.
  *   2. Delete any Stripe customers with this email.
- *   3. Delete the DB row (so subsequent runs can reuse the username slot).
- *   4. Delete the Clerk user.
+ *   3. Delete the application users row.
+ *   4. Delete the BA identity row (cascade handles ba_session/ba_account/etc.).
  *
  * Every step is try/catch-wrapped so one failure doesn't skip the rest —
  * the worst case is that a stripe customer with an orphan email lingers,
  * which is safe in test mode.
  */
 export async function destroyTransientUser(user: TransientUser): Promise<void> {
-  const clerk = getClerk();
   const db = getDb();
   const stripe = getStripe();
 
@@ -164,20 +158,20 @@ export async function destroyTransientUser(user: TransientUser): Promise<void> {
         }
       }
     } catch {
-      // Stripe outage shouldn't block Clerk/DB cleanup
+      // Stripe outage shouldn't block DB cleanup
     }
   }
 
-  // 3. DB row
+  // 3. Application users row
   try {
-    await db.delete(usersTable).where(eq(usersTable.id, user.clerkId));
+    await db.delete(usersTable).where(eq(usersTable.id, user.id));
   } catch {
     // swallow — the row may not exist if the setup failed before insert
   }
 
-  // 4. Clerk user
+  // 4. BA identity row (cascade clears ba_session/ba_account/ba_two_factor/recovery_*)
   try {
-    await clerk.users.deleteUser(user.clerkId);
+    await db.delete(baUserTable).where(eq(baUserTable.id, user.id));
   } catch {
     // same as above
   }

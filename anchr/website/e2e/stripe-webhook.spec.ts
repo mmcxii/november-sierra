@@ -35,20 +35,20 @@ test.describe("stripe webhook — signed deliveries against the live route", () 
   test.skip(WEBHOOK_SECRET == null, "STRIPE_WEBHOOK_SECRET must be set (matching the dev server's env)");
 
   test("checkout.session.completed with a valid signature upgrades the user in the DB", async ({ request }) => {
-    //* Arrange — start from a known free state and resolve the admin clerk id
+    //* Arrange — start from a known free state and resolve the admin user id
     await setUserBilling(testUsers.admin.username, {
       proExpiresAt: null,
       stripeCustomerId: null,
       stripeSubscriptionId: null,
       tier: "free",
     });
-    const adminClerkId = await getUserIdByUsername(testUsers.admin.username);
-    if (adminClerkId == null) {
+    const adminUserId = await getUserIdByUsername(testUsers.admin.username);
+    if (adminUserId == null) {
       throw new Error(`admin user ${testUsers.admin.username} missing from seeded DB`);
     }
     const payload = buildCheckoutCompletedPayload({
-      clerkUserId: adminClerkId,
       customerId: "cus_signed_upgrade",
+      userId: adminUserId,
     });
     const signature = signStripePayload(payload, WEBHOOK_SECRET as string);
 
@@ -121,7 +121,7 @@ test.describe("stripe webhook — signed deliveries against the live route", () 
   test("rejects requests with no stripe-signature header (400)", async ({ request }) => {
     //* Act
     const res = await request.post(WEBHOOK_PATH, {
-      data: buildCheckoutCompletedPayload({ clerkUserId: "anything" }),
+      data: buildCheckoutCompletedPayload({ userId: "anything" }),
       headers: { "content-type": "application/json" },
     });
 
@@ -132,7 +132,7 @@ test.describe("stripe webhook — signed deliveries against the live route", () 
   test("rejects requests with an invalid signature (400)", async ({ request }) => {
     //* Act
     const res = await request.post(WEBHOOK_PATH, {
-      data: buildCheckoutCompletedPayload({ clerkUserId: "anything" }),
+      data: buildCheckoutCompletedPayload({ userId: "anything" }),
       headers: { "content-type": "application/json", "stripe-signature": "t=0,v1=deadbeef" },
     });
 

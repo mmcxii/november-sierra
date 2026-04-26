@@ -1,164 +1,128 @@
-import { setupClerkTestingToken } from "@clerk/testing/playwright";
-import { expect, test as base, type Page } from "@playwright/test";
+import { expect, test as base, type BrowserContext, type Page } from "@playwright/test";
 import { testUsers } from "./test-users";
 
 type AuthFixtures = {
   adminUser: Page;
   freeUser: Page;
   freshUser: Page;
-  /**
-   * Signs in as the passwordPro user (has +clerk_test email).
-   * Reaches Clerk via username lookup + ticket strategy, the same path
-   * every other fixture uses — see the migration note on `signInByUsername`.
-   */
   passwordProUser: Page;
   proUser: Page;
 };
 
 /**
- * Fetch with a few retries on network / 5xx / connection errors. Clerk's
- * REST API is generally reliable but has occasional blips under load; a
- * small backoff here makes the e2e harness resilient without making real
- * failures hide longer than they should. 4xx responses short-circuit so
- * genuine configuration problems (bad secret key, bad username) still fail
- * fast and clearly.
- */
-async function fetchWithRetry(
-  input: RequestInfo | URL,
-  init: RequestInit,
-  label: string,
-  maxAttempts = 3,
-): Promise<Response> {
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const res = await fetch(input, init);
-
-      if (res.ok) {
-        return res;
-      }
-
-      if (res.status >= 400 && res.status < 500) {
-        // 4xx: caller's fault. Surface immediately with the response body
-        // so the thrown error carries Clerk's diagnostic.
-        const body = await res.text().catch(() => "<unreadable>");
-        throw new Error(`${label} failed with ${res.status}: ${body}`);
-      }
-
-      // 5xx: transient. Fall through to retry.
-      lastError = new Error(`${label} failed with ${res.status}`);
-    } catch (err: unknown) {
-      lastError = err;
-    }
-
-    if (attempt < maxAttempts) {
-      await new Promise((resolve) => setTimeout(resolve, 2 ** (attempt - 1) * 300));
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error(String(lastError));
-}
-
-/**
- * Sign in as a user by username via Clerk REST API + ticket strategy.
- *
- * Migration note: prior to this refactor every fixture except
- * `passwordProUser` used `clerk.signIn({ emailAddress })` from
- * `@clerk/testing/playwright`, which in turn uses `getUserList` to
- * resolve the email → userId. `getUserList` has two known problems:
- *
- *   1. Emails containing `+` (e.g. `+clerk_test` addresses) don't resolve.
- *   2. Under load it occasionally returns empty results for valid emails,
- *      producing flaky `No user found with email` failures across unrelated
- *      specs (theme, webhooks, update-password, short-links).
- *
- * Both problems vanish if we skip `getUserList` entirely and look up the
- * user by `username` via the authenticated REST API, then complete the
- * sign-in via the ticket strategy — exactly what this function does. Every
- * fixture now takes this path, so the flakiness stops being visible to
- * test authors.
+ * Sign in a seeded user via BA's credential endpoint. Uses the context-bound
+ * request API so Set-Cookie headers (Secure / SameSite / path) persist into
+ * the browser context — a raw Node fetch loses them and the cookie injection
+ * fails to carry through to page.goto.
  *
  * Exported so smoke tests that spin up transient users can reuse it.
  */
-export const signInByUsername = async (page: Page, username: string): Promise<void> => {
-  const secretKey = process.env.CLERK_SECRET_KEY;
+export async function signInUser(
+  context: BrowserContext,
+  baseURL: string,
+  email: string,
+  password: string,
+): Promise<void> {
+  const res = await context.request.post(`${baseURL}/api/v1/auth/sign-in/email`, {
+    data: { email, password },
+    // BA's origin check rejects mutating POSTs without an Origin header.
+    headers: { "content-type": "application/json", origin: new URL(baseURL).origin },
+  });
 
-  if (secretKey == null) {
-    throw new Error("CLERK_SECRET_KEY is required for signInByUsername");
+  if (!res.ok()) {
+    const body = await res.text().catch(() => "<unreadable>");
+    throw new Error(`BA sign-in failed for ${email} (${res.status()}): ${body}`);
   }
-
-  const listRes = await fetchWithRetry(
-    `https://api.clerk.com/v1/users?username=${encodeURIComponent(username)}&limit=1`,
-    { headers: { Authorization: `Bearer ${secretKey}` } },
-    `Find user by username ${username}`,
-  );
-
-  const users = (await listRes.json()) as { id: string }[];
-
-  if (users.length === 0) {
-    throw new Error(`No user found with username: ${username}`);
-  }
-
-  const tokenRes = await fetchWithRetry(
-    "https://api.clerk.com/v1/sign_in_tokens",
-    {
-      body: JSON.stringify({ expires_in_seconds: 300, user_id: users[0].id }),
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    },
-    "Create sign-in token",
-  );
-
-  const { token } = (await tokenRes.json()) as { token: string };
-
-  await setupClerkTestingToken({ context: page.context() });
-  await page.goto("/");
-  await page.waitForFunction(() => window.Clerk?.loaded);
-
-  // Sign in using the ticket strategy (matching @clerk/testing/playwright internals)
-  const signInError = await page.evaluate(
-    async ({ ticket }) => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const clk = (window as any).Clerk;
-        const result = await clk.client.signIn.create({ strategy: "ticket", ticket });
-
-        if (result.status === "complete") {
-          await clk.setActive({ session: result.createdSessionId });
-        } else {
-          return `Sign-in status: ${result.status}`;
-        }
-
-        return null;
-      } catch (err: unknown) {
-        return String(err);
-      }
-    },
-    { ticket: token },
-  );
-
-  if (signInError != null) {
-    throw new Error(`Sign-in via ticket failed: ${signInError}`);
-  }
-
-  await page.waitForFunction(() => window.Clerk?.user !== null, undefined, { timeout: 15_000 });
-};
+}
 
 /**
- * Sign in by username AND navigate to /dashboard. Every fixture that
- * expects to land on the dashboard should prefer this over calling
- * signInByUsername directly and navigating itself — keeps the sequence
- * (sign in → navigate → wait for hydration) consistent.
+ * Sign in by role and navigate to /dashboard. Centralizes the sign-in →
+ * navigate → wait-for-hydration sequence so individual tests don't race.
  */
-const signInByUsernameToDashboard = async (page: Page, username: string): Promise<void> => {
-  await signInByUsername(page, username);
+async function signInRoleToDashboard(
+  context: BrowserContext,
+  page: Page,
+  baseURL: string,
+  email: string,
+): Promise<void> {
+  const password = process.env.E2E_USER_PASSWORD;
+  if (password == null) {
+    throw new Error("E2E_USER_PASSWORD is required for the auth fixture");
+  }
+  await signInUser(context, baseURL, email, password);
   await page.goto("/dashboard");
   await page.waitForLoadState("domcontentloaded");
-};
+}
+
+/**
+ * Sign in only — no /dashboard navigation. Used for the fresh user (whose
+ * onboarding flow expects the first dashboard request to redirect to
+ * /onboarding) and any test that wants to control its own first navigation.
+ */
+async function signInRole(context: BrowserContext, baseURL: string, email: string): Promise<void> {
+  const password = process.env.E2E_USER_PASSWORD;
+  if (password == null) {
+    throw new Error("E2E_USER_PASSWORD is required for the auth fixture");
+  }
+  await signInUser(context, baseURL, email, password);
+}
+
+/**
+ * Reset a user's password to the seed-time default, used by tests that
+ * mutate the password (update-password, password-section). Pre-cutover this
+ * called Clerk's PATCH /v1/users/{id}; under BA we hit the
+ * `auth.api.setPassword` adapter via direct DB write.
+ *
+ * Implemented as a direct ba_account update so we don't have to spin up a
+ * BA server context inside the test runner.
+ */
+export async function restorePasswordByEmail(email: string, password: string): Promise<void> {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl == null) {
+    return;
+  }
+
+  // Lazy-load the heavy modules so non-password specs don't pay the cost.
+  const [{ neon }, { drizzle }, { hash: argon2Hash }, drizzleOrm, schema] = await Promise.all([
+    import("@neondatabase/serverless"),
+    import("drizzle-orm/neon-http"),
+    import("@node-rs/argon2"),
+    import("drizzle-orm"),
+    import("drizzle-orm/pg-core"),
+  ]);
+
+  const baUserTable = schema.pgTable("ba_user", {
+    email: schema.text("email").notNull(),
+    id: schema.text("id").primaryKey(),
+  });
+  const baAccountTable = schema.pgTable("ba_account", {
+    id: schema.text("id").primaryKey(),
+    password: schema.text("password"),
+    providerId: schema.text("provider_id").notNull(),
+    userId: schema.text("user_id").notNull(),
+  });
+
+  const db = drizzle(neon(databaseUrl));
+  const [user] = await db
+    .select({ id: baUserTable.id })
+    .from(baUserTable)
+    .where(drizzleOrm.eq(baUserTable.email, email))
+    .limit(1);
+  if (user == null) {
+    return;
+  }
+
+  const passwordHash = await argon2Hash(password, { memoryCost: 8, outputLen: 32, parallelism: 1, timeCost: 1 });
+  await db
+    .update(baAccountTable)
+    .set({ password: passwordHash })
+    .where(
+      drizzleOrm.and(
+        drizzleOrm.eq(baAccountTable.userId, user.id),
+        drizzleOrm.eq(baAccountTable.providerId, "credential"),
+      ),
+    );
+}
 
 /**
  * Clicks "Save" in the link form dialog and handles the URL reachability
@@ -187,14 +151,7 @@ export async function saveLinkForm(page: Page) {
 
 /**
  * Creates a link via the Add link dialog, waits for the dialog to close, AND
- * waits for the new link row to appear in the list. saveLinkForm resolves as
- * soon as the server action completes, but the list's re-render is driven by
- * Next.js revalidation which can lag by hundreds of ms (more now that bio-link
- * creation also inserts a short_slugs row). Without this wait, callers that
- * immediately interact with the list (bulk checkboxes, etc.) race the render
- * and select a stale subset.
- *
- * Optionally sets a custom slug for predictable redirect URLs.
+ * waits for the new link row to appear in the list.
  */
 export async function createLink(page: Page, title: string, url: string, slug?: string) {
   await page.getByRole("button", { exact: true, name: "Add link" }).click();
@@ -220,60 +177,56 @@ export async function deleteLink(page: Page, title: string) {
   await page.getByRole("dialog").waitFor({ state: "hidden" });
 }
 
-/**
- * Restore a user's password via the Clerk REST API.
- */
-export async function restorePasswordByUsername(username: string, password: string) {
-  const secretKey = process.env.CLERK_SECRET_KEY;
-
-  if (secretKey == null) {
-    return;
-  }
-
-  const listRes = await fetch(`https://api.clerk.com/v1/users?username=${encodeURIComponent(username)}&limit=1`, {
-    headers: { Authorization: `Bearer ${secretKey}` },
-  });
-
-  if (!listRes.ok) {
-    return;
-  }
-
-  const users = (await listRes.json()) as { id: string }[];
-
-  if (users.length === 0) {
-    return;
-  }
-
-  await fetch(`https://api.clerk.com/v1/users/${users[0].id}`, {
-    body: JSON.stringify({ password, skip_password_checks: true }),
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/json",
-    },
-    method: "PATCH",
-  });
-}
-
 export const test = base.extend<AuthFixtures>({
-  adminUser: async ({ page }, use) => {
-    await signInByUsernameToDashboard(page, testUsers.admin.username);
+  adminUser: async ({ baseURL, browser }, use) => {
+    if (baseURL == null) {
+      throw new Error("baseURL is required for the auth fixture");
+    }
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await signInRoleToDashboard(context, page, baseURL, testUsers.admin.email);
     await use(page);
+    await context.close();
   },
-  freeUser: async ({ page }, use) => {
-    await signInByUsernameToDashboard(page, testUsers.admin.username);
+  freeUser: async ({ baseURL, browser }, use) => {
+    if (baseURL == null) {
+      throw new Error("baseURL is required for the auth fixture");
+    }
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await signInRoleToDashboard(context, page, baseURL, testUsers.free.email);
     await use(page);
+    await context.close();
   },
-  freshUser: async ({ page }, use) => {
-    await signInByUsername(page, testUsers.fresh.username);
+  freshUser: async ({ baseURL, browser }, use) => {
+    if (baseURL == null) {
+      throw new Error("baseURL is required for the auth fixture");
+    }
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await signInRole(context, baseURL, testUsers.fresh.email);
     await use(page);
+    await context.close();
   },
-  passwordProUser: async ({ page }, use) => {
-    await signInByUsernameToDashboard(page, testUsers.passwordPro.username);
+  passwordProUser: async ({ baseURL, browser }, use) => {
+    if (baseURL == null) {
+      throw new Error("baseURL is required for the auth fixture");
+    }
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await signInRoleToDashboard(context, page, baseURL, testUsers.passwordPro.email);
     await use(page);
+    await context.close();
   },
-  proUser: async ({ page }, use) => {
-    await signInByUsernameToDashboard(page, testUsers.pro.username);
+  proUser: async ({ baseURL, browser }, use) => {
+    if (baseURL == null) {
+      throw new Error("baseURL is required for the auth fixture");
+    }
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await signInRoleToDashboard(context, page, baseURL, testUsers.pro.email);
     await use(page);
+    await context.close();
   },
 });
 

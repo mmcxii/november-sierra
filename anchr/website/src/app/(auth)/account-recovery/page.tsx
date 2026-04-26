@@ -1,4 +1,4 @@
-import { BetterAuthAccountRecoveryForm } from "@/components/auth/better-auth/account-recovery-form";
+import { AccountRecoveryForm } from "@/components/auth/account-recovery-form";
 import type { Metadata } from "next";
 import * as React from "react";
 
@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const AccountRecoveryPage: React.FC = () => {
-  return <BetterAuthAccountRecoveryForm />;
+  return <AccountRecoveryForm />;
 };
 
 export default AccountRecoveryPage;

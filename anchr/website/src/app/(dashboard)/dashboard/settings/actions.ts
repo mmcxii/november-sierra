@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import {
   checkUsernameAvailability as checkUsernameAvailabilityQuery,
@@ -21,7 +21,6 @@ import { grantPro } from "@/lib/tier.server";
 import { generateReferralCode } from "@/lib/utils/referral-code";
 import { isValidDomain } from "@/lib/utils/url";
 import { addDomain, getDomainConfig, removeDomain, verifyDomain } from "@/lib/vercel";
-import { auth } from "@clerk/nextjs/server";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 

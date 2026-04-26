@@ -15,7 +15,6 @@ test-results/
 test-results-smoke/
 test-results-smoke-prod/
 blob-report/
-e2e/.clerk/
 
 # next.js
 .next/

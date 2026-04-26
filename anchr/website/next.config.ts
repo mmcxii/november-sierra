@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      { hostname: "img.clerk.com" },
       { hostname: "utfs.io" },
       { hostname: "*.ufs.sh" },
       { hostname: "**" }, // Nostr avatars from any domain

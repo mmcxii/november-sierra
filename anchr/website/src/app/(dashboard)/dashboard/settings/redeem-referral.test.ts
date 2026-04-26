@@ -14,8 +14,9 @@ const mockUpdate = vi.fn();
 const mockGrantPro = vi.fn();
 const mockIsAdmin = vi.fn();
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock("@/lib/auth", () => ({
   auth: (...args: unknown[]) => mockAuth(...args),
+  isAdmin: (...args: unknown[]) => mockIsAdmin(...args),
 }));
 
 vi.mock("@/lib/db/client", () => ({
@@ -40,9 +41,6 @@ vi.mock("@/lib/db/schema/referral-redemption", () => ({
   referralRedemptionsTable: { codeId: "code_id", id: "id", userId: "user_id" },
 }));
 
-vi.mock("@/lib/auth", () => ({
-  isAdmin: (...args: unknown[]) => mockIsAdmin(...args),
-}));
 vi.mock("@/lib/tier.server", () => ({
   grantPro: (...args: unknown[]) => mockGrantPro(...args),
 }));

@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { generateUniqueSlug } from "@/lib/db/queries/link";
 import {
@@ -11,7 +12,6 @@ import { usersTable } from "@/lib/db/schema/user";
 import { detectPlatform } from "@/lib/platforms";
 import { linkSchema } from "@/lib/schemas/link";
 import { assignBioLinkShortSlug } from "@/lib/services/bio-link-short-slug";
-import { auth } from "@clerk/nextjs/server";
 import { eq, sql } from "drizzle-orm";
 
 export type { CheckUsernameResult } from "@/lib/db/queries/username";

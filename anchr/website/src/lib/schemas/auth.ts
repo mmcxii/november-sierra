@@ -29,12 +29,10 @@ export const forgotPasswordEmailSchema = z.object({
 
 export type ForgotPasswordEmailValues = z.infer<typeof forgotPasswordEmailSchema>;
 
+// Token-based reset (post ANC-152). BA's reset-password flow embeds a token
+// in the email link; the new-password form validates min length + match.
 export const resetPasswordSchema = z
   .object({
-    code: z
-      .string()
-      .length(6)
-      .regex(/^\d{6}$/),
     confirmPassword: z.string().min(8),
     newPassword: z.string().min(8),
   })

@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@/lib/auth";
 import { sanitizeCss } from "@/lib/css-sanitizer";
 import { PRO_THEME_LIMIT } from "@/lib/custom-themes";
 import { db } from "@/lib/db/client";
@@ -10,7 +11,6 @@ import type { CustomThemeInput } from "@/lib/schemas/custom-theme";
 import { isValidThemeId } from "@/lib/themes";
 import { isProUser } from "@/lib/tier";
 import { autoVersionThemeName } from "@/lib/utils/custom-theme";
-import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 

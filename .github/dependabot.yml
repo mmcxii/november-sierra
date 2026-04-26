@@ -17,10 +17,12 @@ updates:
           - "next"
           - "eslint-config-next"
           - "babel-plugin-react-compiler"
-      clerk:
+      better-auth:
         patterns:
-          - "@clerk/*"
-          - "svix"
+          - "better-auth"
+          - "@better-auth/*"
+          - "@node-rs/argon2"
+          - "@marsidev/react-turnstile"
       code-quality:
         patterns:
           - "eslint"

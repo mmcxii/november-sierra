@@ -11,9 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type SessionUser } from "@/lib/auth";
+import { authClient } from "@/lib/better-auth/client";
 import { isProUser } from "@/lib/tier";
 import { cn } from "@/lib/utils";
-import { SignOutButton } from "@clerk/nextjs";
 import { Anchor, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,6 +42,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
   //* Handlers
   const closeMobile = () => setMobileOpen(false);
   const handleButtonOnClick = () => setMobileOpen(!mobileOpen);
+
+  const handleSignOut = async () => {
+    // Hard navigation rather than router.push so the BA session cookie clear
+    // (set via Set-Cookie on the sign-out response) is honored on the next
+    // request — a soft client navigation would carry the now-invalid cookie.
+    await authClient.signOut();
+    window.location.assign("/sign-in");
+  };
 
   //* Effects
   React.useEffect(() => {
@@ -197,9 +205,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = (props) => {
                   <Link href="/dashboard/settings">{t("settings")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <SignOutButton>
-                  <DropdownMenuItem>{t("signOut")}</DropdownMenuItem>
-                </SignOutButton>
+                <DropdownMenuItem onClick={handleSignOut}>{t("signOut")}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <DashboardThemeToggle />

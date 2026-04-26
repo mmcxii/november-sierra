@@ -12,23 +12,19 @@ set -euo pipefail
 
 # Client (NEXT_PUBLIC_) — these are expected to appear in client chunks
 export NEXT_PUBLIC_APP_URL="http://localhost:3000"
-export NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_bW9jay5jbGVyay5hY2NvdW50cy5kZXYk"
-export NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
-export NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
-export NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/dashboard"
-export NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/dashboard"
 export NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_mock"
 export NEXT_PUBLIC_POSTHOG_KEY="phc_mock"
 export NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com"
 export NEXT_PUBLIC_SHORT_DOMAIN="test.short.domain"
+# Cloudflare's "always passes" public key — keeps the Turnstile widget
+# rendering during validate-build without needing real keys.
+export NEXT_PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"
 
 # Server — each value embeds VALIDATE_BUILD_SERVER_ONLY__<KEY> so the scanner
 # can pinpoint which env var leaked if one appears in a client chunk.
 export ADMIN_USER_ID="VALIDATE_BUILD_SERVER_ONLY__ADMIN_USER_ID"
 # length>=32 required; sentinel is 44 chars, comfortably above the minimum
 export BETTER_AUTH_SECRET="VALIDATE_BUILD_SERVER_ONLY__BETTER_AUTH_SECRET"
-export CLERK_SECRET_KEY="sk_test_VALIDATE_BUILD_SERVER_ONLY__CLERK_SECRET_KEY"
-export CLERK_WEBHOOK_SECRET="whsec_VALIDATE_BUILD_SERVER_ONLY__CLERK_WEBHOOK_SECRET"
 export CRON_SECRET="VALIDATE_BUILD_SERVER_ONLY__CRON_SECRET"
 export DATABASE_URL="postgresql://mock:VALIDATE_BUILD_SERVER_ONLY__DATABASE_URL@localhost:5432/mock"
 export RESEND_API_KEY="re_VALIDATE_BUILD_SERVER_ONLY__RESEND_API_KEY"
@@ -36,6 +32,10 @@ export STRIPE_PRO_PRICE_ID_ANNUAL="price_VALIDATE_BUILD_SERVER_ONLY_STRIPE_PRO_P
 export STRIPE_PRO_PRICE_ID_MONTHLY="price_VALIDATE_BUILD_SERVER_ONLY_STRIPE_PRO_PRICE_ID_MONTHLY"
 export STRIPE_SECRET_KEY="sk_test_VALIDATE_BUILD_SERVER_ONLY__STRIPE_SECRET_KEY"
 export STRIPE_WEBHOOK_SECRET="whsec_VALIDATE_BUILD_SERVER_ONLY__STRIPE_WEBHOOK_SECRET"
+# Cloudflare's "always passes" secret key. Sentinel-embedded variants would
+# fail siteverify; the test secret keeps the captcha plugin happy without
+# actually contacting Cloudflare.
+export TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
 export UPLOADTHING_TOKEN="VALIDATE_BUILD_SERVER_ONLY__UPLOADTHING_TOKEN"
 export UPSTASH_REDIS_REST_TOKEN="VALIDATE_BUILD_SERVER_ONLY__UPSTASH_REDIS_REST_TOKEN"
 export UPSTASH_REDIS_REST_URL="https://mock.upstash.io/VALIDATE_BUILD_SERVER_ONLY__UPSTASH_REDIS_REST_URL"

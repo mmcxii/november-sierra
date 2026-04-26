@@ -9,7 +9,7 @@ import {
 import { envSchema } from "@/lib/env";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { emailOTP, twoFactor } from "better-auth/plugins";
+import { captcha, emailOTP, twoFactor } from "better-auth/plugins";
 import {
   sendChangeEmailConfirmation,
   sendOtpEmail,
@@ -20,6 +20,7 @@ import {
 import { hashPassword } from "./password";
 import { verifyPasswordWithRehash } from "./password-rehash";
 import { recoveryCode2faBypassPlugin } from "./recovery-code-2fa-bypass-plugin";
+import { bootstrapApplicationUser } from "./user-bootstrap";
 
 // Session cookie cache TTL — BA default 60s. Accepts <1 min revocation latency
 // as the normal trade-off to keep the middleware hot path DB-free.
@@ -56,6 +57,26 @@ export const auth = betterAuth({
     },
     usePlural: false,
   }),
+  // Replaces the old Clerk `user.created` webhook. BA fires this hook in-band
+  // with sign-up, so the application `users` row + signup-grant exist before
+  // the auto-sign-in redirect lands on /onboarding (no race, no waitForUser).
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          if (typeof user.id !== "string" || typeof user.email !== "string") {
+            return;
+          }
+          await bootstrapApplicationUser({
+            email: user.email,
+            id: user.id,
+            image: typeof user.image === "string" ? user.image : null,
+            name: typeof user.name === "string" ? user.name : null,
+          });
+        },
+      },
+    },
+  },
   emailAndPassword: {
     autoSignIn: true,
     enabled: true,
@@ -93,6 +114,27 @@ export const auth = betterAuth({
       },
     }),
     recoveryCode2faBypassPlugin(),
+    // Cloudflare Turnstile bot protection on sign-up + password-reset.
+    // Conditionally enabled — when TURNSTILE_SECRET_KEY is unset (e.g. local
+    // dev without a Cloudflare site provisioned) the plugin is omitted and
+    // the endpoints accept requests without a token. Stage/prod set the
+    // secret so unauthenticated bot traffic is filtered before reaching BA.
+    // Token transport is the `x-captcha-response` header set by the
+    // TurnstileWidget client wrapper.
+    ...(envSchema.TURNSTILE_SECRET_KEY != null
+      ? [
+          captcha({
+            // Limit the captcha gate to creation flows. /sign-in/email is in
+            // BA's defaults but we exclude it: a brute-force attacker would
+            // already be filtered by the per-IP /api/v1/auth/* rate limiter,
+            // and adding a Turnstile challenge to every sign-in is friction
+            // for legitimate users with no equivalent gain.
+            endpoints: ["/sign-up/email", "/request-password-reset"],
+            provider: "cloudflare-turnstile",
+            secretKey: envSchema.TURNSTILE_SECRET_KEY,
+          }),
+        ]
+      : []),
   ],
   rateLimit: {
     // Disabled deliberately. Our middleware (src/middleware.ts) routes every

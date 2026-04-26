@@ -1,15 +1,16 @@
 "use server";
 
-import { isAdmin } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { isUsernameReservedByCode } from "@/lib/db/queries/username";
+import { betterAuthUserTable } from "@/lib/db/schema/better-auth";
 import { referralCodesTable } from "@/lib/db/schema/referral-code";
 import { usersTable } from "@/lib/db/schema/user";
 import { usernameSchema } from "@/lib/schemas/username";
 import { generateReferralCode } from "@/lib/utils/referral-code";
-import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 export type AdminActionResult = { error: string; success: false } | { success: true };
 
@@ -100,6 +101,76 @@ export async function deleteAdminCode(codeId: string): Promise<AdminActionResult
   await requireAdmin();
 
   await db.delete(referralCodesTable).where(eq(referralCodesTable.id, codeId));
+
+  revalidatePath("/dashboard/admin");
+
+  return { success: true };
+}
+
+const updateUserEmailSchema = z
+  .object({
+    confirmEmail: z.email(),
+    newEmail: z.email(),
+    targetUserId: z.string().min(1),
+  })
+  .refine((d) => d.newEmail.toLowerCase() === d.confirmEmail.toLowerCase(), {
+    message: "Emails do not match.",
+    path: ["confirmEmail"],
+  });
+
+export type UpdateUserEmailInput = z.infer<typeof updateUserEmailSchema>;
+
+// Last-resort recovery for users who lost both email access AND their
+// recovery codes. Logs the change to PostHog with the admin's id +
+// timestamp; the change itself flips ba_user.email and forces a re-verify
+// on next sign-in (emailVerified=false), so the new owner has to prove
+// inbox access before BA accepts a session.
+export async function updateUserEmail(input: UpdateUserEmailInput): Promise<AdminActionResult> {
+  const adminUserId = await requireAdmin();
+
+  const parsed = updateUserEmailSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "invalidInput", success: false };
+  }
+
+  const { newEmail, targetUserId } = parsed.data;
+
+  const [target] = await db
+    .select({ email: betterAuthUserTable.email, id: betterAuthUserTable.id })
+    .from(betterAuthUserTable)
+    .where(eq(betterAuthUserTable.id, targetUserId))
+    .limit(1);
+
+  if (target == null) {
+    return { error: "userNotFound", success: false };
+  }
+
+  await db
+    .update(betterAuthUserTable)
+    .set({ email: newEmail, emailVerified: false, updatedAt: new Date() })
+    .where(eq(betterAuthUserTable.id, targetUserId));
+
+  // Best-effort audit (PostHog, same pattern as user-bootstrap)
+  try {
+    const { PostHog } = await import("posthog-node");
+    const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY ?? "", {
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    });
+    posthog.capture({
+      distinctId: adminUserId,
+      event: "admin_user_email_updated",
+      properties: {
+        adminUserId,
+        newEmail,
+        previousEmail: target.email,
+        targetUserId,
+        timestamp: new Date().toISOString(),
+      },
+    });
+    await posthog.shutdown();
+  } catch (error) {
+    console.error("[admin] PostHog audit capture failed:", error);
+  }
 
   revalidatePath("/dashboard/admin");
 

@@ -1,8 +1,10 @@
 import { SettingsContent } from "@/components/dashboard/settings-content";
 import { requireUser } from "@/lib/auth";
+import { db } from "@/lib/db/client";
+import { betterAuthUserTable } from "@/lib/db/schema/better-auth";
 import { initTranslations } from "@/lib/i18n/server";
 import { type ThemeId, isValidThemeId } from "@/lib/themes";
-import { clerkClient } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import * as React from "react";
 
@@ -25,10 +27,14 @@ const SettingsPage: React.FC<SettingsPageProps> = async (props) => {
   const pageDarkThemeId: ThemeId = isValidThemeId(user.pageDarkTheme) ? user.pageDarkTheme : "dark-depths";
   const pageLightThemeId: ThemeId = isValidThemeId(user.pageLightTheme) ? user.pageLightTheme : "stateroom";
 
-  const client = await clerkClient();
-  const clerkUser = await client.users.getUser(user.id);
-  const primaryEmailId = clerkUser.primaryEmailAddressId;
-  const email = clerkUser.emailAddresses.find((e) => e.id === primaryEmailId)?.emailAddress ?? "";
+  // Email lives on ba_user (BA owns identity post ANC-152). The application
+  // `users` row is pure profile/billing/etc. data and doesn't carry email.
+  const [baUser] = await db
+    .select({ email: betterAuthUserTable.email })
+    .from(betterAuthUserTable)
+    .where(eq(betterAuthUserTable.id, user.id))
+    .limit(1);
+  const email = baUser?.email ?? "";
 
   return (
     <div>

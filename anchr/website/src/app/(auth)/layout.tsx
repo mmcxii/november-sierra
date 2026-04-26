@@ -1,6 +1,6 @@
 import { SiteLogo } from "@/components/marketing/site-logo";
 import { MarketingThemeProvider } from "@/components/marketing/theme-provider";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import * as React from "react";
 
@@ -9,6 +9,9 @@ export type AuthLayoutProps = React.PropsWithChildren;
 const AuthLayout: React.FC<AuthLayoutProps> = async (props) => {
   const { children } = props;
 
+  // Middleware redirects authenticated traffic to /dashboard before this
+  // layout runs, but server-side `auth()` is the authoritative gate (the
+  // middleware decision relies on cookie presence only).
   const { userId } = await auth();
 
   if (userId != null) {

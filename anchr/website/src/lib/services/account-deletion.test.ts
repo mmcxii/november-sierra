@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/db/client", () => ({ db: {} }));
 vi.mock("@/lib/stripe", () => ({ stripe: {} }));
 vi.mock("@/lib/vercel", () => ({ removeDomain: vi.fn() }));
-vi.mock("@clerk/nextjs/server", () => ({ clerkClient: vi.fn() }));
 vi.mock("uploadthing/server", () => ({ UTApi: vi.fn() }));
 
 const { extractFileKey } = await import("./account-deletion");

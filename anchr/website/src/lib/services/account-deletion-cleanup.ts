@@ -1,9 +1,9 @@
 import { db } from "@/lib/db/client";
 import { accountDeletionLogsTable } from "@/lib/db/schema/account-deletion-log";
+import { betterAuthUserTable } from "@/lib/db/schema/better-auth";
 import { deleteUploadthingFiles } from "@/lib/services/account-deletion";
 import { stripe } from "@/lib/stripe";
 import { removeDomain } from "@/lib/vercel";
-import { clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 
 const MAX_ATTEMPTS = 3;
@@ -62,19 +62,14 @@ export async function retryDeletionCleanup(): Promise<CleanupResult> {
       uploadthingCleaned = true; // No files to delete
     }
 
-    // Retry Clerk
+    // Retry Better Auth identity row delete (column kept as `clerkCleaned`
+    // pre-rename to avoid a schema migration in this PR).
     if (!clerkCleaned) {
       try {
-        const client = await clerkClient();
-        await client.users.deleteUser(log.clerkUserId);
+        await db.delete(betterAuthUserTable).where(eq(betterAuthUserTable.id, log.clerkUserId));
         clerkCleaned = true;
       } catch (error) {
-        // 404 means the user was already deleted (e.g. by webhook)
-        if (error != null && typeof error === "object" && "status" in error && error.status === 404) {
-          clerkCleaned = true;
-        } else {
-          console.error(`[deletion-cleanup] Clerk retry failed for ${log.username}:`, error);
-        }
+        console.error(`[deletion-cleanup] Better Auth retry failed for ${log.username}:`, error);
       }
     }
 

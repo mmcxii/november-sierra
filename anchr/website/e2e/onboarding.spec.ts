@@ -55,21 +55,19 @@ test.describe("onboarding flow", () => {
   //
   // WHY WE SET LOCALSTORAGE INSTEAD OF SIGNING UP:
   //
-  // Clerk's sign-up flow in CI gets stuck on the session handshake redirect.
-  // After OTP verification succeeds, Clerk navigates to a base64 token URL
-  // (the "__clerk_handshake") which should redirect to /onboarding, but this
-  // redirect never completes in headless Chromium on GitHub Actions. This is a
-  // Clerk infrastructure issue outside our control — the sign-up, OTP
-  // verification, and session creation all succeed, but the final handshake
-  // redirect hangs indefinitely.
+  // Driving the full sign-up → email-OTP → onboarding flow in CI requires a
+  // working inbox to read the BA verification link out of, which the headless
+  // harness doesn't have. The sign-up form's onSubmit handler stashes the
+  // referral code in localStorage on a successful sign-up; the onboarding
+  // theme step reads that value back and applies it via
+  // completeOnboarding() → redeemReferralCode().
   //
   // WHAT WE MOCK:
   //
-  // Only the localStorage write that the sign-up form's onSignUp handler
-  // performs when a user enters a referral code. Instead of creating a new
-  // Clerk user via sign-up, we use the pre-seeded freshUser fixture (a real
-  // Clerk user signed in via the backend API) and set the anchr_referral_code
-  // localStorage key directly — the same key and format the sign-up form uses.
+  // Only the localStorage write. We use the pre-seeded freshUser (a real BA
+  // user signed in via the credential endpoint) and set the
+  // anchr_referral_code localStorage key directly — the same key and format
+  // the sign-up form writes.
   //
   // WHAT IS NOT MOCKED:
   //

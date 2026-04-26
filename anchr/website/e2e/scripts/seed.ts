@@ -1,12 +1,10 @@
 import "dotenv/config";
-import { createClerkClient } from "@clerk/backend";
 import { neon } from "@neondatabase/serverless";
 import { hash as argon2Hash } from "@node-rs/argon2";
 import { drizzle } from "drizzle-orm/neon-http";
 import { boolean, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import fs from "node:fs";
-import path from "node:path";
 
+// Minimal schema mirror — only the columns the seeder writes.
 const usersTable = pgTable("users", {
   displayName: text("display_name"),
   id: text("id").primaryKey(),
@@ -27,7 +25,6 @@ const referralCodesTable = pgTable("referral_codes", {
   type: text("type").notNull(),
 });
 
-// Minimal BA schema mirror — only the columns the seeder writes.
 const baUserTable = pgTable("ba_user", {
   email: text("email").notNull(),
   emailVerified: boolean("email_verified").default(false).notNull(),
@@ -49,83 +46,85 @@ const baAccountTable = pgTable(
 
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
 
+// Test users for the BA flow. Each gets a corresponding ba_user + ba_account
+// (credential password) + users row. Username + id are run-scoped so parallel
+// CI runs never collide. Passwords share a single env var so the
+// signInUser fixture can hash once and re-use.
 const E2E_USERS = [
-  { email: `e2e-pro-${RUN_ID}@anchr.to`, onboarded: true, role: "pro", tier: "pro", username: `e2epro${RUN_ID}` },
-  {
-    email: `e2e-admin-${RUN_ID}@anchr.to`,
-    onboarded: true,
-    role: "admin",
-    tier: "free",
-    username: `e2eadmin${RUN_ID}`,
-  },
-  {
-    email: `e2e-fresh-${RUN_ID}@anchr.to`,
-    onboarded: false,
-    role: "fresh",
-    tier: "free",
-    username: `e2efresh${RUN_ID}`,
-  },
-  {
-    email: `e2e-password-${RUN_ID}+clerk_test@anchr.to`,
-    onboarded: true,
-    role: "passwordPro",
-    tier: "pro",
-    username: `e2epassword${RUN_ID}`,
-  },
+  { onboarded: true, role: "pro", tier: "pro" },
+  { onboarded: true, role: "admin", tier: "free" },
+  { onboarded: false, role: "fresh", tier: "free" },
+  { onboarded: true, role: "passwordPro", tier: "pro" },
+  { onboarded: true, role: "free", tier: "free" },
 ] as const;
 
-type SeededUser = { clerkId: string; email: string; role: string };
+type SeededUser = {
+  email: string;
+  id: string;
+  password: string;
+  role: string;
+  username: string;
+};
+
+function buildSeededUser(role: string, password: string): SeededUser {
+  return {
+    email: `e2e-${role.toLowerCase()}-${RUN_ID}@anchr.to`,
+    id: `e2e_${role.toLowerCase()}_${RUN_ID}`,
+    password,
+    role,
+    username: `e2e${role.toLowerCase()}${RUN_ID}`,
+  };
+}
 
 async function main() {
-  const secretKey = process.env.CLERK_SECRET_KEY;
   const databaseUrl = process.env.DATABASE_URL;
   const password = process.env.E2E_USER_PASSWORD;
 
-  if (!secretKey || !databaseUrl || !password) {
-    console.warn("[e2e:seed] Skipping — missing CLERK_SECRET_KEY, DATABASE_URL, or E2E_USER_PASSWORD");
+  if (databaseUrl == null || password == null) {
+    console.warn("[e2e:seed] Skipping — missing DATABASE_URL or E2E_USER_PASSWORD");
     process.exit(0);
   }
 
-  const clerk = createClerkClient({ secretKey });
   const db = drizzle(neon(databaseUrl));
 
-  const clerkDir = path.join(import.meta.dirname, "../.clerk");
-  fs.mkdirSync(clerkDir, { recursive: true });
-
-  const seededUsers: SeededUser[] = [];
+  // Hash the shared password once — all roles share it. Weaker argon2id
+  // params are deliberate: the hash only ever guards an ephemeral CI user
+  // against in-repo plaintext, so OWASP cost is overkill here.
+  const passwordHash = await argon2Hash(password, { memoryCost: 8, outputLen: 32, parallelism: 1, timeCost: 1 });
 
   for (const user of E2E_USERS) {
-    const { data: existing } = await clerk.users.getUserList({
-      emailAddress: [user.email],
-      limit: 1,
-    });
+    const seeded = buildSeededUser(user.role, password);
 
-    let clerkId: string;
-
-    if (existing.length > 0) {
-      clerkId = existing[0].id;
-      console.log(`[e2e:seed] Found existing ${user.role} user: ${clerkId}`);
-    } else {
-      const created = await clerk.users.createUser({
-        emailAddress: [user.email],
-        firstName: "E2E",
-        lastName: user.role.charAt(0).toUpperCase() + user.role.slice(1),
-        password,
-        skipPasswordChecks: true,
-        username: user.username,
+    await db
+      .insert(baUserTable)
+      .values({ email: seeded.email, emailVerified: true, id: seeded.id, name: `E2E ${user.role}` })
+      .onConflictDoUpdate({
+        set: { email: seeded.email, emailVerified: true, name: `E2E ${user.role}` },
+        target: baUserTable.id,
       });
-      clerkId = created.id;
-      console.log(`[e2e:seed] Created ${user.role} user: ${clerkId}`);
-    }
+
+    await db
+      .insert(baAccountTable)
+      .values({
+        accountId: seeded.id,
+        id: `ba-account-${seeded.id}`,
+        password: passwordHash,
+        providerId: "credential",
+        userId: seeded.id,
+      })
+      .onConflictDoUpdate({
+        set: { password: passwordHash },
+        target: [baAccountTable.providerId, baAccountTable.accountId],
+      });
 
     await db
       .insert(usersTable)
       .values({
         displayName: `E2E ${user.role}`,
-        id: clerkId,
+        id: seeded.id,
         onboardingComplete: user.onboarded,
         tier: user.tier,
-        username: user.username,
+        username: seeded.username,
       })
       .onConflictDoUpdate({
         set: {
@@ -136,60 +135,10 @@ async function main() {
         target: usersTable.id,
       });
 
-    seededUsers.push({ clerkId, email: user.email, role: user.role });
+    console.log(`[e2e:seed] Seeded ${user.role}: ${seeded.id} (${seeded.email})`);
   }
 
-  const seededUsersPath = path.join(clerkDir, "seeded-users.json");
-  fs.writeFileSync(seededUsersPath, JSON.stringify(seededUsers, null, 2));
-  console.log(`[e2e:seed] Wrote ${seededUsers.length} users to ${seededUsersPath} (run: ${RUN_ID})`);
-
-  // ─── Better Auth test user ──────────────────────────────────────────────
-  // Seeded directly via Drizzle to mirror the migration script's path. The
-  // id is run-scoped so parallel CI runs don't collide on ba_user.
-  const baUserId = `e2e_ba_user_${RUN_ID}`;
-  const baEmail = `e2e-ba-${RUN_ID}@anchr.to`;
-  const baUsername = `e2eba${RUN_ID}`;
-  const baPassword = `e2e-ba-password-${RUN_ID}`;
-  // OWASP params would take ~500ms; use weaker params here since the hash
-  // only ever protects the ephemeral CI user against in-repo plaintext.
-  const baPasswordHash = await argon2Hash(baPassword, { memoryCost: 8, outputLen: 32, parallelism: 1, timeCost: 1 });
-
-  await db
-    .insert(baUserTable)
-    .values({ email: baEmail, emailVerified: true, id: baUserId, name: "E2E BA User" })
-    .onConflictDoUpdate({ set: { email: baEmail, emailVerified: true, name: "E2E BA User" }, target: baUserTable.id });
-
-  await db
-    .insert(baAccountTable)
-    .values({
-      accountId: baUserId,
-      id: `ba-account-${baUserId}`,
-      password: baPasswordHash,
-      providerId: "credential",
-      userId: baUserId,
-    })
-    .onConflictDoUpdate({
-      set: { password: baPasswordHash },
-      target: [baAccountTable.providerId, baAccountTable.accountId],
-    });
-
-  await db
-    .insert(usersTable)
-    .values({
-      displayName: "E2E BA User",
-      id: baUserId,
-      onboardingComplete: true,
-      tier: "free",
-      username: baUsername,
-    })
-    .onConflictDoUpdate({
-      set: { displayName: "E2E BA User", onboardingComplete: true, tier: "free" },
-      target: usersTable.id,
-    });
-
-  console.log(`[e2e:seed] Seeded BA test user: ${baUserId} (email: ${baEmail})`);
-
-  // Seed a test referral code for sign-up E2E tests
+  // Test referral code consumed by the redeem-referral spec.
   const E2E_REFERRAL_CODE = `ANCHR-E2E${RUN_ID.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;
   await db
     .insert(referralCodesTable)

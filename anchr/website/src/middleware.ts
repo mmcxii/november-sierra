@@ -1,13 +1,39 @@
 import { rateLimitAuthRequest, rateLimitRequest, rateLimitShortUrlRedirect } from "@/lib/api/rate-limit";
 import { defaultLocale } from "@/lib/i18n/config";
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { neon } from "@neondatabase/serverless";
 import { getSessionCookie } from "better-auth/cookies";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/onboarding(.*)"]);
-const isAuthApiRoute = createRouteMatcher(["/api/v1/auth(.*)"]);
-const isApiV1Route = createRouteMatcher(["/api/v1(.*)"]);
+// Lightweight matcher helpers — Clerk's `createRouteMatcher` is gone after
+// ANC-152, and we don't need its full glob surface. These are evaluated on
+// every request so prefix checks (cheap) > regex (expensive).
+function startsWithAny(pathname: string, prefixes: readonly string[]): boolean {
+  for (const prefix of prefixes) {
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const PROTECTED_PREFIXES = ["/dashboard", "/onboarding"] as const;
+const AUTH_PREFIXES = ["/sign-in", "/sign-up", "/update-password", "/two-factor"] as const;
+
+function isProtectedRoute(pathname: string): boolean {
+  return startsWithAny(pathname, PROTECTED_PREFIXES);
+}
+
+function isAuthRoute(pathname: string): boolean {
+  return pathname === "/" || startsWithAny(pathname, AUTH_PREFIXES);
+}
+
+function isAuthApiRoute(pathname: string): boolean {
+  return pathname.startsWith("/api/v1/auth");
+}
+
+function isApiV1Route(pathname: string): boolean {
+  return pathname.startsWith("/api/v1");
+}
 
 // ─── Custom Domain Cache ─────────────────────────────────────────────────────
 
@@ -100,14 +126,14 @@ async function resolveShortDomain(host: string): Promise<null | string> {
   }
 }
 
-export default clerkMiddleware(async (auth, req) => {
+export default async function middleware(req: NextRequest): Promise<NextResponse | Response> {
   const host = req.headers.get("host") ?? "";
+  const pathname = req.nextUrl.pathname;
 
   // ─── Short Domain Redirect ─────────────────────────────────────────────────
   const shortDomainHosts = getShortDomainHosts();
   if (shortDomainHosts.has(host)) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://anchr.to";
-    const pathname = req.nextUrl.pathname;
     const segments = pathname.split("/").filter(Boolean);
 
     // Root path → redirect to main app
@@ -142,7 +168,6 @@ export default clerkMiddleware(async (auth, req) => {
     // Check if this is a custom short domain
     const shortDomainUsername = await resolveShortDomain(host);
     if (shortDomainUsername != null) {
-      const pathname = req.nextUrl.pathname;
       const segments = pathname.split("/").filter(Boolean);
 
       if (segments.length === 0) {
@@ -176,7 +201,7 @@ export default clerkMiddleware(async (auth, req) => {
   // IP-keyed and tighter than the data-plane Free/Pro/Unauth tiers — auth
   // endpoints are brute-force targets with no high-throughput legitimate use.
   // Everything else under /api/v1/* uses the existing tier-based limiter.
-  if (isAuthApiRoute(req)) {
+  if (isAuthApiRoute(pathname)) {
     const { headers: rateLimitHeaders, limited, response } = await rateLimitAuthRequest(req);
 
     if (limited && response != null) {
@@ -191,7 +216,7 @@ export default clerkMiddleware(async (auth, req) => {
     return next;
   }
 
-  if (isApiV1Route(req)) {
+  if (isApiV1Route(pathname)) {
     const { headers: rateLimitHeaders, limited, response } = await rateLimitRequest(req);
 
     if (limited && response != null) {
@@ -215,7 +240,6 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.next();
     }
 
-    const pathname = req.nextUrl.pathname;
     const segments = pathname.split("/").filter(Boolean);
 
     let rewriteUrl: URL;
@@ -237,42 +261,26 @@ export default clerkMiddleware(async (auth, req) => {
     return response;
   }
 
-  // Whitelisted users carrying a BA session cookie are authenticated via BA.
-  // We can't call into the BA API from middleware (DB access in edge), so we
-  // trust the presence of the signed cookie for the route-gate decision and
-  // let the server-side `auth()` shim do the authoritative lookup.
+  // ─── Auth gates (BA session) ───────────────────────────────────────────────
+  // We can't hit BA's DB-backed getSession from edge middleware. Trust the
+  // presence of the signed session cookie for routing decisions; the
+  // server-side `auth()` shim does the authoritative lookup before any
+  // protected resource is rendered.
   const baCookie = getSessionCookie(req);
-  if (baCookie != null) {
-    if (isProtectedRoute(req)) {
-      const response = NextResponse.next();
-      response.headers.set("x-next-i18n-router-locale", defaultLocale);
-      return response;
-    }
-    const response = NextResponse.next();
-    response.headers.set("x-next-i18n-router-locale", defaultLocale);
-    return response;
+
+  if (isProtectedRoute(pathname) && baCookie == null) {
+    const signInUrl = new URL("/sign-in", req.url);
+    return NextResponse.redirect(signInUrl);
   }
 
-  if (isProtectedRoute(req)) {
-    await auth.protect();
-  }
-
-  const { userId } = await auth();
-
-  const isAuthRoute =
-    req.nextUrl.pathname === "/" ||
-    req.nextUrl.pathname.startsWith("/sign-in") ||
-    req.nextUrl.pathname.startsWith("/sign-up") ||
-    req.nextUrl.pathname.startsWith("/update-password");
-
-  if (isAuthRoute && userId != null) {
+  if (isAuthRoute(pathname) && baCookie != null) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   const response = NextResponse.next();
   response.headers.set("x-next-i18n-router-locale", defaultLocale);
   return response;
-});
+}
 
 export const config = {
   matcher: [

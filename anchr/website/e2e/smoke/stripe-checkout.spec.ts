@@ -1,4 +1,4 @@
-import { expect, signInByUsername, test } from "../fixtures/auth";
+import { expect, signInUser, test } from "../fixtures/auth";
 import { getUserBilling, getUserIdByUsername } from "../fixtures/db";
 import { t } from "../fixtures/i18n";
 import { buildCheckoutCompletedPayload, signStripePayload } from "../fixtures/stripe-webhook";
@@ -28,15 +28,13 @@ import { createTransientUser, destroyTransientUser, type TransientUser } from ".
  *
  * Required env (all provided by the deploy workflow via `vercel env pull`):
  *   - DATABASE_URL                 → stage Neon branch
- *   - CLERK_SECRET_KEY             → stage Clerk instance
  *   - STRIPE_SECRET_KEY            → for transient-user cleanup
  *   - STRIPE_WEBHOOK_SECRET        → for signing synthetic webhook events
  *   - STRIPE_PRO_PRICE_ID_MONTHLY  → proves checkout creates a real session
- *   - E2E_USER_PASSWORD            → password for the transient Clerk user
+ *   - E2E_USER_PASSWORD            → password for the transient BA user
  */
 
 const REQUIRED_ENV = [
-  "CLERK_SECRET_KEY",
   "DATABASE_URL",
   "E2E_USER_PASSWORD",
   "STRIPE_PRO_PRICE_ID_MONTHLY",
@@ -52,6 +50,7 @@ test.describe("stripe upgrade — stage smoke", () => {
   test.skip(missingEnv().length > 0, `missing env: ${missingEnv().join(", ")}`);
 
   test("upgrade button reaches Stripe checkout and synthetic webhook upgrades tier in DB", async ({
+    baseURL,
     page,
     request,
   }) => {
@@ -69,7 +68,10 @@ test.describe("stripe upgrade — stage smoke", () => {
 
       //* Act — sign in, click Upgrade, verify Stripe redirect, then POST
       // a synthetic webhook to prove the full pipeline end-to-end.
-      await signInByUsername(page, user.username);
+      if (baseURL == null) {
+        throw new Error("baseURL is required for the smoke harness");
+      }
+      await signInUser(page.context(), baseURL, user.email, user.password);
       await page.goto("/dashboard/settings");
       await page.getByRole("heading", { exact: true, name: t.settings }).waitFor();
       const main = page.getByRole("main");
@@ -107,9 +109,9 @@ test.describe("stripe upgrade — stage smoke", () => {
         throw new Error(`transient user ${user.username} not found in DB`);
       }
       const payload = buildCheckoutCompletedPayload({
-        clerkUserId: userId,
         customerId: `cus_smoke_${Date.now()}`,
         subscriptionId: `sub_smoke_${Date.now()}`,
+        userId: userId,
       });
       const signature = signStripePayload(payload, process.env.STRIPE_WEBHOOK_SECRET as string);
       const webhookRes = await request.post("/api/stripe/webhook", {

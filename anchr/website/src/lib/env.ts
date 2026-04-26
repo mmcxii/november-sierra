@@ -3,17 +3,16 @@ import { z } from "zod";
 
 const clientSchemaShape = {
   NEXT_PUBLIC_APP_URL: z.url(),
-  NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: z.string(),
-  NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: z.string(),
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string(),
-  NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string(),
-  NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string(),
   NEXT_PUBLIC_POSTHOG_HOST: z.string(),
   NEXT_PUBLIC_POSTHOG_KEY: z.string(),
   NEXT_PUBLIC_SHORT_DOMAIN: z.string().min(1),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().refine((v) => v.startsWith("pk_test_") || v.startsWith("pk_live_"), {
     message: "Must be a Stripe publishable key (pk_test_… or pk_live_…)",
   }),
+  // Cloudflare Turnstile site key. Optional — when unset, the client widget
+  // becomes a no-op so the form still submits. Set in Vercel for stage/prod.
+  // Local dev uses Cloudflare's "always passes" test key (1x00000000000000000000AA).
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
 } as const;
 
 const serverSchemaShape = {
@@ -21,8 +20,6 @@ const serverSchemaShape = {
   AUTH_EMAIL_FROM: z.string().default("auth@anchr.to"),
   BETTER_AUTH_SECRET: z.string().min(32, "Must be a 32+ character random secret"),
   BETTER_AUTH_URL: z.url().optional(),
-  CLERK_SECRET_KEY: z.string(),
-  CLERK_WEBHOOK_SECRET: z.string(),
   CRON_SECRET: z.string(),
   DATABASE_URL: z.url(),
   RESEND_API_KEY: z.string(),
@@ -45,6 +42,12 @@ const serverSchemaShape = {
       message: "Must be a Stripe secret key (sk_test_…, sk_live_…) or restricted key (rk_…)",
     }),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_", "Must be a Stripe webhook signing secret (whsec_…)"),
+  // Cloudflare Turnstile secret key. Optional — when unset, BA's captcha
+  // plugin is not registered, so /sign-up/email and /request-password-reset
+  // accept requests without a token. Required in stage/prod for bot
+  // protection. Local dev uses Cloudflare's "always passes" test secret
+  // (1x0000000000000000000000000000000AA).
+  TURNSTILE_SECRET_KEY: z.string().optional(),
   UPLOADTHING_TOKEN: z.string(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),
   UPSTASH_REDIS_REST_URL: z.string(),
@@ -61,22 +64,16 @@ export const envSchema = createEnv({
   client: clientSchemaShape,
   runtimeEnv: {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL,
-    NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL,
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
-    NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_SHORT_DOMAIN: process.env.NEXT_PUBLIC_SHORT_DOMAIN,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
 
     ADMIN_USER_ID: process.env.ADMIN_USER_ID,
     AUTH_EMAIL_FROM: process.env.AUTH_EMAIL_FROM,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
-    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-    CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
@@ -84,6 +81,7 @@ export const envSchema = createEnv({
     STRIPE_PRO_PRICE_ID_MONTHLY: process.env.STRIPE_PRO_PRICE_ID_MONTHLY,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,

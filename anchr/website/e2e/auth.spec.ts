@@ -3,12 +3,12 @@ import { test } from "./fixtures/auth";
 import { t } from "./fixtures/i18n";
 
 test.describe("route protection", () => {
-  base("redirects unauthenticated users away from /dashboard", async ({ page }) => {
+  base("redirects unauthenticated users away from /dashboard to /sign-in", async ({ page }) => {
     //* Act
     await page.goto("/dashboard");
 
     //* Assert
-    await expect(page).toHaveURL(/redirect_url/);
+    await expect(page).toHaveURL(/\/sign-in/);
   });
 
   base("sign-in page renders functional form with sign-up link", async ({ page }) => {
@@ -28,6 +28,40 @@ test.describe("route protection", () => {
 
     //* Assert
     await expect(page).toHaveURL(/\/dashboard/);
+  });
+});
+
+// ─── Sign-out ────────────────────────────────────────────────────────────────
+// BA's sign-out endpoint requires:
+//  • An Origin header (BA's origin check rejects mutating POSTs without one)
+//  • A valid JSON body (BA's JSON.parse fails on an empty body)
+//
+// We assert on cookie removal directly rather than the post-sign-out redirect
+// target — the redirect itself is exercised in middleware-level integration
+// tests, while the cookie clear is the load-bearing user-visible signal.
+
+test.describe("sign-out", () => {
+  test("hits BA sign-out and clears the session cookie", async ({ baseURL, proUser: page }) => {
+    //* Arrange
+    if (baseURL == null) {
+      throw new Error("baseURL is required");
+    }
+    await page.goto("/dashboard");
+    const cookiesBefore = await page.context().cookies();
+    const baCookieBefore = cookiesBefore.find((c) => c.name.includes("better-auth.session"));
+
+    //* Act
+    const signOut = await page.request.post(`${baseURL}/api/v1/auth/sign-out`, {
+      data: {},
+      headers: { "content-type": "application/json", origin: new URL(baseURL).origin },
+    });
+    const cookiesAfter = await page.context().cookies();
+    const baCookieAfter = cookiesAfter.find((c) => c.name.includes("better-auth.session"));
+
+    //* Assert
+    expect(signOut.ok()).toBe(true);
+    expect(baCookieBefore).toBeDefined();
+    expect(baCookieAfter).toBeUndefined();
   });
 });
 

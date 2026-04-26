@@ -1,11 +1,8 @@
 import "dotenv/config";
-import { createClerkClient } from "@clerk/backend";
 import { neon } from "@neondatabase/serverless";
 import { and, eq, like, lt, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import fs from "node:fs";
-import path from "node:path";
 import { UTApi } from "uploadthing/server";
 
 const usersTable = pgTable("users", {
@@ -15,6 +12,10 @@ const usersTable = pgTable("users", {
   customDomain: text("custom_domain"),
   id: text("id").primaryKey(),
   username: text("username").unique().notNull(),
+});
+
+const baUserTable = pgTable("ba_user", {
+  id: text("id").primaryKey(),
 });
 
 const apiKeysTable = pgTable("api_keys", {
@@ -70,8 +71,6 @@ const referralRedemptionsTable = pgTable("referral_redemptions", {
 
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
 const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000;
-
-type SeededUser = { clerkId: string; email: string; role: string };
 
 async function removeVercelDomain(domain: string) {
   const token = process.env.VERCEL_API_TOKEN;
@@ -153,7 +152,8 @@ async function deleteUserData(db: ReturnType<typeof drizzle>, userId: string) {
   }
   await deleteUploadthingFiles(fileKeys);
 
-  // Clean up any account deletion log entries for this user
+  // Clean up any account-deletion log entries for this user (column kept as
+  // `clerk_user_id` pre-rename; semantically it's now the BA identity id).
   await db
     .delete(accountDeletionLogsTable)
     .where(eq(accountDeletionLogsTable.clerkUserId, userId))
@@ -195,72 +195,47 @@ async function deleteUserData(db: ReturnType<typeof drizzle>, userId: string) {
     .delete(usersTable)
     .where(eq(usersTable.id, userId))
     .catch(() => {});
+
+  // BA identity row (cascade handles ba_session/ba_account/ba_two_factor/recovery_*)
+  await db
+    .delete(baUserTable)
+    .where(eq(baUserTable.id, userId))
+    .catch(() => {});
 }
 
 async function main() {
-  const secretKey = process.env.CLERK_SECRET_KEY;
   const databaseUrl = process.env.DATABASE_URL;
-
-  if (!secretKey || !databaseUrl) {
+  if (databaseUrl == null) {
     return;
   }
 
-  const clerk = createClerkClient({ secretKey });
   const db = drizzle(neon(databaseUrl));
 
-  // Clean up seeded users (tracked by this run's JSON file)
-  const seededUsersPath = path.join(import.meta.dirname, "../.clerk/seeded-users.json");
-
-  if (fs.existsSync(seededUsersPath)) {
-    const seededUsers: SeededUser[] = JSON.parse(fs.readFileSync(seededUsersPath, "utf-8"));
-
-    for (const user of seededUsers) {
-      await deleteUserData(db, user.clerkId);
-      console.log(`[e2e:teardown] Deleted data for ${user.role} (${user.clerkId})`);
-
-      try {
-        await clerk.users.deleteUser(user.clerkId);
-        console.log(`[e2e:teardown] Deleted Clerk user ${user.role} (${user.clerkId})`);
-      } catch {
-        // Clerk user may already be deleted
-      }
-    }
-
-    fs.unlinkSync(seededUsersPath);
+  // Seeded users for this run — id is deterministic from role + RUN_ID,
+  // matching the seed script's buildSeededUser.
+  const seededRoles = ["pro", "admin", "fresh", "passwordPro", "free"] as const;
+  for (const role of seededRoles) {
+    const userId = `e2e_${role.toLowerCase()}_${RUN_ID}`;
+    await deleteUserData(db, userId);
+    console.log(`[e2e:teardown] Deleted data for ${role} (${userId})`);
   }
 
-  // Clean up ephemeral users from this run, plus webhook-created duplicates.
-  //
-  // When seed creates a Clerk user, the Clerk webhook on the staging server
-  // also fires and inserts a DB row with a short random suffix (e.g. e2epro354).
-  // The seed's ON CONFLICT UPDATE handles its own row, but the webhook creates a
-  // separate row with a different username. These webhook artifacts have short
-  // (<=4 digit) suffixes and don't contain the run ID, so the old run-scoped
-  // query missed them. We now clean up both patterns:
-  //   1. e2e%{RUN_ID}% — ephemeral users from this run (onboarding, signup flows)
-  //   2. e2e(pro|admin|fresh) + short suffix — webhook-created duplicates
+  // Clean up ephemeral users from this run (sign-up specs, smoke tests).
+  // Match by username pattern — both seeded prefixes (e2e<role>{RUN_ID}) and
+  // smoke-test prefixes (smoke<sid>) are run-scoped and safe to delete.
   try {
     const ephemeralUsers = await db
       .select({ id: usersTable.id, username: usersTable.username })
       .from(usersTable)
       .where(like(usersTable.username, `e2e%${RUN_ID}%`));
 
-    const webhookDuplicates = await db
+    const smokeUsers = await db
       .select({ id: usersTable.id, username: usersTable.username })
       .from(usersTable)
-      .where(sql`${usersTable.username} ~ '^e2e(pro|admin|fresh)[0-9]{1,4}$'`);
+      .where(sql`${usersTable.username} ~ '^smoke[0-9a-f]{8}$'`);
 
-    const allEphemeral = [...ephemeralUsers, ...webhookDuplicates];
-
-    for (const user of allEphemeral) {
+    for (const user of [...ephemeralUsers, ...smokeUsers]) {
       await deleteUserData(db, user.id);
-
-      try {
-        await clerk.users.deleteUser(user.id);
-      } catch {
-        // Ignore — Clerk user may not exist (webhook-created DB rows have no matching Clerk user)
-      }
-
       console.log(`[e2e:teardown] Cleaned up ephemeral user ${user.username} (${user.id})`);
     }
   } catch {
@@ -277,13 +252,6 @@ async function main() {
 
     for (const user of staleUsers) {
       await deleteUserData(db, user.id);
-
-      try {
-        await clerk.users.deleteUser(user.id);
-      } catch {
-        // Ignore
-      }
-
       console.log(`[e2e:teardown] Purged stale user ${user.username} (${user.id})`);
     }
   } catch {

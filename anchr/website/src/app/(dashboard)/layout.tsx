@@ -1,5 +1,5 @@
-import { RecoveryCodesLowBannerServer } from "@/components/auth/better-auth/recovery-codes-low-banner-server";
-import { RecoveryEnrollmentBannerServer } from "@/components/auth/better-auth/recovery-enrollment-banner-server";
+import { RecoveryCodesLowBannerServer } from "@/components/auth/recovery-codes-low-banner-server";
+import { RecoveryEnrollmentBannerServer } from "@/components/auth/recovery-enrollment-banner-server";
 import { BillingBanner } from "@/components/dashboard/billing-banner";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { Container } from "@/components/ui/container";

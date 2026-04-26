@@ -1,7 +1,7 @@
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { usersTable } from "@/lib/db/schema/user";
 import { isProUser } from "@/lib/tier";
-import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createUploadthing, type FileRouter } from "uploadthing/next";

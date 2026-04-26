@@ -1,11 +1,23 @@
 /**
- * Run-scoped test user identities.
+ * Run-scoped test user identities for the BA-based E2E flow (post ANC-152).
  *
  * In CI, E2E_RUN_ID is set to the GitHub Actions run ID so parallel
- * PR runs never share Clerk users, DB rows, or public profile URLs.
- * Locally it defaults to "local" for a stable, predictable identity.
+ * PR runs never share user rows or public profile URLs. Locally it
+ * defaults to "local" for a stable, predictable identity.
+ *
+ * Every user shares E2E_USER_PASSWORD; sign-in goes through BA's
+ * credential endpoint via fixtures/auth.ts.
  */
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
+
+function buildUser(role: string) {
+  return {
+    email: `e2e-${role}-${RUN_ID}@anchr.to`,
+    id: `e2e_${role}_${RUN_ID}`,
+    role,
+    username: `e2e${role}${RUN_ID}`,
+  };
+}
 
 export const testDomain = {
   /** Run-scoped subdomain for custom short-url domain E2E tests (users.short_domain). */
@@ -18,39 +30,16 @@ export const testDomain = {
 };
 
 export const testUsers = {
-  admin: {
-    email: `e2e-admin-${RUN_ID}@anchr.to`,
-    username: `e2eadmin${RUN_ID}`,
-  },
+  admin: buildUser("admin"),
+  free: buildUser("free"),
+  fresh: buildUser("fresh"),
   /**
-   * Better Auth test user. The id is run-scoped so parallel CI runs don't
-   * collide on the same ba_user row. The id matches what the better-auth
-   * fixture writes into ba_user.
+   * Dedicated user for password-flow tests. Pre-cutover this used a
+   * +clerk_test email suffix to bypass Clerk's email rate limit; under
+   * BA we just give it a plain run-scoped email.
    */
-  betterAuth: {
-    email: `e2e-ba-${RUN_ID}@anchr.to`,
-    id: `e2e_ba_user_${RUN_ID}`,
-    password: `e2e-ba-password-${RUN_ID}`,
-    username: `e2eba${RUN_ID}`,
-  },
-  fresh: {
-    email: `e2e-fresh-${RUN_ID}@anchr.to`,
-    username: `e2efresh${RUN_ID}`,
-  },
-  /**
-   * Dedicated user for password tests. Uses +clerk_test email suffix
-   * so Clerk skips real email delivery and bypasses the 100/month
-   * dev instance email limit. Cannot use clerk.signIn() — use
-   * the passwordProUser fixture from fixtures/auth.ts instead.
-   */
-  passwordPro: {
-    email: `e2e-password-${RUN_ID}+clerk_test@anchr.to`,
-    username: `e2epassword${RUN_ID}`,
-  },
-  pro: {
-    email: `e2e-pro-${RUN_ID}@anchr.to`,
-    username: `e2epro${RUN_ID}`,
-  },
+  passwordPro: buildUser("passwordPro"),
+  pro: buildUser("pro"),
 } as const;
 
 export const E2E_REFERRAL_CODE = `ANCHR-E2E${RUN_ID.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;

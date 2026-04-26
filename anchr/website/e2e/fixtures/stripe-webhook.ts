@@ -23,14 +23,14 @@ export function signStripePayload(payload: string, secret: string, timestamp?: n
  * same test run don't collide in any (hypothetical) future dedup store.
  */
 export function buildCheckoutCompletedPayload(options: {
-  clerkUserId: string;
   customerId?: string;
   subscriptionId?: string;
+  userId: string;
 }): string {
   return JSON.stringify({
     data: {
       object: {
-        client_reference_id: options.clerkUserId,
+        client_reference_id: options.userId,
         customer: options.customerId ?? "cus_e2e_signed",
         id: `cs_test_${randomHex(24)}`,
         ...(options.subscriptionId != null && { subscription: options.subscriptionId }),

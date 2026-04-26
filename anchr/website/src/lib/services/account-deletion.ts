@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import { accountDeletionLogsTable } from "@/lib/db/schema/account-deletion-log";
+import { betterAuthUserTable } from "@/lib/db/schema/better-auth";
 import { clicksTable } from "@/lib/db/schema/click";
 import { customThemesTable } from "@/lib/db/schema/custom-theme";
 import { linksTable } from "@/lib/db/schema/link";
@@ -9,7 +10,6 @@ import { usersTable } from "@/lib/db/schema/user";
 import { webhooksTable } from "@/lib/db/schema/webhook";
 import { stripe } from "@/lib/stripe";
 import { removeDomain } from "@/lib/vercel";
-import { clerkClient } from "@clerk/nextjs/server";
 import { and, count, eq } from "drizzle-orm";
 import { UTApi } from "uploadthing/server";
 
@@ -144,14 +144,15 @@ async function removeVercelDomain(domain: string): Promise<boolean> {
   }
 }
 
-/** Delete the user from Clerk. Returns true if successful. */
-async function deleteClerkUser(clerkUserId: string): Promise<boolean> {
+/** Delete the user's Better Auth identity row. Returns true if successful.
+ * Cascade handles ba_session / ba_account / ba_two_factor / recovery_codes /
+ * recovery_lockouts via FK ON DELETE CASCADE. */
+async function deleteBetterAuthUser(userId: string): Promise<boolean> {
   try {
-    const client = await clerkClient();
-    await client.users.deleteUser(clerkUserId);
+    await db.delete(betterAuthUserTable).where(eq(betterAuthUserTable.id, userId));
     return true;
   } catch (error) {
-    console.error("[account-deletion] Clerk user deletion failed:", error);
+    console.error("[account-deletion] Better Auth user deletion failed:", error);
     return false;
   }
 }
@@ -204,9 +205,12 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
 
   const uploadthingCleaned = await deleteUploadthingFiles(uploadthingFileKeys);
 
-  // 5. Insert deletion log (before DB cascade wipes user data)
+  // 5. Insert deletion log (before DB cascade wipes user data).
+  // `clerkCleaned`/`clerkUserId` columns predate ANC-152 and now track the
+  // Better Auth identity row instead. Renaming the columns is a follow-up
+  // migration; semantics are unchanged.
   await db.insert(accountDeletionLogsTable).values({
-    clerkCleaned: false, // Will be set after Clerk deletion
+    clerkCleaned: false,
     clerkUserId: userId,
     customDomain: !vercelCleaned ? user.customDomain : null,
     stripeCleaned,
@@ -218,16 +222,16 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
     vercelCleaned,
   });
 
-  // 6. Delete user from DB (CASCADE handles all child tables)
+  // 6. Delete user from DB (CASCADE handles application child tables)
   await db.delete(usersTable).where(eq(usersTable.id, userId));
 
-  // 7. Delete from Clerk (best-effort)
-  const clerkCleaned = await deleteClerkUser(userId);
+  // 7. Delete the BA identity row (best-effort)
+  const baCleaned = await deleteBetterAuthUser(userId);
 
-  // 8. Update deletion log with Clerk status
-  if (clerkCleaned) {
+  // 8. Update deletion log with BA status
+  if (baCleaned) {
     // Check if all cleanup is done — if so, remove the log row entirely
-    const allCleaned = stripeCleaned && vercelCleaned && uploadthingCleaned && clerkCleaned;
+    const allCleaned = stripeCleaned && vercelCleaned && uploadthingCleaned && baCleaned;
     if (allCleaned) {
       await db.delete(accountDeletionLogsTable).where(eq(accountDeletionLogsTable.clerkUserId, userId));
     } else {

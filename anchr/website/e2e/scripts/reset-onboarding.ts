@@ -6,17 +6,15 @@
  * onboardingComplete=true (from the previous attempt's completeOnboarding
  * call) and the referral code already redeemed.
  *
- * The fresh user's username gets mutated by the username-step test, so we
- * look up the user by its stable Clerk ID (written to seeded-users.json by
- * e2e:seed) instead of by username.
+ * Post-cutover the seeded user id is deterministic from the run id (matching
+ * the seed script), so we don't need a seeded-users.json sidecar to look it
+ * up.
  */
 import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import * as fs from "node:fs";
-import * as path from "node:path";
 
 const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -42,8 +40,6 @@ const linksTable = pgTable("links", {
   userId: text("user_id").notNull(),
 });
 
-type SeededUser = { clerkId: string; email: string; role: string };
-
 const RUN_ID = process.env.E2E_RUN_ID ?? "local";
 
 async function main() {
@@ -54,21 +50,8 @@ async function main() {
     return;
   }
 
-  const seededUsersPath = path.join(import.meta.dirname, "..", ".clerk", "seeded-users.json");
-  if (!fs.existsSync(seededUsersPath)) {
-    console.log("[e2e:reset-onboarding] seeded-users.json not found, skipping");
-    return;
-  }
-
-  const seededUsers = JSON.parse(fs.readFileSync(seededUsersPath, "utf8")) as SeededUser[];
-  const freshSeededUser = seededUsers.find((u) => u.role === "fresh");
-  if (freshSeededUser == null) {
-    console.log("[e2e:reset-onboarding] Fresh user not in seeded-users.json, skipping");
-    return;
-  }
-
   const db = drizzle(neon(databaseUrl));
-  const freshUserId = freshSeededUser.clerkId;
+  const freshUserId = `e2e_fresh_${RUN_ID}`;
 
   // Reset user state — also restore the original username in case it was changed
   // by the username-step test

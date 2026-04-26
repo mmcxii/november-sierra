@@ -1,4 +1,5 @@
 import { AdminContent } from "@/components/dashboard/admin-content";
+import { AdminUpdateUserEmailCard } from "@/components/dashboard/admin-update-user-email-card";
 import { isAdmin, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { referralCodesTable } from "@/lib/db/schema/referral-code";
@@ -49,14 +50,15 @@ const AdminPage: React.FC = async () => {
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">{t("admin")}</h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold">{t("admin")}</h1>
       <AdminContent
         codes={codes.map((code) => ({
           ...code,
           redemptions: redemptionsByCode.get(code.id) ?? [],
         }))}
       />
+      <AdminUpdateUserEmailCard />
     </div>
   );
 };

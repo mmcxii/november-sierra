@@ -1,4 +1,3 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GeistMono } from "geist/font/mono";
@@ -43,23 +42,21 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
   const { resources } = await initTranslations("en-US");
 
   return (
-    <ClerkProvider>
-      <TranslationsProvider locale="en" resources={resources}>
-        <PosthogProvider>
-          <html lang="en" suppressHydrationWarning>
-            <body className={cn(GeistSans.variable, GeistMono.variable, "antialiased")}>
-              <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} suppressHydrationWarning />
-              <DashboardThemeProvider>
-                {children}
-                <Toaster />
-              </DashboardThemeProvider>
-            </body>
-            <Analytics />
-            <SpeedInsights />
-          </html>
-        </PosthogProvider>
-      </TranslationsProvider>
-    </ClerkProvider>
+    <TranslationsProvider locale="en" resources={resources}>
+      <PosthogProvider>
+        <html lang="en" suppressHydrationWarning>
+          <body className={cn(GeistSans.variable, GeistMono.variable, "antialiased")}>
+            <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} suppressHydrationWarning />
+            <DashboardThemeProvider>
+              {children}
+              <Toaster />
+            </DashboardThemeProvider>
+          </body>
+          <Analytics />
+          <SpeedInsights />
+        </html>
+      </PosthogProvider>
+    </TranslationsProvider>
   );
 };
 
