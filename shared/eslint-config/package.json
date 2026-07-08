@@ -4,13 +4,13 @@
     "eslint-config-next": "16.2.3"
   },
   "devDependencies": {
-    "@types/node": "25.6.0",
-    "@typescript-eslint/rule-tester": "8.59.0",
-    "@typescript-eslint/type-utils": "8.59.0",
-    "@typescript-eslint/utils": "8.59.0",
-    "eslint": "^10.2.1",
-    "typescript": "6.0.3",
-    "vitest": "^4.1.5"
+    "@types/node": "26.1.1",
+    "@typescript-eslint/rule-tester": "8.63.0",
+    "@typescript-eslint/type-utils": "8.63.0",
+    "@typescript-eslint/utils": "8.63.0",
+    "eslint": "^10.6.0",
+    "typescript": "7.0.2",
+    "vitest": "^4.1.10"
   },
   "exports": {
     ".": "./index.ts",
