@@ -32,7 +32,7 @@ export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>)
   const allowed = canEditDay({
     mode,
     selectedDate: parsed.data.date,
-    startDate: session.group.startDate,
+    startDate: session.team.startDate,
     status: session.member.status as "active" | "failed",
     todayLocal,
   });
@@ -80,13 +80,13 @@ export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>)
   }
 
   await refreshMemberStatus({
-    endDate: session.group.endDate,
+    endDate: session.team.endDate,
     memberId: session.member.id,
     mode,
-    startDate: session.group.startDate,
+    startDate: session.team.startDate,
     timeZone: session.member.timeZone,
   });
 
-  revalidatePath("/group");
+  revalidatePath("/team");
   return { ok: true as const };
 }
