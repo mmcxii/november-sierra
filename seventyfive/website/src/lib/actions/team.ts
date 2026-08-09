@@ -174,6 +174,36 @@ export async function updateTeamAction(input: z.infer<typeof updateTeamSchema>):
 }
 
 export async function leaveTeamAction(): Promise<void> {
+  const session = await getSessionContext();
+  if (session == null) {
+    redirect("/");
+  }
+
+  if (session.member.isOwner) {
+    redirect("/settings");
+  }
+
+  await db.delete(membersTable).where(eq(membersTable.id, session.member.id));
+  await clearSessionCookie();
+  redirect("/");
+}
+
+const deleteTeamSchema = z.object({
+  confirm: z.literal(true),
+});
+
+export async function deleteTeamAction(input: z.infer<typeof deleteTeamSchema>): Promise<ActionResult> {
+  const parsed = deleteTeamSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "confirmDeleteTeam" };
+  }
+
+  const session = await getSessionContext();
+  if (session?.member.isOwner != true) {
+    return { error: "somethingWentWrong" };
+  }
+
+  await db.delete(teamsTable).where(eq(teamsTable.id, session.team.id));
   await clearSessionCookie();
   redirect("/");
 }

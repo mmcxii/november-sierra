@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { savePushSubscriptionAction, updateMemberAction } from "@/lib/actions/member";
+import { deleteTeamAction } from "@/lib/actions/team";
 import type { ChallengeMode } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { urlBase64ToUint8Array } from "@/lib/url-base64-to-uint8-array";
@@ -16,6 +17,7 @@ import { useTranslation } from "react-i18next";
 
 export type SettingsFormProps = {
   displayName: string;
+  isOwner: boolean;
   mode: ChallengeMode;
   reminderEnabled: boolean;
   reminderTime: string;
@@ -25,7 +27,7 @@ export type SettingsFormProps = {
 };
 
 export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
-  const { displayName, mode, reminderEnabled, reminderTime, startPassed, timeZone, vapidPublicKey } = props;
+  const { displayName, isOwner, mode, reminderEnabled, reminderTime, startPassed, timeZone, vapidPublicKey } = props;
 
   //* State
   const { t } = useTranslation();
@@ -34,6 +36,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
   const [error, setError] = React.useState<null | TranslationKey>(null);
   const [challengeMode, setChallengeMode] = React.useState<ChallengeMode>(mode);
   const [remindersOn, setRemindersOn] = React.useState(reminderEnabled);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
 
   //* Handlers
   const handleChallengeModeChange = (value: string) => {
@@ -42,6 +45,23 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
 
   const handleRemindersChange = (checked: boolean | "indeterminate") => {
     setRemindersOn(checked === true);
+  };
+
+  const handleConfirmDeleteChange = (checked: boolean | "indeterminate") => {
+    setConfirmDelete(checked === true);
+  };
+
+  const onDeleteTeam = () => {
+    if (!confirmDelete) {
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const result = await deleteTeamAction({ confirm: true });
+      if ("error" in result) {
+        setError(result.error as TranslationKey);
+      }
+    });
   };
 
   const onSubmit = (formData: FormData) => {
@@ -171,6 +191,30 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
           {t("save")}
         </button>
       </form>
+
+      {isOwner ? (
+        <section
+          aria-labelledby="settings-danger-heading"
+          className="border-sf-border mt-12 w-full space-y-4 border-t pt-8"
+        >
+          <h2 className="text-sf-danger text-xs font-medium tracking-[0.14em] uppercase" id="settings-danger-heading">
+            {t("deleteTeam")}
+          </h2>
+          <p className="text-sf-muted text-sm">{t("thisWillPermanentlyDeleteTheTeamAndAllMemberData")}</p>
+          <div className="flex w-full items-center gap-2">
+            <Checkbox checked={confirmDelete} id="confirmDelete" onCheckedChange={handleConfirmDeleteChange} />
+            <Label htmlFor="confirmDelete">{t("confirmDeleteTeam")}</Label>
+          </div>
+          <button
+            className="border-sf-danger/40 text-sf-danger w-full rounded-[var(--sf-radius)] border px-4 py-3 text-sm font-medium disabled:opacity-40"
+            disabled={isPending || !confirmDelete}
+            onClick={onDeleteTeam}
+            type="button"
+          >
+            {t("deleteTeam")}
+          </button>
+        </section>
+      ) : null}
     </Container>
   );
 };
