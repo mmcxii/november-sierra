@@ -39,8 +39,9 @@
 ## 7. PWA + cron reminder
 
 - Manifest, icons, service worker
-- `POST /api/cron/reminders` secured by `CRON_SECRET`
+- `GET /api/cron/reminders` secured by `CRON_SECRET`
 - Push body: remaining task labels; `lastReminderDate` dedupe
+- `vercel.json`: 24 once-daily crons (hourly UTC coverage) for Hobby plan limits
 
 ## 8. Tests + polish hygiene
 
@@ -49,12 +50,12 @@
 
 ## Vertical slices (build order)
 
-1. Scaffold + schema + task config + unit tests for pure helpers  
-2. Create/join + session + empty board shell  
-3. Checklist + fail/stumble recompute + roster  
-4. Owner edit + invite UI + settings  
-5. PWA + reminder cron  
-6. Polish light/dark + landing  
+1. Scaffold + schema + task config + unit tests for pure helpers
+2. Create/join + session + empty board shell
+3. Checklist + fail/stumble recompute + roster
+4. Owner edit + invite UI + settings
+5. PWA + reminder cron
+6. Polish light/dark + landing
 
 ## Simplicity constraints
 
