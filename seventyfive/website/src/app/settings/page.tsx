@@ -14,6 +14,7 @@ const SettingsPage = async () => {
     <AppChrome>
       <SettingsForm
         displayName={session.member.displayName}
+        isOwner={session.member.isOwner}
         mode={session.member.mode as ChallengeMode}
         reminderEnabled={session.member.reminderEnabled}
         reminderTime={session.member.reminderTime}
