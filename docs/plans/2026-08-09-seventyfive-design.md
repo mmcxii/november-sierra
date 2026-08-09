@@ -109,6 +109,7 @@ Invite code is a high-entropy capability secret stored so any member can copy pa
 - Opt-in reminder default 20:00 local; push body lists remaining task labels for today
 - Cron scans DB only (no Redis): eligible active members, incomplete today, not yet reminded today
 - Failed Hard members: no reminder
+- Hobby-compatible scheduling: 24 daily Vercel crons (one per UTC hour) instead of `*/15`, since Hobby only allows once-per-day expressions
 
 ## UI
 
