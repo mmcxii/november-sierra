@@ -1,4 +1,5 @@
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Container } from "@/components/ui/container";
 import * as React from "react";
 
 export type AppChromeProps = React.PropsWithChildren;
@@ -8,9 +9,9 @@ export const AppChrome: React.FC<AppChromeProps> = (props) => {
 
   return (
     <div className="relative min-h-dvh">
-      <div className="absolute top-4 right-4 z-20 md:top-6 md:right-6">
+      <Container className="flex justify-end pt-4 md:pt-6">
         <ThemeToggle />
-      </div>
+      </Container>
       {children}
     </div>
   );

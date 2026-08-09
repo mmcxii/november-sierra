@@ -106,6 +106,17 @@ main {
   z-index: 1;
 }
 
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  appearance: none;
+  box-sizing: border-box;
+  display: block;
+  max-width: none;
+  min-width: 0;
+  width: 100%;
+}
+
 @keyframes sf-rise {
   from {
     opacity: 0;

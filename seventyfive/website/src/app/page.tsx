@@ -1,4 +1,5 @@
 import { AppChrome } from "@/components/app-chrome";
+import { Container } from "@/components/ui/container";
 import { getSessionMemberId } from "@/lib/auth/session";
 import { initTranslations } from "@/lib/i18n/server";
 import Link from "next/link";
@@ -14,7 +15,7 @@ const HomePage = async () => {
 
   return (
     <AppChrome>
-      <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-end px-6 pt-24 pb-16">
+      <Container as="main" className="flex min-h-dvh flex-col justify-end pt-24 pb-16">
         <p className="sf-rise text-sf-muted text-base">{t("team")}</p>
         <p className="sf-rise sf-rise-delay-1 font-sf-display text-sf-text text-5xl leading-none tracking-tight md:text-6xl">
           {t("seventyFive")}
@@ -36,7 +37,7 @@ const HomePage = async () => {
             {t("joinTeam")}
           </Link>
         </div>
-      </main>
+      </Container>
     </AppChrome>
   );
 };
