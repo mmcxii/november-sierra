@@ -1,6 +1,8 @@
 "use client";
 
+import { TaskPreviewList } from "@/components/challenge/task-preview-list";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Container } from "@/components/ui/container";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { savePushSubscriptionAction, updateMemberAction } from "@/lib/actions/member";
@@ -83,19 +85,23 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
   };
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-lg px-6 py-8 pr-16">
+    <Container as="main" className="min-h-dvh py-8">
       <Link className="text-sf-muted text-sm" href="/team">
         {t("yourTeam")}
       </Link>
       <h1 className="font-sf-display mt-6 text-3xl">{t("settings")}</h1>
 
-      <form action={onSubmit} className="mt-8 space-y-8">
-        <fieldset className="space-y-4">
-          <legend className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("me")}</legend>
-          <div className="space-y-1.5">
-            <Label htmlFor="displayName">{t("displayName")}</Label>
+      <form action={onSubmit} className="mt-8 w-full space-y-8">
+        <section aria-labelledby="settings-me-heading" className="w-full space-y-4">
+          <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase" id="settings-me-heading">
+            {t("me")}
+          </h2>
+          <div className="w-full space-y-1.5">
+            <Label className="block w-full" htmlFor="displayName">
+              {t("name")}
+            </Label>
             <input
-              className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
               defaultValue={displayName}
               id="displayName"
               name="displayName"
@@ -103,10 +109,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="timeZone">{t("timezone")}</Label>
+          <div className="w-full space-y-1.5">
+            <Label className="block w-full" htmlFor="timeZone">
+              {t("timezone")}
+            </Label>
             <input
-              className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
               defaultValue={timeZone}
               id="timeZone"
               name="timeZone"
@@ -114,10 +122,8 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>
-              {t("hard")} / {t("soft")}
-            </Label>
+          <div className="w-full space-y-2">
+            <Label className="block w-full">{t("challenge")}</Label>
             <RadioGroup
               className="flex gap-4"
               disabled={startPassed}
@@ -133,35 +139,38 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
                 <Label htmlFor="settings-mode-soft">{t("soft")}</Label>
               </div>
             </RadioGroup>
+            <TaskPreviewList mode={challengeMode} />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2">
             <Checkbox checked={remindersOn} id="reminderEnabled" onCheckedChange={handleRemindersChange} />
             <Label htmlFor="reminderEnabled">{t("enableDailyReminder")}</Label>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="reminderTime">{t("reminderTime")}</Label>
+          <div className="w-full space-y-1.5">
+            <Label className="block w-full" htmlFor="reminderTime">
+              {t("reminderTime")}
+            </Label>
             <input
-              className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
               defaultValue={reminderTime}
               id="reminderTime"
               name="reminderTime"
               type="time"
             />
           </div>
-        </fieldset>
+        </section>
 
         {error != null ? <p className="text-sf-danger text-sm">{t(error)}</p> : null}
 
         <button
-          className="bg-sf-accent text-sf-accent-text rounded-[var(--sf-radius)] px-4 py-3 text-sm font-medium disabled:opacity-60"
+          className="bg-sf-accent text-sf-accent-text w-full rounded-[var(--sf-radius)] px-4 py-3 text-sm font-medium disabled:opacity-60"
           disabled={isPending}
           type="submit"
         >
           {t("save")}
         </button>
       </form>
-    </main>
+    </Container>
   );
 };

@@ -2,6 +2,7 @@
 
 import { RosterRow } from "@/components/team/roster-row";
 import { TaskRow } from "@/components/team/task-row";
+import { Container } from "@/components/ui/container";
 import { setTaskCheckedAction } from "@/lib/actions/tasks";
 import { leaveTeamAction, updateTeamAction } from "@/lib/actions/team";
 import { canEditDay, tasksForMode, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
@@ -129,7 +130,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   };
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-lg px-6 py-8 pr-16">
+    <Container as="main" className="min-h-dvh py-8">
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="font-sf-display text-3xl tracking-tight">{teamName}</p>
@@ -175,19 +176,19 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       ) : null}
 
       {isOwner && startDate > todayLocal ? (
-        <form action={onOwnerSave} className="border-sf-border mt-6 space-y-3 border-b pb-6">
-          <label className="block space-y-1 text-sm">
+        <form action={onOwnerSave} className="border-sf-border mt-6 w-full space-y-3 border-b pb-6">
+          <label className="block w-full space-y-1 text-sm">
             <span className="text-sf-muted">{t("teamName")}</span>
             <input
-              className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              className="border-sf-border bg-sf-elevated block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
               defaultValue={teamName}
               name="name"
             />
           </label>
-          <label className="block space-y-1 text-sm">
+          <label className="block w-full space-y-1 text-sm">
             <span className="text-sf-muted">{t("startDate")}</span>
             <input
-              className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              className="border-sf-border bg-sf-elevated block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
               defaultValue={startDate}
               name="startDate"
               type="date"
@@ -196,16 +197,16 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
           <p className="text-sf-muted text-xs">
             {t("endDate")}: {endDate}
           </p>
-          <button className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-2 text-sm" type="submit">
+          <button className="border-sf-border w-full rounded-[var(--sf-radius)] border px-3 py-2 text-sm" type="submit">
             {t("save")}
           </button>
         </form>
       ) : null}
 
-      <label className="mt-8 block space-y-1 text-sm">
+      <label className="mt-8 block w-full space-y-1 text-sm">
         <span className="text-sf-muted">{selectedDate === todayLocal ? t("today") : selectedDate}</span>
         <input
-          className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
+          className="border-sf-border bg-sf-elevated block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
           max={endDate}
           min={startDate}
           onChange={onDateChange}
@@ -262,6 +263,6 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
           {t("leaveTeam")}
         </button>
       </form>
-    </main>
+    </Container>
   );
 };

@@ -1,17 +1,19 @@
 "use client";
 
+import { TaskPreviewList } from "@/components/challenge/task-preview-list";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createTeamAction, joinTeamAction } from "@/lib/actions/team";
 import { browserTimeZone } from "@/lib/browser-timezone";
+import type { ChallengeMode } from "@/lib/challenge/tasks";
 import { defaultStartDate } from "@/lib/default-start-date";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 
-export type EntryFormProps =
+export type EntryFormProps = (
   | {
       initialCode?: never;
       mode: "create";
@@ -19,10 +21,13 @@ export type EntryFormProps =
   | {
       initialCode?: string;
       mode: "join";
-    };
+    }
+) & {
+  hasExistingSession: boolean;
+};
 
 export const EntryForm: React.FC<EntryFormProps> = (props) => {
-  const { initialCode, mode } = props;
+  const { hasExistingSession, initialCode, mode } = props;
 
   //* State
   const { t } = useTranslation();
@@ -30,7 +35,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
   const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<null | TranslationKey>(null);
   const [invitePassword, setInvitePassword] = React.useState<null | string>(null);
-  const [challengeMode, setChallengeMode] = React.useState<"hard" | "soft">("hard");
+  const [challengeMode, setChallengeMode] = React.useState<ChallengeMode>("hard");
   const [replaceSession, setReplaceSession] = React.useState(false);
 
   //* Handlers
@@ -98,7 +103,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
   };
 
   const handleChallengeModeChange = (value: string) => {
-    setChallengeMode(value as "hard" | "soft");
+    setChallengeMode(value as ChallengeMode);
   };
 
   const handleReplaceSessionChange = (checked: boolean | "indeterminate") => {
@@ -143,24 +148,30 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
   }
 
   return (
-    <form action={onSubmit} className="sf-rise space-y-8">
-      <fieldset className="space-y-4">
-        <legend className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("team")}</legend>
+    <form action={onSubmit} className="sf-rise w-full space-y-8">
+      <section aria-labelledby="entry-team-heading" className="w-full space-y-4">
+        <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase" id="entry-team-heading">
+          {t("team")}
+        </h2>
         {mode === "create" ? (
           <>
-            <div className="space-y-1.5">
-              <Label htmlFor="teamName">{t("teamName")}</Label>
+            <div className="w-full space-y-1.5">
+              <Label className="block w-full" htmlFor="teamName">
+                {t("teamName")}
+              </Label>
               <input
-                className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+                className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
                 id="teamName"
                 name="teamName"
                 required
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="startDate">{t("startDate")}</Label>
+            <div className="w-full space-y-1.5">
+              <Label className="block w-full" htmlFor="startDate">
+                {t("startDate")}
+              </Label>
               <input
-                className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+                className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
                 defaultValue={defaultStartDate()}
                 id="startDate"
                 name="startDate"
@@ -170,10 +181,12 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
             </div>
           </>
         ) : (
-          <div className="space-y-1.5">
-            <Label htmlFor="password">{t("teamPassword")}</Label>
+          <div className="w-full space-y-1.5">
+            <Label className="block w-full" htmlFor="password">
+              {t("teamPassword")}
+            </Label>
             <input
-              className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2 font-mono text-xs"
+              className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2 font-mono text-xs"
               defaultValue={initialCode ?? ""}
               id="password"
               name="password"
@@ -181,24 +194,26 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
             />
           </div>
         )}
-      </fieldset>
+      </section>
 
-      <fieldset className="space-y-4">
-        <legend className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("me")}</legend>
-        <div className="space-y-1.5">
-          <Label htmlFor="displayName">{t("displayName")}</Label>
+      <section aria-labelledby="entry-me-heading" className="w-full space-y-4">
+        <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase" id="entry-me-heading">
+          {t("me")}
+        </h2>
+        <div className="w-full space-y-1.5">
+          <Label className="block w-full" htmlFor="displayName">
+            {t("name")}
+          </Label>
           <input
-            className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+            className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
             id="displayName"
             name="displayName"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>
-            {t("hard")} / {t("soft")}
-          </Label>
+        <div className="w-full space-y-2">
+          <Label className="block w-full">{t("challenge")}</Label>
           <RadioGroup className="flex gap-4" onValueChange={handleChallengeModeChange} value={challengeMode}>
             <div className="flex items-center gap-2">
               <RadioGroupItem id="mode-hard" value="hard" />
@@ -209,13 +224,16 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
               <Label htmlFor="mode-soft">{t("soft")}</Label>
             </div>
           </RadioGroup>
+          <TaskPreviewList mode={challengeMode} />
         </div>
 
-        <div className="flex items-center gap-2">
-          <Checkbox checked={replaceSession} id="replaceSession" onCheckedChange={handleReplaceSessionChange} />
-          <Label htmlFor="replaceSession">{t("alreadyInATeamConfirmToSwitch")}</Label>
-        </div>
-      </fieldset>
+        {hasExistingSession ? (
+          <div className="flex w-full items-center gap-2">
+            <Checkbox checked={replaceSession} id="replaceSession" onCheckedChange={handleReplaceSessionChange} />
+            <Label htmlFor="replaceSession">{t("alreadyInATeamConfirmToSwitch")}</Label>
+          </div>
+        ) : null}
+      </section>
 
       {error != null ? <p className="text-sf-danger text-sm">{t(error)}</p> : null}
 

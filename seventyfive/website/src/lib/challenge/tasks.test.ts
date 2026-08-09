@@ -44,7 +44,7 @@ describe("recomputeMemberStatus", () => {
       challengeDates: ["2026-09-01", "2026-09-02", "2026-09-03"],
       completions: [
         {
-          checkedTaskIds: ["workout", "outdoorWorkout", "water", "diet", "progressPhoto"],
+          checkedTaskIds: ["workout", "outdoorWorkout", "water", "diet", "reading", "progressPhoto"],
           date: "2026-09-01",
           mode: "hard" as const,
         },
@@ -66,7 +66,7 @@ describe("recomputeMemberStatus", () => {
       challengeDates: ["2026-09-01", "2026-09-02"],
       completions: [
         {
-          checkedTaskIds: ["workout", "outdoorWorkout", "water", "diet", "progressPhoto"],
+          checkedTaskIds: ["workout", "outdoorWorkout", "water", "diet", "reading", "progressPhoto"],
           date: "2026-09-01",
           mode: "hard" as const,
         },

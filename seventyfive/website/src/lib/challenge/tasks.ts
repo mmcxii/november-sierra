@@ -15,6 +15,7 @@ export const HARD_TASKS: readonly TaskDefinition[] = [
   { id: "outdoorWorkout", labelKey: "outdoorWorkout45Min" },
   { id: "water", labelKey: "drink1GallonOfWater" },
   { id: "diet", labelKey: "followDietNoAlcoholOrCheatMeals" },
+  { id: "reading", labelKey: "read10PagesOfANonfictionBook" },
   { id: "progressPhoto", labelKey: "takeProgressPhoto" },
 ] as const;
 
