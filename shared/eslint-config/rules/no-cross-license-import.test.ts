@@ -22,6 +22,12 @@ tester.run("no-cross-license-import", noCrossLicenseImport, {
       errors: [{ messageId: "crossLicenseImport" as const }],
       filename: "/repo/november-sierra/website/src/index.ts",
     },
+    // AGPL import in seventyfive/ (MIT)
+    {
+      code: 'import { bar } from "@november-sierra/anchr-website";',
+      errors: [{ messageId: "crossLicenseImport" as const }],
+      filename: "/repo/seventyfive/website/src/index.ts",
+    },
     // Relative path import from anchr/ in shared/
     {
       code: 'import { baz } from "../../anchr/website/src/lib/utils";',
@@ -44,6 +50,11 @@ tester.run("no-cross-license-import", noCrossLicenseImport, {
     {
       code: 'import { baz } from "@november-sierra/eslint-config";',
       filename: "/repo/november-sierra/website/src/index.ts",
+    },
+    // Non-anchr imports in seventyfive/ are fine
+    {
+      code: 'import { baz } from "@november-sierra/eslint-config";',
+      filename: "/repo/seventyfive/website/src/index.ts",
     },
   ],
 });
