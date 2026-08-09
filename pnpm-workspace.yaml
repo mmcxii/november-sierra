@@ -1,6 +1,7 @@
 packages:
   - "anchr/*"
   - "november-sierra/*"
+  - "seventyfive/*"
   - "shared/*"
 
 ignoredBuiltDependencies:
