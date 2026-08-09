@@ -1,4 +1,5 @@
 {
+  "buildCommand": "pnpm exec next build",
   "crons": [
     { "path": "/api/cron/reminders", "schedule": "0 0 * * *" },
     { "path": "/api/cron/reminders", "schedule": "0 1 * * *" },
@@ -24,5 +25,6 @@
     { "path": "/api/cron/reminders", "schedule": "0 21 * * *" },
     { "path": "/api/cron/reminders", "schedule": "0 22 * * *" },
     { "path": "/api/cron/reminders", "schedule": "0 23 * * *" }
-  ]
+  ],
+  "installCommand": "cd ../.. && corepack enable && corepack prepare pnpm@10.33.0 --activate && pnpm install --frozen-lockfile --filter=@november-sierra/seventyfive-website..."
 }
