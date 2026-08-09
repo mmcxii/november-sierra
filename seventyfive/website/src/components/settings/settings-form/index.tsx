@@ -1,5 +1,8 @@
 "use client";
 
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { savePushSubscriptionAction, updateMemberAction } from "@/lib/actions/member";
 import type { ChallengeMode } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
@@ -20,24 +23,35 @@ export type SettingsFormProps = {
 };
 
 export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
+  const { displayName, mode, reminderEnabled, reminderTime, startPassed, timeZone, vapidPublicKey } = props;
+
   //* State
   const { t } = useTranslation();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<null | TranslationKey>(null);
+  const [challengeMode, setChallengeMode] = React.useState<ChallengeMode>(mode);
+  const [remindersOn, setRemindersOn] = React.useState(reminderEnabled);
 
   //* Handlers
+  const handleChallengeModeChange = (value: string) => {
+    setChallengeMode(value as ChallengeMode);
+  };
+
+  const handleRemindersChange = (checked: boolean | "indeterminate") => {
+    setRemindersOn(checked === true);
+  };
+
   const onSubmit = (formData: FormData) => {
     setError(null);
-    const reminderEnabled = formData.get("reminderEnabled") === "on";
 
     startTransition(async () => {
       const result = await updateMemberAction({
         displayName: String(formData.get("displayName") ?? ""),
-        mode: String(formData.get("challengeMode") ?? props.mode) as ChallengeMode,
-        reminderEnabled,
+        mode: challengeMode,
+        reminderEnabled: remindersOn,
         reminderTime: String(formData.get("reminderTime") ?? "20:00"),
-        timeZone: String(formData.get("timeZone") ?? props.timeZone),
+        timeZone: String(formData.get("timeZone") ?? timeZone),
       });
 
       if ("error" in result) {
@@ -45,12 +59,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
         return;
       }
 
-      if (reminderEnabled && props.vapidPublicKey && "serviceWorker" in navigator && "PushManager" in window) {
+      if (remindersOn && vapidPublicKey && "serviceWorker" in navigator && "PushManager" in window) {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
           const registration = await navigator.serviceWorker.register("/sw.js");
           const subscription = await registration.pushManager.subscribe({
-            applicationServerKey: urlBase64ToUint8Array(props.vapidPublicKey) as BufferSource,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
             userVisibleOnly: true,
           });
           const json = subscription.toJSON();
@@ -69,61 +83,74 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
   };
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-lg px-6 py-8">
-      <Link className="text-sf-muted text-sm" href="/group">
-        {t("yourGroup")}
+    <main className="mx-auto min-h-dvh w-full max-w-lg px-6 py-8 pr-16">
+      <Link className="text-sf-muted text-sm" href="/team">
+        {t("yourTeam")}
       </Link>
       <h1 className="font-sf-display mt-6 text-3xl">{t("settings")}</h1>
 
-      <form action={onSubmit} className="mt-8 space-y-4">
-        <label className="block space-y-1 text-sm">
-          <span className="text-sf-muted">{t("displayName")}</span>
-          <input
-            className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
-            defaultValue={props.displayName}
-            name="displayName"
-            required
-          />
-        </label>
+      <form action={onSubmit} className="mt-8 space-y-8">
+        <fieldset className="space-y-4">
+          <legend className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("me")}</legend>
+          <div className="space-y-1.5">
+            <Label htmlFor="displayName">{t("displayName")}</Label>
+            <input
+              className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              defaultValue={displayName}
+              id="displayName"
+              name="displayName"
+              required
+            />
+          </div>
 
-        <label className="block space-y-1 text-sm">
-          <span className="text-sf-muted">{t("timezone")}</span>
-          <input
-            className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
-            defaultValue={props.timeZone}
-            name="timeZone"
-            required
-          />
-        </label>
+          <div className="space-y-1.5">
+            <Label htmlFor="timeZone">{t("timezone")}</Label>
+            <input
+              className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              defaultValue={timeZone}
+              id="timeZone"
+              name="timeZone"
+              required
+            />
+          </div>
 
-        <fieldset className="space-y-2 text-sm" disabled={props.startPassed}>
-          <legend className="text-sf-muted">
-            {t("hard")} / {t("soft")}
-          </legend>
-          <label className="mr-4 inline-flex items-center gap-2">
-            <input defaultChecked={props.mode === "hard"} name="challengeMode" type="radio" value="hard" />
-            {t("hard")}
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input defaultChecked={props.mode === "soft"} name="challengeMode" type="radio" value="soft" />
-            {t("soft")}
-          </label>
+          <div className="space-y-2">
+            <Label>
+              {t("hard")} / {t("soft")}
+            </Label>
+            <RadioGroup
+              className="flex gap-4"
+              disabled={startPassed}
+              onValueChange={handleChallengeModeChange}
+              value={challengeMode}
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem id="settings-mode-hard" value="hard" />
+                <Label htmlFor="settings-mode-hard">{t("hard")}</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem id="settings-mode-soft" value="soft" />
+                <Label htmlFor="settings-mode-soft">{t("soft")}</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox checked={remindersOn} id="reminderEnabled" onCheckedChange={handleRemindersChange} />
+            <Label htmlFor="reminderEnabled">{t("enableDailyReminder")}</Label>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="reminderTime">{t("reminderTime")}</Label>
+            <input
+              className="border-sf-border bg-sf-elevated text-sf-text w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              defaultValue={reminderTime}
+              id="reminderTime"
+              name="reminderTime"
+              type="time"
+            />
+          </div>
         </fieldset>
-
-        <label className="flex items-center gap-2 text-sm">
-          <input defaultChecked={props.reminderEnabled} name="reminderEnabled" type="checkbox" />
-          {t("enableDailyReminder")}
-        </label>
-
-        <label className="block space-y-1 text-sm">
-          <span className="text-sf-muted">{t("reminderTime")}</span>
-          <input
-            className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
-            defaultValue={props.reminderTime}
-            name="reminderTime"
-            type="time"
-          />
-        </label>
 
         {error != null ? <p className="text-sf-danger text-sm">{t(error)}</p> : null}
 

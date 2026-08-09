@@ -1,9 +1,9 @@
 "use client";
 
-import { RosterRow } from "@/components/group/roster-row";
-import { TaskRow } from "@/components/group/task-row";
-import { leaveGroupAction, updateGroupAction } from "@/lib/actions/group";
+import { RosterRow } from "@/components/team/roster-row";
+import { TaskRow } from "@/components/team/task-row";
 import { setTaskCheckedAction } from "@/lib/actions/tasks";
+import { leaveTeamAction, updateTeamAction } from "@/lib/actions/team";
 import { canEditDay, tasksForMode, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import Link from "next/link";
@@ -21,10 +21,9 @@ export type RosterMember = {
   totalTasks: number;
 };
 
-export type GroupBoardProps = {
+export type TeamBoardProps = {
   checkedTaskIds: string[];
   endDate: string;
-  groupName: string;
   inviteCode: string;
   isOwner: boolean;
   memberId: string;
@@ -33,10 +32,26 @@ export type GroupBoardProps = {
   roster: RosterMember[];
   selectedDate: string;
   startDate: string;
+  teamName: string;
   todayLocal: string;
 };
 
-export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
+export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
+  const {
+    checkedTaskIds,
+    endDate,
+    inviteCode,
+    isOwner,
+    memberId,
+    memberMode,
+    memberStatus,
+    roster,
+    selectedDate,
+    startDate,
+    teamName,
+    todayLocal,
+  } = props;
+
   //* State
   const { t } = useTranslation();
   const router = useRouter();
@@ -46,22 +61,21 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
 
   //* Variables
   const editable = canEditDay({
-    mode: props.memberMode,
-    selectedDate: props.selectedDate,
-    startDate: props.startDate,
-    status: props.memberStatus,
-    todayLocal: props.todayLocal,
+    mode: memberMode,
+    selectedDate,
+    startDate,
+    status: memberStatus,
+    todayLocal,
   });
-  const tasks = tasksForMode(props.memberMode);
-  const checked = new Set(props.checkedTaskIds);
+  const tasks = tasksForMode(memberMode);
+  const checked = new Set(checkedTaskIds);
   const dayNumber =
-    Math.floor(
-      (Date.parse(`${props.selectedDate}T00:00:00.000Z`) - Date.parse(`${props.startDate}T00:00:00.000Z`)) / 86_400_000,
-    ) + 1;
+    Math.floor((Date.parse(`${selectedDate}T00:00:00.000Z`) - Date.parse(`${startDate}T00:00:00.000Z`)) / 86_400_000) +
+    1;
   const joinUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/join?code=${encodeURIComponent(props.inviteCode)}`
-      : `/join?code=${encodeURIComponent(props.inviteCode)}`;
+      ? `${window.location.origin}/join?code=${encodeURIComponent(inviteCode)}`
+      : `/join?code=${encodeURIComponent(inviteCode)}`;
 
   //* Handlers
   const onToggle = (taskId: string, nextChecked: boolean) => {
@@ -69,7 +83,7 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
     startTransition(async () => {
       const result = await setTaskCheckedAction({
         checked: nextChecked,
-        date: props.selectedDate,
+        date: selectedDate,
         taskId,
       });
       if ("error" in result) {
@@ -82,7 +96,7 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
 
   const onOwnerSave = (formData: FormData) => {
     startTransition(async () => {
-      const result = await updateGroupAction({
+      const result = await updateTeamAction({
         name: String(formData.get("name") ?? ""),
         startDate: String(formData.get("startDate") ?? ""),
       });
@@ -95,11 +109,13 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
   };
 
   const toggleInvite = () => {
-    setShowInvite((value) => !value);
+    setShowInvite((value) => {
+      return !value;
+    });
   };
 
   const copyPassword = () => {
-    void navigator.clipboard.writeText(props.inviteCode);
+    void navigator.clipboard.writeText(inviteCode);
   };
 
   const copyJoinLink = () => {
@@ -109,14 +125,14 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
   const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const params = new URLSearchParams(window.location.search);
     params.set("date", event.target.value);
-    router.push(`/group?${params.toString()}`);
+    router.push(`/team?${params.toString()}`);
   };
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-lg px-6 py-8">
+    <main className="mx-auto min-h-dvh w-full max-w-lg px-6 py-8 pr-16">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-sf-display text-3xl tracking-tight">{props.groupName}</p>
+          <p className="font-sf-display text-3xl tracking-tight">{teamName}</p>
           <p className="text-sf-muted mt-1 text-sm">{t("day{{day}}Of75", { day: dayNumber })}</p>
         </div>
         <div className="flex gap-2 text-sm">
@@ -136,9 +152,9 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
       {showInvite ? (
         <section className="sf-rise border-sf-border bg-sf-elevated mt-6 space-y-3 rounded-[var(--sf-radius)] border p-4">
           <p className="text-sf-muted text-sm">
-            {t("shareThisPasswordWithYourGroupAnyoneWithItCanJoinBeforeTheStartDate")}
+            {t("shareThisPasswordWithYourTeamAnyoneWithItCanJoinBeforeTheStartDate")}
           </p>
-          <code className="block text-xs break-all">{props.inviteCode}</code>
+          <code className="block text-xs break-all">{inviteCode}</code>
           <div className="flex flex-col gap-2">
             <button
               className="bg-sf-accent text-sf-accent-text rounded-[var(--sf-radius)] px-3 py-2 text-sm"
@@ -158,13 +174,13 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
         </section>
       ) : null}
 
-      {props.isOwner && props.startDate > props.todayLocal ? (
+      {isOwner && startDate > todayLocal ? (
         <form action={onOwnerSave} className="border-sf-border mt-6 space-y-3 border-b pb-6">
           <label className="block space-y-1 text-sm">
-            <span className="text-sf-muted">{t("groupName")}</span>
+            <span className="text-sf-muted">{t("teamName")}</span>
             <input
               className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
-              defaultValue={props.groupName}
+              defaultValue={teamName}
               name="name"
             />
           </label>
@@ -172,13 +188,13 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
             <span className="text-sf-muted">{t("startDate")}</span>
             <input
               className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
-              defaultValue={props.startDate}
+              defaultValue={startDate}
               name="startDate"
               type="date"
             />
           </label>
           <p className="text-sf-muted text-xs">
-            {t("endDate")}: {props.endDate}
+            {t("endDate")}: {endDate}
           </p>
           <button className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-2 text-sm" type="submit">
             {t("save")}
@@ -187,61 +203,63 @@ export const GroupBoard: React.FC<GroupBoardProps> = (props) => {
       ) : null}
 
       <label className="mt-8 block space-y-1 text-sm">
-        <span className="text-sf-muted">
-          {props.selectedDate === props.todayLocal ? t("today") : props.selectedDate}
-        </span>
+        <span className="text-sf-muted">{selectedDate === todayLocal ? t("today") : selectedDate}</span>
         <input
           className="border-sf-border bg-sf-elevated w-full rounded-[var(--sf-radius)] border px-3 py-2"
-          max={props.endDate}
-          min={props.startDate}
+          max={endDate}
+          min={startDate}
           onChange={onDateChange}
           type="date"
-          value={props.selectedDate}
+          value={selectedDate}
         />
       </label>
 
       <section className="mt-8">
-        <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("yourGroup")}</h2>
+        <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("yourTeam")}</h2>
         <ul className="divide-sf-border mt-3 divide-y">
-          {props.roster.map((member) => (
-            <RosterRow
-              checkedCount={member.checkedCount}
-              displayName={member.displayName}
-              isSelf={member.id === props.memberId}
-              key={member.id}
-              mode={member.mode}
-              softStumble={member.softStumble}
-              status={member.status}
-              totalTasks={member.totalTasks}
-            />
-          ))}
+          {roster.map((member) => {
+            return (
+              <RosterRow
+                checkedCount={member.checkedCount}
+                displayName={member.displayName}
+                isSelf={member.id === memberId}
+                key={member.id}
+                mode={member.mode}
+                softStumble={member.softStumble}
+                status={member.status}
+                totalTasks={member.totalTasks}
+              />
+            );
+          })}
         </ul>
       </section>
 
       <section className="mt-10">
         <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("yourChecklist")}</h2>
-        {props.memberStatus === "failed" && props.selectedDate === props.todayLocal ? (
+        {memberStatus === "failed" && selectedDate === todayLocal ? (
           <p className="text-sf-danger mt-3 text-sm">{t("fixPastDaysToContinue")}</p>
         ) : null}
         <ul className="mt-4 space-y-3">
-          {tasks.map((task) => (
-            <TaskRow
-              checked={checked.has(task.id)}
-              disabled={!editable || isPending}
-              key={task.id}
-              labelKey={task.labelKey}
-              onToggle={onToggle}
-              taskId={task.id}
-            />
-          ))}
+          {tasks.map((task) => {
+            return (
+              <TaskRow
+                checked={checked.has(task.id)}
+                disabled={!editable || isPending}
+                key={task.id}
+                labelKey={task.labelKey}
+                onToggle={onToggle}
+                taskId={task.id}
+              />
+            );
+          })}
         </ul>
       </section>
 
       {error != null ? <p className="text-sf-danger mt-4 text-sm">{t(error)}</p> : null}
 
-      <form action={leaveGroupAction} className="mt-12">
+      <form action={leaveTeamAction} className="mt-12">
         <button className="text-sf-muted text-sm underline" type="submit">
-          {t("leaveGroup")}
+          {t("leaveTeam")}
         </button>
       </form>
     </main>

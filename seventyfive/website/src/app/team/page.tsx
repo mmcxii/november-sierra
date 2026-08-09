@@ -1,4 +1,5 @@
-import { GroupBoard } from "@/components/group/board";
+import { AppChrome } from "@/components/app-chrome";
+import { TeamBoard } from "@/components/team/board";
 import { getSessionContext } from "@/lib/auth/session";
 import {
   hasSoftStumble,
@@ -14,11 +15,11 @@ import { dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/sch
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
-type GroupPageProps = {
+type TeamPageProps = {
   searchParams: Promise<{ date?: string }>;
 };
 
-const GroupPage = async (props: GroupPageProps) => {
+const TeamPage = async (props: TeamPageProps) => {
   const session = await getSessionContext();
   if (session == null) {
     redirect("/");
@@ -27,9 +28,9 @@ const GroupPage = async (props: GroupPageProps) => {
   const searchParams = await props.searchParams;
   const todayLocal = localDateString(new Date(), session.member.timeZone);
   const selectedDate = searchParams.date ?? todayLocal;
-  const challengeDates = listChallengeDates(session.group.startDate, session.group.endDate);
+  const challengeDates = listChallengeDates(session.team.startDate, session.team.endDate);
 
-  const members = await db.select().from(membersTable).where(eq(membersTable.groupId, session.group.id));
+  const members = await db.select().from(membersTable).where(eq(membersTable.teamId, session.team.id));
 
   const dayRows = await db.select().from(dayCompletionsTable);
   const memberIds = new Set(members.map((member) => member.id));
@@ -88,21 +89,23 @@ const GroupPage = async (props: GroupPageProps) => {
   const checkedTaskIds = selfDay != null ? (checksByDay.get(selfDay.id) ?? []) : [];
 
   return (
-    <GroupBoard
-      checkedTaskIds={checkedTaskIds}
-      endDate={session.group.endDate}
-      groupName={session.group.name}
-      inviteCode={session.group.inviteCode}
-      isOwner={session.member.isOwner}
-      memberId={session.member.id}
-      memberMode={session.member.mode as ChallengeMode}
-      memberStatus={session.member.status as MemberStatus}
-      roster={roster}
-      selectedDate={selectedDate}
-      startDate={session.group.startDate}
-      todayLocal={todayLocal}
-    />
+    <AppChrome>
+      <TeamBoard
+        checkedTaskIds={checkedTaskIds}
+        endDate={session.team.endDate}
+        inviteCode={session.team.inviteCode}
+        isOwner={session.member.isOwner}
+        memberId={session.member.id}
+        memberMode={session.member.mode as ChallengeMode}
+        memberStatus={session.member.status as MemberStatus}
+        roster={roster}
+        selectedDate={selectedDate}
+        startDate={session.team.startDate}
+        teamName={session.team.name}
+        todayLocal={todayLocal}
+      />
+    </AppChrome>
   );
 };
 
-export default GroupPage;
+export default TeamPage;

@@ -11,12 +11,12 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Seventy Five",
+    title: "Team SeventyFive",
   },
-  applicationName: "Seventy Five",
+  applicationName: "Team SeventyFive",
   description: "The quiet practice of showing up.",
   metadataBase: new URL(APP_URL),
-  title: "Seventy Five",
+  title: "Team SeventyFive",
 };
 
 export const viewport: Viewport = {

@@ -1,4 +1,4 @@
-CREATE TABLE "groups" (
+CREATE TABLE "teams" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"end_date" date NOT NULL,
 	"id" text PRIMARY KEY NOT NULL,
@@ -7,13 +7,12 @@ CREATE TABLE "groups" (
 	"owner_member_id" text,
 	"start_date" date NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "groups_invite_code_unique" UNIQUE("invite_code")
+	CONSTRAINT "teams_invite_code_unique" UNIQUE("invite_code")
 );
 --> statement-breakpoint
 CREATE TABLE "members" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"display_name" text NOT NULL,
-	"group_id" text NOT NULL,
 	"id" text PRIMARY KEY NOT NULL,
 	"is_owner" boolean DEFAULT false NOT NULL,
 	"joined_at" timestamp DEFAULT now() NOT NULL,
@@ -22,6 +21,7 @@ CREATE TABLE "members" (
 	"reminder_enabled" boolean DEFAULT false NOT NULL,
 	"reminder_time" text DEFAULT '20:00' NOT NULL,
 	"status" text DEFAULT 'active' NOT NULL,
+	"team_id" text NOT NULL,
 	"time_zone" text NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
@@ -49,7 +49,7 @@ CREATE TABLE "push_subscriptions" (
 	"p256dh" text NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "members" ADD CONSTRAINT "members_group_id_groups_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."groups"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "members" ADD CONSTRAINT "members_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint
 ALTER TABLE "day_completions" ADD CONSTRAINT "day_completions_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint

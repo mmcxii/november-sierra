@@ -1,6 +1,6 @@
 import { date, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-export const groupsTable = pgTable("groups", {
+export const teamsTable = pgTable("teams", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   endDate: date("end_date").notNull(),
   id: text("id").primaryKey(),

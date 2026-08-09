@@ -1,6 +1,6 @@
 "use server";
 
-import { generateGroupPassword } from "@/lib/auth/password";
+import { generateTeamPassword } from "@/lib/auth/password";
 import { clearSessionCookie, getSessionContext, getSessionMemberId, setSessionCookie } from "@/lib/auth/session";
 import {
   endDateFromStart,
@@ -10,7 +10,7 @@ import {
   type ChallengeMode,
 } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
-import { groupsTable, membersTable } from "@/lib/db/schema";
+import { membersTable, teamsTable } from "@/lib/db/schema";
 import { newId } from "@/lib/utils";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -21,10 +21,10 @@ const modeSchema = z.enum(["hard", "soft"]);
 
 const createSchema = z.object({
   displayName: z.string().trim().min(1).max(40),
-  groupName: z.string().trim().min(1).max(60),
   mode: modeSchema,
   replaceSession: z.boolean().optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  teamName: z.string().trim().min(1).max(60),
   timeZone: z.string().min(1),
 });
 
@@ -36,7 +36,7 @@ const joinSchema = z.object({
   timeZone: z.string().min(1),
 });
 
-const updateGroupSchema = z.object({
+const updateTeamSchema = z.object({
   name: z.string().trim().min(1).max(60),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
@@ -45,13 +45,15 @@ export type ActionResult = { error: string } | { ok: true; password?: string };
 
 async function ensureCanReplaceSession(replaceSession?: boolean): Promise<null | ActionResult> {
   const existing = await getSessionMemberId();
-  if (existing != null && !replaceSession) {
-    return { error: "alreadyInAGroupConfirmToSwitch" };
+  if (existing != null) {
+    if (!replaceSession) {
+      return { error: "alreadyInATeamConfirmToSwitch" };
+    }
   }
   return null;
 }
 
-export async function createGroupAction(input: z.infer<typeof createSchema>): Promise<ActionResult> {
+export async function createTeamAction(input: z.infer<typeof createSchema>): Promise<ActionResult> {
   const parsed = createSchema.safeParse(input);
   if (!parsed.success) {
     return { error: "somethingWentWrong" };
@@ -67,30 +69,30 @@ export async function createGroupAction(input: z.infer<typeof createSchema>): Pr
     return { error: "startDateMustBeInTheFuture" };
   }
 
-  const groupId = newId();
+  const teamId = newId();
   const memberId = newId();
-  const inviteCode = generateGroupPassword();
+  const inviteCode = generateTeamPassword();
   const endDate = endDateFromStart(parsed.data.startDate);
 
-  await db.insert(groupsTable).values({
+  await db.insert(teamsTable).values({
     endDate,
-    id: groupId,
+    id: teamId,
     inviteCode,
-    name: parsed.data.groupName,
+    name: parsed.data.teamName,
     ownerMemberId: memberId,
     startDate: parsed.data.startDate,
   });
 
   await db.insert(membersTable).values({
     displayName: parsed.data.displayName,
-    groupId,
     id: memberId,
     isOwner: true,
     mode: parsed.data.mode,
+    teamId,
     timeZone: parsed.data.timeZone,
   });
 
-  if (await getSessionMemberId()) {
+  if ((await getSessionMemberId()) != null) {
     await clearSessionCookie();
   }
   await setSessionCookie(memberId);
@@ -98,7 +100,7 @@ export async function createGroupAction(input: z.infer<typeof createSchema>): Pr
   return { ok: true, password: inviteCode };
 }
 
-export async function joinGroupAction(input: z.infer<typeof joinSchema>): Promise<ActionResult> {
+export async function joinTeamAction(input: z.infer<typeof joinSchema>): Promise<ActionResult> {
   const parsed = joinSchema.safeParse(input);
   if (!parsed.success) {
     return { error: "somethingWentWrong" };
@@ -109,14 +111,10 @@ export async function joinGroupAction(input: z.infer<typeof joinSchema>): Promis
     return blocked;
   }
 
-  const [matched] = await db
-    .select()
-    .from(groupsTable)
-    .where(eq(groupsTable.inviteCode, parsed.data.password))
-    .limit(1);
+  const [matched] = await db.select().from(teamsTable).where(eq(teamsTable.inviteCode, parsed.data.password)).limit(1);
 
-  if (!matched) {
-    return { error: "invalidGroupPassword" };
+  if (matched == null) {
+    return { error: "invalidTeamPassword" };
   }
 
   const utcToday = formatDateOnly(new Date());
@@ -127,34 +125,34 @@ export async function joinGroupAction(input: z.infer<typeof joinSchema>): Promis
   const memberId = newId();
   await db.insert(membersTable).values({
     displayName: parsed.data.displayName,
-    groupId: matched.id,
     id: memberId,
     isOwner: false,
     mode: parsed.data.mode as ChallengeMode,
+    teamId: matched.id,
     timeZone: parsed.data.timeZone,
   });
 
-  if (await getSessionMemberId()) {
+  if ((await getSessionMemberId()) != null) {
     await clearSessionCookie();
   }
   await setSessionCookie(memberId);
-  revalidatePath("/group");
+  revalidatePath("/team");
   return { ok: true };
 }
 
-export async function updateGroupAction(input: z.infer<typeof updateGroupSchema>): Promise<ActionResult> {
-  const parsed = updateGroupSchema.safeParse(input);
+export async function updateTeamAction(input: z.infer<typeof updateTeamSchema>): Promise<ActionResult> {
+  const parsed = updateTeamSchema.safeParse(input);
   if (!parsed.success) {
     return { error: "somethingWentWrong" };
   }
 
   const session = await getSessionContext();
-  if (!session?.member.isOwner) {
+  if (session?.member.isOwner != true) {
     return { error: "somethingWentWrong" };
   }
 
   const utcToday = formatDateOnly(new Date());
-  if (hasStartPassed(session.group.startDate, utcToday)) {
+  if (hasStartPassed(session.team.startDate, utcToday)) {
     return { error: "startDateCanNoLongerBeChanged" };
   }
   if (hasStartPassed(parsed.data.startDate, utcToday)) {
@@ -162,20 +160,20 @@ export async function updateGroupAction(input: z.infer<typeof updateGroupSchema>
   }
 
   await db
-    .update(groupsTable)
+    .update(teamsTable)
     .set({
       endDate: endDateFromStart(parsed.data.startDate),
       name: parsed.data.name,
       startDate: parsed.data.startDate,
       updatedAt: new Date(),
     })
-    .where(eq(groupsTable.id, session.group.id));
+    .where(eq(teamsTable.id, session.team.id));
 
-  revalidatePath("/group");
+  revalidatePath("/team");
   return { ok: true };
 }
 
-export async function leaveGroupAction(): Promise<void> {
+export async function leaveTeamAction(): Promise<void> {
   await clearSessionCookie();
   redirect("/");
 }

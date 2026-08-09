@@ -35,7 +35,7 @@ export async function updateMemberAction(input: z.infer<typeof updateMemberSchem
   }
 
   const utcToday = formatDateOnly(new Date());
-  const startPassed = hasStartPassed(session.group.startDate, utcToday);
+  const startPassed = hasStartPassed(session.team.startDate, utcToday);
   const nextMode = startPassed ? (session.member.mode as ChallengeMode) : parsed.data.mode;
 
   await db
@@ -50,7 +50,7 @@ export async function updateMemberAction(input: z.infer<typeof updateMemberSchem
     })
     .where(eq(membersTable.id, session.member.id));
 
-  revalidatePath("/group");
+  revalidatePath("/team");
   revalidatePath("/settings");
   return { ok: true as const };
 }

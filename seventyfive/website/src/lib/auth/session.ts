@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/client";
-import { groupsTable, membersTable } from "@/lib/db/schema";
+import { membersTable, teamsTable } from "@/lib/db/schema";
 import { envSchema } from "@/lib/env";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
@@ -14,7 +14,7 @@ function sign(memberId: string): string {
 
 function verify(token: string): null | string {
   const [memberId, sig] = token.split(".");
-  if (!memberId || !sig) {
+  if (memberId == null || sig == null) {
     return null;
   }
 
@@ -60,11 +60,11 @@ export async function getSessionContext() {
 
   const rows = await db
     .select({
-      group: groupsTable,
       member: membersTable,
+      team: teamsTable,
     })
     .from(membersTable)
-    .innerJoin(groupsTable, eq(membersTable.groupId, groupsTable.id))
+    .innerJoin(teamsTable, eq(membersTable.teamId, teamsTable.id))
     .where(eq(membersTable.id, memberId))
     .limit(1);
 
