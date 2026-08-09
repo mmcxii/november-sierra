@@ -8,9 +8,11 @@ Monorepo for November Sierra products and shared tooling.
 ├── anchr/
 │   ├── website/        @november-sierra/anchr-website    AGPL-3.0
 │   └── docs/           Anchr brand guidelines
+├── seventyfive/
+│   └── website/        @november-sierra/seventyfive-website    MIT
 ├── shared/
 │   └── eslint-config/  @november-sierra/eslint-config    MIT
-├── november-sierra/    (future: company website)
+├── november-sierra/    company website
 └── scripts/            Shared validation and build scripts
 ```
 
@@ -21,6 +23,9 @@ pnpm install
 
 # Start the Anchr dev server
 turbo dev --filter=@november-sierra/anchr-website
+
+# Start the Seventy Five dev server (https://seventyfive.team)
+turbo dev --filter=@november-sierra/seventyfive-website
 
 # Run all checks
 turbo build lint typecheck test
@@ -43,6 +48,7 @@ This repository contains packages under different licenses:
 | Directory          | License           |
 | ------------------ | ----------------- |
 | `anchr/`           | AGPL-3.0-or-later |
+| `seventyfive/`     | MIT               |
 | `shared/`          | MIT               |
 | `november-sierra/` | MIT               |
 

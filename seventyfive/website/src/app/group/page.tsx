@@ -1,0 +1,108 @@
+import { GroupBoard } from "@/components/group/board";
+import { getSessionContext } from "@/lib/auth/session";
+import {
+  hasSoftStumble,
+  isDayComplete,
+  listChallengeDates,
+  localDateString,
+  taskIdsForMode,
+  type ChallengeMode,
+  type MemberStatus,
+} from "@/lib/challenge/tasks";
+import { db } from "@/lib/db/client";
+import { dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
+
+type GroupPageProps = {
+  searchParams: Promise<{ date?: string }>;
+};
+
+const GroupPage = async (props: GroupPageProps) => {
+  const session = await getSessionContext();
+  if (session == null) {
+    redirect("/");
+  }
+
+  const searchParams = await props.searchParams;
+  const todayLocal = localDateString(new Date(), session.member.timeZone);
+  const selectedDate = searchParams.date ?? todayLocal;
+  const challengeDates = listChallengeDates(session.group.startDate, session.group.endDate);
+
+  const members = await db.select().from(membersTable).where(eq(membersTable.groupId, session.group.id));
+
+  const dayRows = await db.select().from(dayCompletionsTable);
+  const memberIds = new Set(members.map((member) => member.id));
+  const relevantDays = dayRows.filter((day) => memberIds.has(day.memberId) && day.date === selectedDate);
+
+  const allMemberDays = dayRows.filter((day) => memberIds.has(day.memberId));
+  const checks = allMemberDays.length === 0 ? [] : await db.select().from(taskChecksTable);
+
+  const checksByDay = new Map<string, string[]>();
+  for (const check of checks) {
+    const list = checksByDay.get(check.dayCompletionId) ?? [];
+    list.push(check.taskId);
+    checksByDay.set(check.dayCompletionId, list);
+  }
+
+  const daysByMember = new Map<string, typeof allMemberDays>();
+  for (const day of allMemberDays) {
+    const list = daysByMember.get(day.memberId) ?? [];
+    list.push(day);
+    daysByMember.set(day.memberId, list);
+  }
+
+  const roster = members.map((member) => {
+    const mode = member.mode as ChallengeMode;
+    const selectedDay = relevantDays.find((day) => day.memberId === member.id);
+    const checkedTaskIds = selectedDay != null ? (checksByDay.get(selectedDay.id) ?? []) : [];
+    const totalTasks = taskIdsForMode(mode).length;
+
+    const completions = (daysByMember.get(member.id) ?? []).map((day) => ({
+      checkedTaskIds: checksByDay.get(day.id) ?? [],
+      date: day.date,
+      mode,
+    }));
+
+    const softStumble =
+      mode === "soft" &&
+      hasSoftStumble({
+        challengeDates,
+        completions,
+        todayLocal,
+      });
+
+    return {
+      checkedCount: checkedTaskIds.filter((id) => taskIdsForMode(mode).includes(id)).length,
+      dayComplete: isDayComplete(mode, checkedTaskIds),
+      displayName: member.displayName,
+      id: member.id,
+      mode,
+      softStumble,
+      status: member.status as MemberStatus,
+      totalTasks,
+    };
+  });
+
+  const selfDay = relevantDays.find((day) => day.memberId === session.member.id);
+  const checkedTaskIds = selfDay != null ? (checksByDay.get(selfDay.id) ?? []) : [];
+
+  return (
+    <GroupBoard
+      checkedTaskIds={checkedTaskIds}
+      endDate={session.group.endDate}
+      groupName={session.group.name}
+      inviteCode={session.group.inviteCode}
+      isOwner={session.member.isOwner}
+      memberId={session.member.id}
+      memberMode={session.member.mode as ChallengeMode}
+      memberStatus={session.member.status as MemberStatus}
+      roster={roster}
+      selectedDate={selectedDate}
+      startDate={session.group.startDate}
+      todayLocal={todayLocal}
+    />
+  );
+};
+
+export default GroupPage;
