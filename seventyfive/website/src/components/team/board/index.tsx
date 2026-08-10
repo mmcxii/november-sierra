@@ -5,7 +5,7 @@ import { TaskRow } from "@/components/team/task-row";
 import { Container } from "@/components/ui/container";
 import { setTaskCheckedAction } from "@/lib/actions/tasks";
 import { leaveTeamAction, updateTeamAction } from "@/lib/actions/team";
-import { canEditDay, tasksForMode, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
+import { canEditDay, daysUntilStart, tasksForMode, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,13 +13,12 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 
 export type RosterMember = {
-  checkedCount: number;
+  checkedTaskIds: readonly string[];
   displayName: string;
   id: string;
   mode: ChallengeMode;
   softStumble: boolean;
   status: MemberStatus;
-  totalTasks: number;
 };
 
 export type TeamBoardProps = {
@@ -70,9 +69,16 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   });
   const tasks = tasksForMode(memberMode);
   const checked = new Set(checkedTaskIds);
+  const daysUntil = daysUntilStart(startDate, todayLocal);
   const dayNumber =
     Math.floor((Date.parse(`${selectedDate}T00:00:00.000Z`) - Date.parse(`${startDate}T00:00:00.000Z`)) / 86_400_000) +
     1;
+  let challengeProgressLabel = t("challengeStartsIn{{count}}Days", { count: daysUntil });
+  if (daysUntil === 0) {
+    challengeProgressLabel = t("day{{day}}Of75", { day: dayNumber });
+  } else if (daysUntil === 1) {
+    challengeProgressLabel = t("challengeStartsTomorrow");
+  }
   const joinUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/join?code=${encodeURIComponent(inviteCode)}`
@@ -134,7 +140,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="font-sf-display text-3xl tracking-tight">{teamName}</p>
-          <p className="text-sf-muted mt-1 text-sm">{t("day{{day}}Of75", { day: dayNumber })}</p>
+          <p className="text-sf-muted mt-1 text-sm">{challengeProgressLabel}</p>
         </div>
         <div className="flex gap-2 text-sm">
           <button
@@ -190,6 +196,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
             <input
               className="border-sf-border bg-sf-elevated block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
               defaultValue={startDate}
+              min={todayLocal}
               name="startDate"
               type="date"
             />
@@ -221,14 +228,13 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
           {roster.map((member) => {
             return (
               <RosterRow
-                checkedCount={member.checkedCount}
+                checkedTaskIds={member.checkedTaskIds}
                 displayName={member.displayName}
                 isSelf={member.id === memberId}
                 key={member.id}
                 mode={member.mode}
                 softStumble={member.softStumble}
                 status={member.status}
-                totalTasks={member.totalTasks}
               />
             );
           })}

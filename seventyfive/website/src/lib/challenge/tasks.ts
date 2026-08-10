@@ -86,12 +86,25 @@ export function compareDateOnly(a: string, b: string): number {
   return a < b ? -1 : 1;
 }
 
+/** Join is open on or before the start date (including day one). */
 export function isJoinAllowed(startDate: string, utcToday: string): boolean {
-  return compareDateOnly(utcToday, startDate) < 0;
+  return compareDateOnly(utcToday, startDate) <= 0;
 }
 
+/** True once the calendar day is on or after the start date. */
 export function hasStartPassed(startDate: string, utcToday: string): boolean {
   return compareDateOnly(utcToday, startDate) >= 0;
+}
+
+/** True when the start date is strictly before today (today is still allowed). */
+export function isStartDateInPast(startDate: string, utcToday: string): boolean {
+  return compareDateOnly(utcToday, startDate) > 0;
+}
+
+/** Whole days from today until start (0 when started or start is today). */
+export function daysUntilStart(startDate: string, today: string): number {
+  const ms = parseDateOnly(startDate).getTime() - parseDateOnly(today).getTime();
+  return Math.max(0, Math.round(ms / 86_400_000));
 }
 
 export type DayCompletionInput = {
