@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeScript } from "@/components/theme-script";
+import { Toaster } from "@/components/ui/sonner";
 import { SITE_URL } from "@/lib/constants";
 import { initTranslations } from "@/lib/i18n/server";
 import { TranslationsProvider } from "@/lib/i18n/translations-provider";
@@ -46,6 +47,7 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
         <ThemeScript />
         <TranslationsProvider locale="en-US" resources={resources}>
           {children}
+          <Toaster />
         </TranslationsProvider>
       </body>
     </html>

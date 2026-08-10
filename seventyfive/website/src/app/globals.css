@@ -150,3 +150,12 @@ select {
 .sf-check-pop:checked {
   transform: scale(1.06);
 }
+
+/* ── Sonner toaster ───────────────────────────────────────────────────── */
+
+.toaster-theme {
+  --border-radius: var(--sf-radius);
+  --normal-bg: var(--sf-bg-elevated);
+  --normal-border: var(--sf-border);
+  --normal-text: var(--sf-text);
+}

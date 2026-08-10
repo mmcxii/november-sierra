@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 export type RosterMember = {
   checkedTaskIds: readonly string[];
@@ -123,10 +124,12 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
 
   const copyPassword = () => {
     void navigator.clipboard.writeText(inviteCode);
+    toast.success(t("passwordCopied"));
   };
 
   const copyJoinLink = () => {
     void navigator.clipboard.writeText(joinUrl);
+    toast.success(t("joinLinkCopied"));
   };
 
   const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
