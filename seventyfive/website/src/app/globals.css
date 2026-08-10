@@ -162,12 +162,12 @@ select {
 }
 
 .sf-roster-icon-pulse {
-  animation: sf-roster-check-pulse var(--sf-roster-pulse-ms, 4000ms) ease-in-out infinite;
+  animation: sf-roster-check-pulse var(--sf-roster-pulse-ms, 30000ms) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .sf-roster-icon-pulse {
-    --sf-roster-pulse-ms: 4000ms;
+    --sf-roster-pulse-ms: 30000ms;
   }
 }
 

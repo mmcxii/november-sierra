@@ -128,23 +128,26 @@ export function daysUntilStart(startDate: string, today: string): number {
   return Math.max(0, Math.round(ms / 86_400_000));
 }
 
-const PRE_START_PULSE_MAX_MS = 4000;
-const PRE_START_PULSE_MIN_MS = 1200;
+const PRE_START_PULSE_MAX_MS = 30_000;
+const PRE_START_PULSE_TOMORROW_MS = 1200;
 const PRE_START_PULSE_SPAN_DAYS = 30;
 
 /**
  * Roster icon pulse cycle while the challenge has not started.
- * 4s at ≥30 days out → 1.2s the day before; `null` once started (daysUntil === 0).
+ * ~1s per day out (capped at 30s for ≥30 days) → 1.2s the day before;
+ * `null` once started (daysUntil === 0).
  */
 export function preStartRosterPulseMs(daysUntil: number): null | number {
   if (daysUntil <= 0) {
     return null;
   }
+  if (daysUntil === 1) {
+    return PRE_START_PULSE_TOMORROW_MS;
+  }
   if (daysUntil >= PRE_START_PULSE_SPAN_DAYS) {
     return PRE_START_PULSE_MAX_MS;
   }
-  const t = (PRE_START_PULSE_SPAN_DAYS - daysUntil) / (PRE_START_PULSE_SPAN_DAYS - 1);
-  return PRE_START_PULSE_MAX_MS - t * (PRE_START_PULSE_MAX_MS - PRE_START_PULSE_MIN_MS);
+  return daysUntil * 1000;
 }
 
 export type DayCompletionInput = {
