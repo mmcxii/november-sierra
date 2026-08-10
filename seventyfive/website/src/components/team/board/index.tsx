@@ -5,8 +5,17 @@ import { TaskRow } from "@/components/team/task-row";
 import { Container } from "@/components/ui/container";
 import { setTaskCheckedAction } from "@/lib/actions/tasks";
 import { leaveTeamAction, updateTeamAction } from "@/lib/actions/team";
-import { canEditDay, daysUntilStart, tasksForMode, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
+import {
+  canEditDay,
+  daysUntilStart,
+  preStartRosterPulseMs,
+  tasksForMode,
+  type ChallengeMode,
+  type MemberStatus,
+} from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
+import { cn } from "@/lib/utils";
+import { RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -59,8 +68,12 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
+  const [isRefreshing, startRefreshTransition] = React.useTransition();
   const [showInvite, setShowInvite] = React.useState(false);
   const [error, setError] = React.useState<null | TranslationKey>(null);
+
+  //* Refs
+  const rosterListRef = React.useRef<HTMLUListElement>(null);
 
   //* Variables
   const editable = canEditDay({
@@ -73,6 +86,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const tasks = tasksForMode(memberMode);
   const checked = new Set(checkedTaskIds);
   const daysUntil = daysUntilStart(startDate, todayLocal);
+  const rosterPulseMs = preStartRosterPulseMs(daysUntil);
   const dayNumber =
     Math.floor((Date.parse(`${selectedDate}T00:00:00.000Z`) - Date.parse(`${startDate}T00:00:00.000Z`)) / 86_400_000) +
     1;
@@ -142,11 +156,30 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     router.push(`/teams/${teamId}?${params.toString()}`);
   };
 
+  const onRefreshRoster = () => {
+    startRefreshTransition(() => {
+      router.refresh();
+    });
+  };
+
   const onLeave = () => {
     startTransition(async () => {
       await leaveTeamAction(teamId);
     });
   };
+
+  //* Effects
+  React.useEffect(() => {
+    const list = rosterListRef.current;
+    if (list == null) {
+      return;
+    }
+    if (rosterPulseMs == null) {
+      list.style.removeProperty("--sf-roster-pulse-ms");
+      return;
+    }
+    list.style.setProperty("--sf-roster-pulse-ms", `${rosterPulseMs}ms`);
+  }, [rosterPulseMs]);
 
   return (
     <Container as="main" className="min-h-dvh py-8">
@@ -242,8 +275,19 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       </label>
 
       <section className="mt-8">
-        <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("yourTeam")}</h2>
-        <ul className="divide-sf-border mt-3 divide-y">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("yourTeam")}</h2>
+          <button
+            aria-label={t("refreshTeam")}
+            className="text-sf-muted hover:text-sf-text rounded-[var(--sf-radius)] p-1 disabled:opacity-60"
+            disabled={isRefreshing}
+            onClick={onRefreshRoster}
+            type="button"
+          >
+            <RefreshCw aria-hidden className={cn("size-3.5", { "animate-spin": isRefreshing })} strokeWidth={1.75} />
+          </button>
+        </div>
+        <ul className="divide-sf-border mt-3 divide-y" ref={rosterListRef}>
           {roster.map((member) => {
             return (
               <RosterRow
@@ -252,6 +296,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
                 isSelf={member.id === memberId}
                 key={member.id}
                 mode={member.mode}
+                pulse={rosterPulseMs != null}
                 softStumble={member.softStumble}
                 status={member.status}
               />

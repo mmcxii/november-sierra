@@ -13,12 +13,14 @@ export type RosterRowProps = {
   displayName: string;
   isSelf: boolean;
   mode: ChallengeMode;
+  /** When true, icons pulse unchecked↔checked (duration from parent CSS var). */
+  pulse?: boolean;
   softStumble: boolean;
   status: MemberStatus;
 };
 
 export const RosterRow: React.FC<RosterRowProps> = (props) => {
-  const { checkedTaskIds, displayName, isSelf, mode, softStumble, status } = props;
+  const { checkedTaskIds, displayName, isSelf, mode, pulse = false, softStumble, status } = props;
 
   //* State
   const { t } = useTranslation();
@@ -52,8 +54,9 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
                 <Icon
                   aria-hidden
                   className={cn("size-3.5", {
-                    "text-sf-accent": isChecked,
-                    "text-sf-muted/35": !isChecked,
+                    "sf-roster-icon-pulse": pulse,
+                    "text-sf-accent": !pulse && isChecked,
+                    "text-sf-muted/35": !pulse && !isChecked,
                   })}
                   strokeWidth={1.75}
                 />
