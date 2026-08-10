@@ -18,7 +18,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     name: "Team SeventyFive",
     short_name: "SeventyFive",
-    start_url: "/team",
+    start_url: "/teams",
     theme_color: "#5c6b4a",
   };
 }

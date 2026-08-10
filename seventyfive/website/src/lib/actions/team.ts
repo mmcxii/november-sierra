@@ -1,7 +1,14 @@
 "use server";
 
+import { createAccountForDisplayName } from "@/lib/auth/account";
 import { generateTeamPassword } from "@/lib/auth/password";
-import { clearSessionCookie, getSessionContext, getSessionMemberId, setSessionCookie } from "@/lib/auth/session";
+import {
+  clearSessionCookie,
+  getAuthUser,
+  getMembershipContext,
+  getPendingPasswordCookie,
+  getSessionMemberId,
+} from "@/lib/auth/session";
 import {
   endDateFromStart,
   hasStartPassed,
@@ -13,7 +20,7 @@ import {
 import { db } from "@/lib/db/client";
 import { membersTable, teamsTable } from "@/lib/db/schema";
 import { newId } from "@/lib/utils";
-import { eq } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -21,38 +28,35 @@ import { z } from "zod";
 const modeSchema = z.enum(["hard", "soft"]);
 
 const createSchema = z.object({
-  displayName: z.string().trim().min(1).max(40),
+  displayName: z.string().trim().min(1).max(40).optional(),
   mode: modeSchema,
-  replaceSession: z.boolean().optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   teamName: z.string().trim().min(1).max(60),
-  timeZone: z.string().min(1),
+  timeZone: z.string().min(1).optional(),
 });
 
 const joinSchema = z.object({
-  displayName: z.string().trim().min(1).max(40),
+  displayName: z.string().trim().min(1).max(40).optional(),
   mode: modeSchema,
   password: z.string().min(1),
-  replaceSession: z.boolean().optional(),
-  timeZone: z.string().min(1),
+  timeZone: z.string().min(1).optional(),
 });
 
 const updateTeamSchema = z.object({
   name: z.string().trim().min(1).max(60),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  teamId: z.string().min(1),
 });
 
-export type ActionResult = { error: string } | { ok: true; password?: string };
-
-async function ensureCanReplaceSession(replaceSession?: boolean): Promise<null | ActionResult> {
-  const existing = await getSessionMemberId();
-  if (existing != null) {
-    if (!replaceSession) {
-      return { error: "alreadyInATeamConfirmToSwitch" };
+export type ActionResult =
+  | {
+      inviteCode?: string;
+      ok: true;
+      password?: string;
+      teamId: string;
+      username?: string;
     }
-  }
-  return null;
-}
+  | { error: string; password?: string; username?: string };
 
 export async function createTeamAction(input: z.infer<typeof createSchema>): Promise<ActionResult> {
   const parsed = createSchema.safeParse(input);
@@ -60,44 +64,87 @@ export async function createTeamAction(input: z.infer<typeof createSchema>): Pro
     return { error: "somethingWentWrong" };
   }
 
-  const blocked = await ensureCanReplaceSession(parsed.data.replaceSession);
-  if (blocked != null) {
-    return blocked;
-  }
+  try {
+    const existingUser = await getAuthUser();
+    let userId: string;
+    let displayName: string;
+    let timeZone: string;
+    let generatedPassword: undefined | string;
+    let username: undefined | string;
 
-  if (!isStartDateSelectable(parsed.data.startDate, new Date(), parsed.data.timeZone)) {
-    return { error: "startDateCannotBeInThePast" };
-  }
+    if (existingUser == null) {
+      if (parsed.data.displayName == null || parsed.data.timeZone == null) {
+        return { error: "somethingWentWrong" };
+      }
+      // Do not call getAuthUser() after signup — the new session cookie is on the
+      // response and is not visible on this request's headers yet.
+      const created = await createAccountForDisplayName({
+        displayName: parsed.data.displayName,
+        timeZone: parsed.data.timeZone,
+      });
+      userId = created.userId;
+      displayName = created.displayName;
+      timeZone = created.timeZone;
+      generatedPassword = created.password;
+      username = created.username;
+    } else {
+      userId = existingUser.id;
+      displayName = existingUser.name;
+      timeZone = existingUser.timeZone;
+    }
 
-  const teamId = newId();
-  const memberId = newId();
-  const inviteCode = generateTeamPassword();
-  const endDate = endDateFromStart(parsed.data.startDate);
+    if (!isStartDateSelectable(parsed.data.startDate, new Date(), timeZone)) {
+      return { error: "startDateCannotBeInThePast" };
+    }
 
-  await db.insert(teamsTable).values({
-    endDate,
-    id: teamId,
-    inviteCode,
-    name: parsed.data.teamName,
-    ownerMemberId: memberId,
-    startDate: parsed.data.startDate,
-  });
+    const teamId = newId();
+    const memberId = newId();
+    const inviteCode = generateTeamPassword();
+    const endDate = endDateFromStart(parsed.data.startDate);
 
-  await db.insert(membersTable).values({
-    displayName: parsed.data.displayName,
-    id: memberId,
-    isOwner: true,
-    mode: parsed.data.mode,
-    teamId,
-    timeZone: parsed.data.timeZone,
-  });
+    await db.insert(teamsTable).values({
+      endDate,
+      id: teamId,
+      inviteCode,
+      name: parsed.data.teamName,
+      ownerMemberId: memberId,
+      startDate: parsed.data.startDate,
+    });
 
-  if ((await getSessionMemberId()) != null) {
+    await db.insert(membersTable).values({
+      displayName,
+      id: memberId,
+      isOwner: true,
+      mode: parsed.data.mode,
+      teamId,
+      timeZone,
+      userId,
+    });
+
     await clearSessionCookie();
-  }
-  await setSessionCookie(memberId);
+    revalidatePath("/teams");
 
-  return { ok: true, password: inviteCode };
+    const pending = await getPendingPasswordCookie();
+    return {
+      inviteCode,
+      ok: true,
+      password: generatedPassword ?? pending?.password,
+      teamId,
+      username: username ?? pending?.username,
+    };
+  } catch (error) {
+    console.error("createTeamAction failed", error);
+    const pending = await getPendingPasswordCookie();
+    if (pending != null) {
+      // Account may already exist; surface credentials so the user is not locked out.
+      return {
+        error: "somethingWentWrong",
+        password: pending.password,
+        username: pending.username,
+      };
+    }
+    return { error: "somethingWentWrong" };
+  }
 }
 
 export async function joinTeamAction(input: z.infer<typeof joinSchema>): Promise<ActionResult> {
@@ -106,38 +153,96 @@ export async function joinTeamAction(input: z.infer<typeof joinSchema>): Promise
     return { error: "somethingWentWrong" };
   }
 
-  const blocked = await ensureCanReplaceSession(parsed.data.replaceSession);
-  if (blocked != null) {
-    return blocked;
-  }
+  try {
+    const existingUser = await getAuthUser();
+    let userId: string;
+    let displayName: string;
+    let timeZone: string;
+    let generatedPassword: undefined | string;
+    let username: undefined | string;
 
-  const [matched] = await db.select().from(teamsTable).where(eq(teamsTable.inviteCode, parsed.data.password)).limit(1);
+    if (existingUser == null) {
+      if (parsed.data.displayName == null || parsed.data.timeZone == null) {
+        return { error: "somethingWentWrong" };
+      }
+      const created = await createAccountForDisplayName({
+        displayName: parsed.data.displayName,
+        timeZone: parsed.data.timeZone,
+      });
+      userId = created.userId;
+      displayName = created.displayName;
+      timeZone = created.timeZone;
+      generatedPassword = created.password;
+      username = created.username;
+    } else {
+      userId = existingUser.id;
+      displayName = existingUser.name;
+      timeZone = existingUser.timeZone;
+    }
 
-  if (matched == null) {
-    return { error: "invalidTeamPassword" };
-  }
+    const [matched] = await db
+      .select()
+      .from(teamsTable)
+      .where(eq(teamsTable.inviteCode, parsed.data.password))
+      .limit(1);
 
-  const todayLocal = localDateString(new Date(), parsed.data.timeZone);
-  if (!isJoinAllowed(matched.startDate, todayLocal)) {
-    return { error: "challengeAlreadyStarted" };
-  }
+    if (matched == null) {
+      return { error: "invalidTeamPassword" };
+    }
 
-  const memberId = newId();
-  await db.insert(membersTable).values({
-    displayName: parsed.data.displayName,
-    id: memberId,
-    isOwner: false,
-    mode: parsed.data.mode as ChallengeMode,
-    teamId: matched.id,
-    timeZone: parsed.data.timeZone,
-  });
+    const todayLocal = localDateString(new Date(), timeZone);
+    if (!isJoinAllowed(matched.startDate, todayLocal)) {
+      return { error: "challengeAlreadyStarted" };
+    }
 
-  if ((await getSessionMemberId()) != null) {
+    const [existingMembership] = await db
+      .select()
+      .from(membersTable)
+      .where(and(eq(membersTable.userId, userId), eq(membersTable.teamId, matched.id)))
+      .limit(1);
+
+    if (existingMembership != null) {
+      return {
+        ok: true,
+        password: generatedPassword,
+        teamId: matched.id,
+        username,
+      };
+    }
+
+    const memberId = newId();
+    await db.insert(membersTable).values({
+      displayName,
+      id: memberId,
+      isOwner: false,
+      mode: parsed.data.mode as ChallengeMode,
+      teamId: matched.id,
+      timeZone,
+      userId,
+    });
+
     await clearSessionCookie();
+    revalidatePath("/teams");
+
+    const pending = await getPendingPasswordCookie();
+    return {
+      ok: true,
+      password: generatedPassword ?? pending?.password,
+      teamId: matched.id,
+      username: username ?? pending?.username,
+    };
+  } catch (error) {
+    console.error("joinTeamAction failed", error);
+    const pending = await getPendingPasswordCookie();
+    if (pending != null) {
+      return {
+        error: "somethingWentWrong",
+        password: pending.password,
+        username: pending.username,
+      };
+    }
+    return { error: "somethingWentWrong" };
   }
-  await setSessionCookie(memberId);
-  revalidatePath("/team");
-  return { ok: true };
 }
 
 export async function updateTeamAction(input: z.infer<typeof updateTeamSchema>): Promise<ActionResult> {
@@ -146,16 +251,16 @@ export async function updateTeamAction(input: z.infer<typeof updateTeamSchema>):
     return { error: "somethingWentWrong" };
   }
 
-  const session = await getSessionContext();
+  const session = await getMembershipContext(parsed.data.teamId);
   if (session?.member.isOwner != true) {
     return { error: "somethingWentWrong" };
   }
 
-  const todayLocal = localDateString(new Date(), session.member.timeZone);
+  const todayLocal = localDateString(new Date(), session.user.timeZone);
   if (hasStartPassed(session.team.startDate, todayLocal)) {
     return { error: "startDateCanNoLongerBeChanged" };
   }
-  if (!isStartDateSelectable(parsed.data.startDate, new Date(), session.member.timeZone)) {
+  if (!isStartDateSelectable(parsed.data.startDate, new Date(), session.user.timeZone)) {
     return { error: "startDateCannotBeInThePast" };
   }
 
@@ -169,27 +274,27 @@ export async function updateTeamAction(input: z.infer<typeof updateTeamSchema>):
     })
     .where(eq(teamsTable.id, session.team.id));
 
-  revalidatePath("/team");
-  return { ok: true };
+  revalidatePath(`/teams/${session.team.id}`);
+  return { ok: true, teamId: session.team.id };
 }
 
-export async function leaveTeamAction(): Promise<void> {
-  const session = await getSessionContext();
+export async function leaveTeamAction(teamId: string): Promise<void> {
+  const session = await getMembershipContext(teamId);
   if (session == null) {
-    redirect("/");
+    redirect("/teams");
   }
 
   if (session.member.isOwner) {
-    redirect("/settings");
+    redirect(`/teams/${teamId}/settings`);
   }
 
   await db.delete(membersTable).where(eq(membersTable.id, session.member.id));
-  await clearSessionCookie();
-  redirect("/");
+  redirect("/teams");
 }
 
 const deleteTeamSchema = z.object({
   confirm: z.literal(true),
+  teamId: z.string().min(1),
 });
 
 export async function deleteTeamAction(input: z.infer<typeof deleteTeamSchema>): Promise<ActionResult> {
@@ -198,12 +303,36 @@ export async function deleteTeamAction(input: z.infer<typeof deleteTeamSchema>):
     return { error: "confirmDeleteTeam" };
   }
 
-  const session = await getSessionContext();
+  const session = await getMembershipContext(parsed.data.teamId);
   if (session?.member.isOwner != true) {
     return { error: "somethingWentWrong" };
   }
 
   await db.delete(teamsTable).where(eq(teamsTable.id, session.team.id));
-  await clearSessionCookie();
-  redirect("/");
+  redirect("/teams");
 }
+
+/** Transfer ownership to oldest other member, or delete team if alone. */
+export async function transferOrDeleteOwnedTeam(teamId: string, ownerMemberId: string): Promise<void> {
+  const [next] = await db
+    .select()
+    .from(membersTable)
+    .where(and(eq(membersTable.teamId, teamId), ne(membersTable.id, ownerMemberId)))
+    .orderBy(asc(membersTable.joinedAt))
+    .limit(1);
+
+  if (next == null) {
+    await db.delete(teamsTable).where(eq(teamsTable.id, teamId));
+    return;
+  }
+
+  await db.update(membersTable).set({ isOwner: true, updatedAt: new Date() }).where(eq(membersTable.id, next.id));
+  await db
+    .update(membersTable)
+    .set({ isOwner: false, updatedAt: new Date() })
+    .where(eq(membersTable.id, ownerMemberId));
+  await db.update(teamsTable).set({ ownerMemberId: next.id, updatedAt: new Date() }).where(eq(teamsTable.id, teamId));
+}
+
+/** @deprecated — use getSessionMemberId only for migration shim */
+export { getSessionMemberId };

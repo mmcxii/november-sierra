@@ -1,6 +1,6 @@
 "use server";
 
-import { getSessionContext } from "@/lib/auth/session";
+import { getMembershipContext } from "@/lib/auth/session";
 import { refreshMemberStatus } from "@/lib/challenge/status";
 import { canEditDay, localDateString, taskIdsForMode, type ChallengeMode } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
@@ -14,6 +14,7 @@ const setTaskSchema = z.object({
   checked: z.boolean(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   taskId: z.string().min(1),
+  teamId: z.string().min(1),
 });
 
 export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>) {
@@ -22,13 +23,13 @@ export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>)
     return { error: "somethingWentWrong" as const };
   }
 
-  const session = await getSessionContext();
+  const session = await getMembershipContext(parsed.data.teamId);
   if (session == null) {
     return { error: "somethingWentWrong" as const };
   }
 
   const mode = session.member.mode as ChallengeMode;
-  const todayLocal = localDateString(new Date(), session.member.timeZone);
+  const todayLocal = localDateString(new Date(), session.user.timeZone);
   const allowed = canEditDay({
     mode,
     selectedDate: parsed.data.date,
@@ -84,9 +85,9 @@ export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>)
     memberId: session.member.id,
     mode,
     startDate: session.team.startDate,
-    timeZone: session.member.timeZone,
+    timeZone: session.user.timeZone,
   });
 
-  revalidatePath("/team");
+  revalidatePath(`/teams/${parsed.data.teamId}`);
   return { ok: true as const };
 }

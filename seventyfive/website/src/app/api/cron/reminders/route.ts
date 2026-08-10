@@ -10,6 +10,7 @@ import {
 } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
 import {
+  betterAuthUserTable,
   dayCompletionsTable,
   membersTable,
   pushSubscriptionsTable,
@@ -24,8 +25,8 @@ import webpush from "web-push";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const auth = request.headers.get("authorization");
-  if (!envSchema.CRON_SECRET || auth !== `Bearer ${envSchema.CRON_SECRET}`) {
+  const authHeader = request.headers.get("authorization");
+  if (!envSchema.CRON_SECRET || authHeader !== `Bearer ${envSchema.CRON_SECRET}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -46,16 +47,22 @@ export async function GET(request: Request) {
       reminderTime: membersTable.reminderTime,
       startDate: teamsTable.startDate,
       status: membersTable.status,
-      timeZone: membersTable.timeZone,
+      timeZone: betterAuthUserTable.timeZone,
+      userId: membersTable.userId,
     })
     .from(membersTable)
     .innerJoin(teamsTable, eq(membersTable.teamId, teamsTable.id))
+    .innerJoin(betterAuthUserTable, eq(membersTable.userId, betterAuthUserTable.id))
     .where(eq(membersTable.reminderEnabled, true));
   const subscriptions = await db.select().from(pushSubscriptionsTable);
 
   let sent = 0;
 
   for (const member of members) {
+    if (member.userId == null) {
+      continue;
+    }
+
     const todayLocal = localDateString(now, member.timeZone);
     const mode = member.mode as ChallengeMode;
     const status = member.status as MemberStatus;
@@ -114,7 +121,7 @@ export async function GET(request: Request) {
     }
 
     const memberSubs = subscriptions.filter((sub) => {
-      return sub.memberId === member.id;
+      return sub.userId === member.userId;
     });
     for (const sub of memberSubs) {
       try {
@@ -126,7 +133,7 @@ export async function GET(request: Request) {
           JSON.stringify({
             body,
             title: t("seventyFive"),
-            url: "/team",
+            url: "/teams",
           }),
         );
         sent += 1;

@@ -1,5 +1,5 @@
 import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import { membersTable } from "./members";
+import { betterAuthUserTable } from "./better-auth";
 
 export const pushSubscriptionsTable = pgTable(
   "push_subscriptions",
@@ -8,15 +8,15 @@ export const pushSubscriptionsTable = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     endpoint: text("endpoint").notNull(),
     id: text("id").primaryKey(),
-    memberId: text("member_id")
+    p256dh: text("p256dh").notNull(),
+    userId: text("user_id")
       .notNull()
       .references(
         () => {
-          return membersTable.id;
+          return betterAuthUserTable.id;
         },
         { onDelete: "cascade" },
       ),
-    p256dh: text("p256dh").notNull(),
   },
   (table) => {
     return [uniqueIndex("push_subscriptions_endpoint_idx").on(table.endpoint)];
