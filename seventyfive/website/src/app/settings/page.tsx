@@ -1,29 +1,17 @@
 import { AppChrome } from "@/components/app-chrome";
-import { SettingsForm } from "@/components/settings/settings-form";
-import { getSessionContext } from "@/lib/auth/session";
-import { hasStartPassed, localDateString, type ChallengeMode } from "@/lib/challenge/tasks";
+import { AccountSettingsForm } from "@/components/settings/account-settings-form";
+import { getAuthUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 
 const SettingsPage = async () => {
-  const session = await getSessionContext();
-  if (session == null) {
-    redirect("/");
+  const user = await getAuthUser();
+  if (user == null || user.username == null) {
+    redirect("/sign-in");
   }
-
-  const todayLocal = localDateString(new Date(), session.member.timeZone);
 
   return (
     <AppChrome>
-      <SettingsForm
-        displayName={session.member.displayName}
-        isOwner={session.member.isOwner}
-        mode={session.member.mode as ChallengeMode}
-        reminderEnabled={session.member.reminderEnabled}
-        reminderTime={session.member.reminderTime}
-        startPassed={hasStartPassed(session.team.startDate, todayLocal)}
-        timeZone={session.member.timeZone}
-        vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
-      />
+      <AccountSettingsForm displayName={user.name} timeZone={user.timeZone} username={user.username} />
     </AppChrome>
   );
 };

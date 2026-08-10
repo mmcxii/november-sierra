@@ -1,10 +1,9 @@
 import { AppChrome } from "@/components/app-chrome";
 import { EntryForm } from "@/components/landing/entry-form";
 import { Container } from "@/components/ui/container";
-import { getSessionContext } from "@/lib/auth/session";
+import { getAuthUser } from "@/lib/auth/session";
 import { initTranslations } from "@/lib/i18n/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 type JoinPageProps = {
   searchParams: Promise<{ code?: string }>;
@@ -13,13 +12,7 @@ type JoinPageProps = {
 const JoinPage = async (props: JoinPageProps) => {
   const searchParams = await props.searchParams;
   const inviteCode = searchParams.code?.trim() ?? "";
-  const session = await getSessionContext();
-
-  // Invite links can still be used to switch teams; otherwise send members home to the board.
-  if (session != null && inviteCode === "") {
-    redirect("/team");
-  }
-
+  const user = await getAuthUser();
   const { t } = await initTranslations();
 
   return (
@@ -30,7 +23,13 @@ const JoinPage = async (props: JoinPageProps) => {
         </Link>
         <h1 className="font-sf-display mt-6 text-3xl">{t("joinTeam")}</h1>
         <div className="mt-8 w-full">
-          <EntryForm hasExistingSession={session != null} initialCode={inviteCode || undefined} mode="join" />
+          <EntryForm
+            initialCode={inviteCode || undefined}
+            isSignedIn={user != null}
+            mode="join"
+            profileDisplayName={user?.name}
+            profileTimeZone={user?.timeZone}
+          />
         </div>
       </Container>
     </AppChrome>

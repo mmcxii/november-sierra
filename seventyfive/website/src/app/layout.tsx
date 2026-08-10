@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { MigrateLegacySession } from "@/components/auth/migrate-legacy-session";
 import { ThemeScript } from "@/components/theme-script";
 import { Toaster } from "@/components/ui/sonner";
 import { SITE_URL } from "@/lib/constants";
@@ -46,6 +47,7 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
       <body>
         <ThemeScript />
         <TranslationsProvider locale="en-US" resources={resources}>
+          <MigrateLegacySession />
           {children}
           <Toaster />
         </TranslationsProvider>

@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 const serverSchema = {
+  BETTER_AUTH_SECRET: z.string().min(32).optional(),
   CRON_SECRET: z.string().min(1).optional(),
   DATABASE_URL: z.string().url(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -23,6 +24,7 @@ export const envSchema = createEnv({
   client: clientSchema,
   emptyStringAsUndefined: true,
   runtimeEnv: {
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
@@ -35,3 +37,8 @@ export const envSchema = createEnv({
   },
   server: serverSchema,
 });
+
+/** Prefer dedicated BA secret; fall back to SESSION_SECRET for local/dev. */
+export function betterAuthSecret(): string {
+  return envSchema.BETTER_AUTH_SECRET ?? envSchema.SESSION_SECRET;
+}

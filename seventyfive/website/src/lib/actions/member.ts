@@ -1,6 +1,6 @@
 "use server";
 
-import { getSessionContext } from "@/lib/auth/session";
+import { getAuthUser, getMembershipContext } from "@/lib/auth/session";
 import { hasStartPassed, localDateString, type ChallengeMode } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
 import { membersTable, pushSubscriptionsTable } from "@/lib/db/schema";
@@ -13,18 +13,16 @@ const reminderTimeSchema = z
   .string()
   .trim()
   .transform((value) => {
-    // Some browsers submit HH:mm:ss from <input type="time">.
     const match = /^(\d{2}):(\d{2})(?::\d{2})?$/.exec(value);
     return match == null ? value : `${match[1]}:${match[2]}`;
   })
   .pipe(z.string().regex(/^\d{2}:\d{2}$/));
 
 const updateMemberSchema = z.object({
-  displayName: z.string().trim().min(1).max(40),
   mode: z.enum(["hard", "soft"]),
   reminderEnabled: z.boolean(),
   reminderTime: reminderTimeSchema,
-  timeZone: z.string().min(1),
+  teamId: z.string().min(1),
 });
 
 const pushSchema = z.object({
@@ -39,29 +37,27 @@ export async function updateMemberAction(input: z.infer<typeof updateMemberSchem
     return { error: "somethingWentWrong" as const };
   }
 
-  const session = await getSessionContext();
+  const session = await getMembershipContext(parsed.data.teamId);
   if (session == null) {
     return { error: "somethingWentWrong" as const };
   }
 
-  const todayLocal = localDateString(new Date(), parsed.data.timeZone || session.member.timeZone);
+  const todayLocal = localDateString(new Date(), session.user.timeZone);
   const startPassed = hasStartPassed(session.team.startDate, todayLocal);
   const nextMode = startPassed ? (session.member.mode as ChallengeMode) : parsed.data.mode;
 
   await db
     .update(membersTable)
     .set({
-      displayName: parsed.data.displayName,
       mode: nextMode,
       reminderEnabled: parsed.data.reminderEnabled,
       reminderTime: parsed.data.reminderTime,
-      timeZone: parsed.data.timeZone,
       updatedAt: new Date(),
     })
     .where(eq(membersTable.id, session.member.id));
 
-  revalidatePath("/team");
-  revalidatePath("/settings");
+  revalidatePath(`/teams/${parsed.data.teamId}`);
+  revalidatePath(`/teams/${parsed.data.teamId}/settings`);
   return { ok: true as const };
 }
 
@@ -71,8 +67,8 @@ export async function savePushSubscriptionAction(input: z.infer<typeof pushSchem
     return { error: "somethingWentWrong" as const };
   }
 
-  const session = await getSessionContext();
-  if (session == null) {
+  const user = await getAuthUser();
+  if (user == null) {
     return { error: "somethingWentWrong" as const };
   }
 
@@ -87,8 +83,8 @@ export async function savePushSubscriptionAction(input: z.infer<typeof pushSchem
       .update(pushSubscriptionsTable)
       .set({
         auth: parsed.data.auth,
-        memberId: session.member.id,
         p256dh: parsed.data.p256dh,
+        userId: user.id,
       })
       .where(eq(pushSubscriptionsTable.id, existing.id));
   } else {
@@ -96,8 +92,8 @@ export async function savePushSubscriptionAction(input: z.infer<typeof pushSchem
       auth: parsed.data.auth,
       endpoint: parsed.data.endpoint,
       id: newId(),
-      memberId: session.member.id,
       p256dh: parsed.data.p256dh,
+      userId: user.id,
     });
   }
 

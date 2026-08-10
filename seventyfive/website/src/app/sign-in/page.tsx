@@ -1,12 +1,18 @@
 import { AppChrome } from "@/components/app-chrome";
-import { EntryForm } from "@/components/landing/entry-form";
+import { SignInForm } from "@/components/auth/sign-in-form";
 import { Container } from "@/components/ui/container";
+import { resolveSignedInHomePath } from "@/lib/auth/redirects";
 import { getAuthUser } from "@/lib/auth/session";
 import { initTranslations } from "@/lib/i18n/server";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-const CreatePage = async () => {
+const SignInPage = async () => {
   const user = await getAuthUser();
+  if (user != null) {
+    redirect(await resolveSignedInHomePath());
+  }
+
   const { t } = await initTranslations();
 
   return (
@@ -15,18 +21,13 @@ const CreatePage = async () => {
         <Link className="text-sf-muted text-sm" href="/">
           {t("teamSeventyfive")}
         </Link>
-        <h1 className="font-sf-display mt-6 text-3xl">{t("createTeam")}</h1>
+        <h1 className="font-sf-display mt-6 text-3xl">{t("signIn")}</h1>
         <div className="mt-8 w-full">
-          <EntryForm
-            isSignedIn={user != null}
-            mode="create"
-            profileDisplayName={user?.name}
-            profileTimeZone={user?.timeZone}
-          />
+          <SignInForm />
         </div>
       </Container>
     </AppChrome>
   );
 };
 
-export default CreatePage;
+export default SignInPage;

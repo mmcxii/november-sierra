@@ -1,6 +1,6 @@
 import { AppChrome } from "@/components/app-chrome";
 import { TeamBoard } from "@/components/team/board";
-import { getSessionContext } from "@/lib/auth/session";
+import { getMembershipContext } from "@/lib/auth/session";
 import {
   hasSoftStumble,
   listChallengeDates,
@@ -10,29 +10,38 @@ import {
   type MemberStatus,
 } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
-import { dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/schema";
+import { betterAuthUserTable, dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 type TeamPageProps = {
+  params: Promise<{ teamId: string }>;
   searchParams: Promise<{ date?: string }>;
 };
 
 const TeamPage = async (props: TeamPageProps) => {
-  const session = await getSessionContext();
+  const { teamId } = await props.params;
+  const session = await getMembershipContext(teamId);
   if (session == null) {
-    redirect("/");
+    redirect("/teams");
   }
 
   const searchParams = await props.searchParams;
-  const todayLocal = localDateString(new Date(), session.member.timeZone);
+  const todayLocal = localDateString(new Date(), session.user.timeZone);
   const selectedDate = searchParams.date ?? todayLocal;
   const challengeDates = listChallengeDates(session.team.startDate, session.team.endDate);
 
-  const members = await db.select().from(membersTable).where(eq(membersTable.teamId, session.team.id));
+  const members = await db
+    .select({
+      member: membersTable,
+      user: betterAuthUserTable,
+    })
+    .from(membersTable)
+    .leftJoin(betterAuthUserTable, eq(membersTable.userId, betterAuthUserTable.id))
+    .where(eq(membersTable.teamId, session.team.id));
 
   const dayRows = await db.select().from(dayCompletionsTable);
-  const memberIds = new Set(members.map((member) => member.id));
+  const memberIds = new Set(members.map((row) => row.member.id));
   const relevantDays = dayRows.filter((day) => memberIds.has(day.memberId) && day.date === selectedDate);
 
   const allMemberDays = dayRows.filter((day) => memberIds.has(day.memberId));
@@ -52,12 +61,12 @@ const TeamPage = async (props: TeamPageProps) => {
     daysByMember.set(day.memberId, list);
   }
 
-  const roster = members.map((member) => {
-    const mode = member.mode as ChallengeMode;
-    const selectedDay = relevantDays.find((day) => day.memberId === member.id);
+  const roster = members.map((row) => {
+    const mode = row.member.mode as ChallengeMode;
+    const selectedDay = relevantDays.find((day) => day.memberId === row.member.id);
     const checkedTaskIds = selectedDay != null ? (checksByDay.get(selectedDay.id) ?? []) : [];
 
-    const completions = (daysByMember.get(member.id) ?? []).map((day) => ({
+    const completions = (daysByMember.get(row.member.id) ?? []).map((day) => ({
       checkedTaskIds: checksByDay.get(day.id) ?? [],
       date: day.date,
       mode,
@@ -73,11 +82,11 @@ const TeamPage = async (props: TeamPageProps) => {
 
     return {
       checkedTaskIds: checkedTaskIds.filter((id) => taskIdsForMode(mode).includes(id)),
-      displayName: member.displayName,
-      id: member.id,
+      displayName: row.user?.name ?? row.member.displayName,
+      id: row.member.id,
       mode,
       softStumble,
-      status: member.status as MemberStatus,
+      status: row.member.status as MemberStatus,
     };
   });
 
@@ -97,6 +106,7 @@ const TeamPage = async (props: TeamPageProps) => {
         roster={roster}
         selectedDate={selectedDate}
         startDate={session.team.startDate}
+        teamId={session.team.id}
         teamName={session.team.name}
         todayLocal={todayLocal}
       />

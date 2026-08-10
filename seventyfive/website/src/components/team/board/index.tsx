@@ -33,6 +33,7 @@ export type TeamBoardProps = {
   roster: RosterMember[];
   selectedDate: string;
   startDate: string;
+  teamId: string;
   teamName: string;
   todayLocal: string;
 };
@@ -49,6 +50,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     roster,
     selectedDate,
     startDate,
+    teamId,
     teamName,
     todayLocal,
   } = props;
@@ -93,6 +95,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
         checked: nextChecked,
         date: selectedDate,
         taskId,
+        teamId,
       });
       if ("error" in result) {
         setError(result.error ?? "somethingWentWrong");
@@ -107,6 +110,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       const result = await updateTeamAction({
         name: String(formData.get("name") ?? ""),
         startDate: String(formData.get("startDate") ?? ""),
+        teamId,
       });
       if ("error" in result) {
         setError(result.error as TranslationKey);
@@ -124,7 +128,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
 
   const copyPassword = () => {
     void navigator.clipboard.writeText(inviteCode);
-    toast.success(t("passwordCopied"));
+    toast.success(t("teamInvitePasswordCopied"));
   };
 
   const copyJoinLink = () => {
@@ -135,7 +139,13 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const params = new URLSearchParams(window.location.search);
     params.set("date", event.target.value);
-    router.push(`/team?${params.toString()}`);
+    router.push(`/teams/${teamId}?${params.toString()}`);
+  };
+
+  const onLeave = () => {
+    startTransition(async () => {
+      await leaveTeamAction(teamId);
+    });
   };
 
   return (
@@ -145,7 +155,10 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
           <p className="font-sf-display text-3xl tracking-tight">{teamName}</p>
           <p className="text-sf-muted mt-1 text-sm">{challengeProgressLabel}</p>
         </div>
-        <div className="flex gap-2 text-sm">
+        <div className="flex flex-wrap justify-end gap-2 text-sm">
+          <Link className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-1.5" href="/teams">
+            {t("yourTeams")}
+          </Link>
           <button
             className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-1.5"
             onClick={toggleInvite}
@@ -153,7 +166,10 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
           >
             {t("invite")}
           </button>
-          <Link className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-1.5" href="/settings">
+          <Link
+            className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-1.5"
+            href={`/teams/${teamId}/settings`}
+          >
             {t("settings")}
           </Link>
         </div>
@@ -171,7 +187,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
               onClick={copyPassword}
               type="button"
             >
-              {t("copyPassword")}
+              {t("copyTeamInvitePassword")}
             </button>
             <button
               className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-2 text-sm"
@@ -268,11 +284,9 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       {error != null ? <p className="text-sf-danger mt-4 text-sm">{t(error)}</p> : null}
 
       {!isOwner ? (
-        <form action={leaveTeamAction} className="mt-12">
-          <button className="text-sf-muted text-sm underline" type="submit">
-            {t("leaveTeam")}
-          </button>
-        </form>
+        <button className="text-sf-muted mt-12 text-sm underline" onClick={onLeave} type="button">
+          {t("leaveTeam")}
+        </button>
       ) : null}
     </Container>
   );
