@@ -1,13 +1,18 @@
 import { AppChrome } from "@/components/app-chrome";
 import { EntryForm } from "@/components/landing/entry-form";
 import { Container } from "@/components/ui/container";
-import { getSessionMemberId } from "@/lib/auth/session";
+import { getSessionContext } from "@/lib/auth/session";
 import { initTranslations } from "@/lib/i18n/server";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 const CreatePage = async () => {
+  const session = await getSessionContext();
+  if (session != null) {
+    redirect("/team");
+  }
+
   const { t } = await initTranslations();
-  const memberId = await getSessionMemberId();
 
   return (
     <AppChrome>
@@ -17,7 +22,7 @@ const CreatePage = async () => {
         </Link>
         <h1 className="font-sf-display mt-6 text-3xl">{t("createTeam")}</h1>
         <div className="mt-8 w-full">
-          <EntryForm hasExistingSession={memberId != null} mode="create" />
+          <EntryForm hasExistingSession={false} mode="create" />
         </div>
       </Container>
     </AppChrome>
