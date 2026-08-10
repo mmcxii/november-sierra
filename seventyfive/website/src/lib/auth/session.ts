@@ -68,5 +68,10 @@ export async function getSessionContext() {
     .where(eq(membersTable.id, memberId))
     .limit(1);
 
-  return rows[0] ?? null;
+  const session = rows[0] ?? null;
+  if (session == null) {
+    // Stale cookie (member/team removed) — clear so `/` ↔ `/team` cannot loop.
+    await clearSessionCookie();
+  }
+  return session;
 }

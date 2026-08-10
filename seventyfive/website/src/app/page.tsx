@@ -1,13 +1,13 @@
 import { AppChrome } from "@/components/app-chrome";
 import { Container } from "@/components/ui/container";
-import { getSessionMemberId } from "@/lib/auth/session";
+import { getSessionContext } from "@/lib/auth/session";
 import { initTranslations } from "@/lib/i18n/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 const HomePage = async () => {
-  const memberId = await getSessionMemberId();
-  if (memberId != null) {
+  const session = await getSessionContext();
+  if (session != null) {
     redirect("/team");
   }
 
