@@ -1,10 +1,10 @@
 "use client";
 
+import { TASK_ICONS } from "@/lib/challenge/task-icons";
 import { tasksForMode, type ChallengeMode } from "@/lib/challenge/tasks";
 import { Dumbbell } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { TASK_ICONS } from "./utils";
 
 export type TaskPreviewListProps = {
   mode: ChallengeMode;

@@ -3,7 +3,6 @@ import { TeamBoard } from "@/components/team/board";
 import { getSessionContext } from "@/lib/auth/session";
 import {
   hasSoftStumble,
-  isDayComplete,
   listChallengeDates,
   localDateString,
   taskIdsForMode,
@@ -57,7 +56,6 @@ const TeamPage = async (props: TeamPageProps) => {
     const mode = member.mode as ChallengeMode;
     const selectedDay = relevantDays.find((day) => day.memberId === member.id);
     const checkedTaskIds = selectedDay != null ? (checksByDay.get(selectedDay.id) ?? []) : [];
-    const totalTasks = taskIdsForMode(mode).length;
 
     const completions = (daysByMember.get(member.id) ?? []).map((day) => ({
       checkedTaskIds: checksByDay.get(day.id) ?? [],
@@ -74,14 +72,12 @@ const TeamPage = async (props: TeamPageProps) => {
       });
 
     return {
-      checkedCount: checkedTaskIds.filter((id) => taskIdsForMode(mode).includes(id)).length,
-      dayComplete: isDayComplete(mode, checkedTaskIds),
+      checkedTaskIds: checkedTaskIds.filter((id) => taskIdsForMode(mode).includes(id)),
       displayName: member.displayName,
       id: member.id,
       mode,
       softStumble,
       status: member.status as MemberStatus,
-      totalTasks,
     };
   });
 

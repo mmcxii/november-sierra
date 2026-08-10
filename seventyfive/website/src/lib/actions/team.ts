@@ -7,6 +7,7 @@ import {
   formatDateOnly,
   hasStartPassed,
   isJoinAllowed,
+  isStartDateInPast,
   type ChallengeMode,
 } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
@@ -65,8 +66,8 @@ export async function createTeamAction(input: z.infer<typeof createSchema>): Pro
   }
 
   const utcToday = formatDateOnly(new Date());
-  if (hasStartPassed(parsed.data.startDate, utcToday)) {
-    return { error: "startDateMustBeInTheFuture" };
+  if (isStartDateInPast(parsed.data.startDate, utcToday)) {
+    return { error: "startDateCannotBeInThePast" };
   }
 
   const teamId = newId();
@@ -155,8 +156,8 @@ export async function updateTeamAction(input: z.infer<typeof updateTeamSchema>):
   if (hasStartPassed(session.team.startDate, utcToday)) {
     return { error: "startDateCanNoLongerBeChanged" };
   }
-  if (hasStartPassed(parsed.data.startDate, utcToday)) {
-    return { error: "startDateMustBeInTheFuture" };
+  if (isStartDateInPast(parsed.data.startDate, utcToday)) {
+    return { error: "startDateCannotBeInThePast" };
   }
 
   await db

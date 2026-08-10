@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   canEditDay,
+  daysUntilStart,
   endDateFromStart,
   hasSoftStumble,
   isJoinAllowed,
   isReminderDue,
+  isStartDateInPast,
   recomputeMemberStatus,
   remainingTaskIds,
 } from "./tasks";
@@ -23,17 +25,53 @@ describe("endDateFromStart", () => {
 });
 
 describe("isJoinAllowed", () => {
-  it("allows join only before start date", () => {
+  it("allows join on or before the start date", () => {
     //* Arrange
     const startDate = "2026-09-01";
 
     //* Act
     const before = isJoinAllowed(startDate, "2026-08-31");
     const onStart = isJoinAllowed(startDate, "2026-09-01");
+    const after = isJoinAllowed(startDate, "2026-09-02");
 
     //* Assert
     expect(before).toBe(true);
-    expect(onStart).toBe(false);
+    expect(onStart).toBe(true);
+    expect(after).toBe(false);
+  });
+});
+
+describe("isStartDateInPast", () => {
+  it("allows today and future start dates", () => {
+    //* Arrange
+    const today = "2026-09-01";
+
+    //* Act
+    const past = isStartDateInPast("2026-08-31", today);
+    const todayStart = isStartDateInPast("2026-09-01", today);
+    const future = isStartDateInPast("2026-09-02", today);
+
+    //* Assert
+    expect(past).toBe(true);
+    expect(todayStart).toBe(false);
+    expect(future).toBe(false);
+  });
+});
+
+describe("daysUntilStart", () => {
+  it("counts whole days until start", () => {
+    //* Arrange
+    const startDate = "2026-09-03";
+
+    //* Act
+    const inTwoDays = daysUntilStart(startDate, "2026-09-01");
+    const tomorrow = daysUntilStart(startDate, "2026-09-02");
+    const started = daysUntilStart(startDate, "2026-09-03");
+
+    //* Assert
+    expect(inTwoDays).toBe(2);
+    expect(tomorrow).toBe(1);
+    expect(started).toBe(0);
   });
 });
 

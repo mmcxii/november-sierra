@@ -174,6 +174,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
                 className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
                 defaultValue={defaultStartDate()}
                 id="startDate"
+                min={new Date().toISOString().slice(0, 10)}
                 name="startDate"
                 required
                 type="date"
