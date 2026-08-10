@@ -264,19 +264,13 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
 
       {error != null ? <p className="text-sf-danger mt-4 text-sm">{t(error)}</p> : null}
 
-      {isOwner ? (
-        <p className="mt-12 text-sm">
-          <Link className="text-sf-muted underline" href="/settings">
-            {t("deleteTeam")}
-          </Link>
-        </p>
-      ) : (
+      {!isOwner ? (
         <form action={leaveTeamAction} className="mt-12">
           <button className="text-sf-muted text-sm underline" type="submit">
             {t("leaveTeam")}
           </button>
         </form>
-      )}
+      ) : null}
     </Container>
   );
 };

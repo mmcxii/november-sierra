@@ -15,13 +15,6 @@ export const metadata: Metadata = {
   },
   applicationName: "Team SeventyFive",
   description: "The quiet practice of showing up.",
-  icons: {
-    apple: [{ sizes: "192x192", type: "image/png", url: "/icons/icon-192.png" }],
-    icon: [
-      { type: "image/svg+xml", url: "/icons/icon.svg" },
-      { sizes: "192x192", type: "image/png", url: "/icons/icon-192.png" },
-    ],
-  },
   metadataBase: new URL(APP_URL),
   title: "Team SeventyFive",
 };
@@ -42,8 +35,6 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link href="/icons/icon.svg" rel="icon" type="image/svg+xml" />
-        <link href="/icons/icon-192.png" rel="apple-touch-icon" sizes="192x192" />
         <link href="https://fonts.googleapis.com" rel="preconnect" />
         <link crossOrigin="anonymous" href="https://fonts.gstatic.com" rel="preconnect" />
         <link

@@ -2,20 +2,20 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const size = { height: 180, width: 180 };
+export const size = { height: 32, width: 32 };
 export const contentType = "image/png";
 
-export default function AppleIcon() {
+export default function Icon() {
   return new ImageResponse(
     <div
       style={{
         alignItems: "center",
         background: "#5c6b4a",
-        borderRadius: 40,
+        borderRadius: 8,
         color: "#f7f5f0",
         display: "flex",
         fontFamily: "Georgia, 'Times New Roman', serif",
-        fontSize: 96,
+        fontSize: 16,
         fontWeight: 700,
         height: "100%",
         justifyContent: "center",
