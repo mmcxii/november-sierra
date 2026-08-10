@@ -4,6 +4,7 @@ import {
   daysUntilStart,
   endDateFromStart,
   hasSoftStumble,
+  hasStartPassed,
   isJoinAllowed,
   isReminderDue,
   isStartDateInPast,
@@ -55,6 +56,21 @@ describe("isStartDateInPast", () => {
     expect(past).toBe(true);
     expect(todayStart).toBe(false);
     expect(future).toBe(false);
+  });
+});
+
+describe("hasStartPassed", () => {
+  it("locks mode once the local start date arrives", () => {
+    //* Arrange
+    const startDate = "2026-09-02";
+
+    //* Act
+    const before = hasStartPassed(startDate, "2026-09-01");
+    const onStart = hasStartPassed(startDate, "2026-09-02");
+
+    //* Assert
+    expect(before).toBe(false);
+    expect(onStart).toBe(true);
   });
 });
 

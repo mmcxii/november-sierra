@@ -1,7 +1,7 @@
 import { AppChrome } from "@/components/app-chrome";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { getSessionContext } from "@/lib/auth/session";
-import { formatDateOnly, hasStartPassed, type ChallengeMode } from "@/lib/challenge/tasks";
+import { hasStartPassed, localDateString, type ChallengeMode } from "@/lib/challenge/tasks";
 import { redirect } from "next/navigation";
 
 const SettingsPage = async () => {
@@ -9,6 +9,8 @@ const SettingsPage = async () => {
   if (session == null) {
     redirect("/");
   }
+
+  const todayLocal = localDateString(new Date(), session.member.timeZone);
 
   return (
     <AppChrome>
@@ -18,7 +20,7 @@ const SettingsPage = async () => {
         mode={session.member.mode as ChallengeMode}
         reminderEnabled={session.member.reminderEnabled}
         reminderTime={session.member.reminderTime}
-        startPassed={hasStartPassed(session.team.startDate, formatDateOnly(new Date()))}
+        startPassed={hasStartPassed(session.team.startDate, todayLocal)}
         timeZone={session.member.timeZone}
         vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
       />
