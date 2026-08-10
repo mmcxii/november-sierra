@@ -26,6 +26,7 @@ const TeamSettingsPage = async (props: TeamSettingsPageProps) => {
         reminderTime={session.member.reminderTime}
         startPassed={hasStartPassed(session.team.startDate, todayLocal)}
         teamId={session.team.id}
+        teamName={session.team.name}
         vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
       />
     </AppChrome>

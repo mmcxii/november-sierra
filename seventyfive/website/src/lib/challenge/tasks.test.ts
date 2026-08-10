@@ -10,6 +10,7 @@ import {
   isStartDateInPast,
   isStartDateSelectable,
   localDateString,
+  preStartRosterPulseMs,
   recomputeMemberStatus,
   remainingTaskIds,
   resolveDailyReminder,
@@ -152,6 +153,40 @@ describe("daysUntilStart", () => {
     expect(inTwoDays).toBe(2);
     expect(tomorrow).toBe(1);
     expect(started).toBe(0);
+  });
+});
+
+describe("preStartRosterPulseMs", () => {
+  it("returns null once the challenge has started", () => {
+    //* Arrange
+    const daysUntil = 0;
+
+    //* Act
+    const pulseMs = preStartRosterPulseMs(daysUntil);
+
+    //* Assert
+    expect(pulseMs).toBeNull();
+  });
+
+  it("is slow far out and faster the day before", () => {
+    //* Arrange
+    const farOut = 45;
+    const monthOut = 30;
+    const mid = 15;
+    const tomorrow = 1;
+
+    //* Act
+    const farOutMs = preStartRosterPulseMs(farOut);
+    const monthOutMs = preStartRosterPulseMs(monthOut);
+    const midMs = preStartRosterPulseMs(mid);
+    const tomorrowMs = preStartRosterPulseMs(tomorrow);
+
+    //* Assert
+    expect(farOutMs).toBe(4000);
+    expect(monthOutMs).toBe(4000);
+    expect(tomorrowMs).toBe(1200);
+    expect(midMs).toBeGreaterThan(1200);
+    expect(midMs).toBeLessThan(4000);
   });
 });
 

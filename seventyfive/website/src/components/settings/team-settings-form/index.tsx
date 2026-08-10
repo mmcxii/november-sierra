@@ -23,11 +23,12 @@ export type TeamSettingsFormProps = {
   reminderTime: string;
   startPassed: boolean;
   teamId: string;
+  teamName: string;
   vapidPublicKey?: string;
 };
 
 export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
-  const { isOwner, mode, reminderEnabled, reminderTime, startPassed, teamId, vapidPublicKey } = props;
+  const { isOwner, mode, reminderEnabled, reminderTime, startPassed, teamId, teamName, vapidPublicKey } = props;
 
   //* State
   const { t } = useTranslation();
@@ -132,7 +133,7 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
   return (
     <Container as="main" className="min-h-dvh py-8">
       <Link className="text-sf-muted text-sm" href={`/teams/${teamId}`}>
-        {t("yourTeam")}
+        {`\u2190 ${t("backTo{{teamName}}", { teamName })}`}
       </Link>
       <h1 className="font-sf-display mt-6 text-3xl">{t("teamSettings")}</h1>
 

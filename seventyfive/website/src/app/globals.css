@@ -151,6 +151,26 @@ select {
   transform: scale(1.06);
 }
 
+@keyframes sf-roster-check-pulse {
+  0%,
+  100% {
+    color: color-mix(in srgb, var(--sf-text-muted) 35%, transparent);
+  }
+  50% {
+    color: var(--sf-accent);
+  }
+}
+
+.sf-roster-icon-pulse {
+  animation: sf-roster-check-pulse var(--sf-roster-pulse-ms, 4000ms) ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-roster-icon-pulse {
+    --sf-roster-pulse-ms: 4000ms;
+  }
+}
+
 /* ── Sonner toaster ───────────────────────────────────────────────────── */
 
 .toaster-theme {

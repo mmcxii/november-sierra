@@ -12,10 +12,6 @@ const TeamsPage = async () => {
   }
 
   const memberships = await listMembershipsForUser(user.id);
-  if (memberships.length === 1) {
-    redirect(`/teams/${memberships[0].team.id}`);
-  }
-
   const { t } = await initTranslations();
 
   return (
@@ -23,21 +19,7 @@ const TeamsPage = async () => {
       <Container as="main" className="min-h-dvh py-8">
         <h1 className="font-sf-display text-3xl">{t("yourTeams")}</h1>
         {memberships.length === 0 ? (
-          <div className="mt-8 space-y-3">
-            <p className="text-sf-muted text-sm">{t("youAreNotOnATeamYet")}</p>
-            <Link
-              className="bg-sf-accent text-sf-accent-text block rounded-[var(--sf-radius)] px-4 py-3 text-center text-sm"
-              href="/create"
-            >
-              {t("createTeam")}
-            </Link>
-            <Link
-              className="border-sf-border block rounded-[var(--sf-radius)] border px-4 py-3 text-center text-sm"
-              href="/join"
-            >
-              {t("joinTeam")}
-            </Link>
-          </div>
+          <p className="text-sf-muted mt-8 text-sm">{t("youAreNotOnATeamYet")}</p>
         ) : (
           <ul className="divide-sf-border mt-8 divide-y">
             {memberships.map((row) => {
@@ -51,6 +33,20 @@ const TeamsPage = async () => {
             })}
           </ul>
         )}
+        <div className="mt-8 flex flex-col gap-3">
+          <Link
+            className="bg-sf-accent text-sf-accent-text block rounded-[var(--sf-radius)] px-4 py-3 text-center text-sm"
+            href="/create"
+          >
+            {t("createTeam")}
+          </Link>
+          <Link
+            className="border-sf-border block rounded-[var(--sf-radius)] border px-4 py-3 text-center text-sm"
+            href="/join"
+          >
+            {t("joinTeam")}
+          </Link>
+        </div>
         <div className="mt-10 flex gap-4 text-sm">
           <Link className="text-sf-muted underline" href="/settings">
             {t("settings")}
