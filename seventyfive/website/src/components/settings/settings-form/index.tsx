@@ -1,6 +1,7 @@
 "use client";
 
 import { TaskPreviewList } from "@/components/challenge/task-preview-list";
+import { TimeZoneSelect } from "@/components/timezone-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Container } from "@/components/ui/container";
 import { Label } from "@/components/ui/label";
@@ -133,13 +134,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
             <Label className="block w-full" htmlFor="timeZone">
               {t("timezone")}
             </Label>
-            <input
-              className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
-              defaultValue={timeZone}
-              id="timeZone"
-              name="timeZone"
-              required
-            />
+            <TimeZoneSelect defaultValue={timeZone} />
           </div>
 
           <div className="w-full space-y-2">

@@ -1,13 +1,13 @@
 "use client";
 
 import { TaskPreviewList } from "@/components/challenge/task-preview-list";
+import { TimeZoneSelect } from "@/components/timezone-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createTeamAction, joinTeamAction } from "@/lib/actions/team";
-import { browserTimeZone } from "@/lib/browser-timezone";
 import type { ChallengeMode } from "@/lib/challenge/tasks";
-import { defaultStartDate } from "@/lib/default-start-date";
+import { browserLocalDateString, defaultStartDate } from "@/lib/default-start-date";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -42,7 +42,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
   const onSubmit = (formData: FormData) => {
     setError(null);
     const displayName = String(formData.get("displayName") ?? "");
-    const timeZone = browserTimeZone();
+    const timeZone = String(formData.get("timeZone") ?? "");
 
     startTransition(async () => {
       if (mode === "create") {
@@ -174,7 +174,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
                 className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
                 defaultValue={defaultStartDate()}
                 id="startDate"
-                min={new Date().toISOString().slice(0, 10)}
+                min={browserLocalDateString()}
                 name="startDate"
                 required
                 type="date"
@@ -211,6 +211,13 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
             name="displayName"
             required
           />
+        </div>
+
+        <div className="w-full space-y-1.5">
+          <Label className="block w-full" htmlFor="timeZone">
+            {t("timezone")}
+          </Label>
+          <TimeZoneSelect />
         </div>
 
         <div className="w-full space-y-2">

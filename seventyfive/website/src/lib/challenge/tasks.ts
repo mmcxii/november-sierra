@@ -86,19 +86,19 @@ export function compareDateOnly(a: string, b: string): number {
   return a < b ? -1 : 1;
 }
 
-/** Join is open on or before the start date (including day one). */
-export function isJoinAllowed(startDate: string, utcToday: string): boolean {
-  return compareDateOnly(utcToday, startDate) <= 0;
+/** Join is open on or before the start date (including day one). `today` should be the member's local calendar date. */
+export function isJoinAllowed(startDate: string, today: string): boolean {
+  return compareDateOnly(today, startDate) <= 0;
 }
 
-/** True once the calendar day is on or after the start date. */
-export function hasStartPassed(startDate: string, utcToday: string): boolean {
-  return compareDateOnly(utcToday, startDate) >= 0;
+/** True once the local calendar day is on or after the start date. */
+export function hasStartPassed(startDate: string, today: string): boolean {
+  return compareDateOnly(today, startDate) >= 0;
 }
 
 /** True when the start date is strictly before today (today is still allowed). */
-export function isStartDateInPast(startDate: string, utcToday: string): boolean {
-  return compareDateOnly(utcToday, startDate) > 0;
+export function isStartDateInPast(startDate: string, today: string): boolean {
+  return compareDateOnly(today, startDate) > 0;
 }
 
 /** Whole days from today until start (0 when started or start is today). */

@@ -4,10 +4,10 @@ import { generateTeamPassword } from "@/lib/auth/password";
 import { clearSessionCookie, getSessionContext, getSessionMemberId, setSessionCookie } from "@/lib/auth/session";
 import {
   endDateFromStart,
-  formatDateOnly,
   hasStartPassed,
   isJoinAllowed,
   isStartDateInPast,
+  localDateString,
   type ChallengeMode,
 } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
@@ -65,8 +65,8 @@ export async function createTeamAction(input: z.infer<typeof createSchema>): Pro
     return blocked;
   }
 
-  const utcToday = formatDateOnly(new Date());
-  if (isStartDateInPast(parsed.data.startDate, utcToday)) {
+  const todayLocal = localDateString(new Date(), parsed.data.timeZone);
+  if (isStartDateInPast(parsed.data.startDate, todayLocal)) {
     return { error: "startDateCannotBeInThePast" };
   }
 
@@ -118,8 +118,8 @@ export async function joinTeamAction(input: z.infer<typeof joinSchema>): Promise
     return { error: "invalidTeamPassword" };
   }
 
-  const utcToday = formatDateOnly(new Date());
-  if (!isJoinAllowed(matched.startDate, utcToday)) {
+  const todayLocal = localDateString(new Date(), parsed.data.timeZone);
+  if (!isJoinAllowed(matched.startDate, todayLocal)) {
     return { error: "challengeAlreadyStarted" };
   }
 
@@ -152,11 +152,11 @@ export async function updateTeamAction(input: z.infer<typeof updateTeamSchema>):
     return { error: "somethingWentWrong" };
   }
 
-  const utcToday = formatDateOnly(new Date());
-  if (hasStartPassed(session.team.startDate, utcToday)) {
+  const todayLocal = localDateString(new Date(), session.member.timeZone);
+  if (hasStartPassed(session.team.startDate, todayLocal)) {
     return { error: "startDateCanNoLongerBeChanged" };
   }
-  if (isStartDateInPast(parsed.data.startDate, utcToday)) {
+  if (isStartDateInPast(parsed.data.startDate, todayLocal)) {
     return { error: "startDateCannotBeInThePast" };
   }
 

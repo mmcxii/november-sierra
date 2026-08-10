@@ -1,7 +1,7 @@
 "use server";
 
 import { getSessionContext } from "@/lib/auth/session";
-import { hasStartPassed, formatDateOnly, type ChallengeMode } from "@/lib/challenge/tasks";
+import { hasStartPassed, localDateString, type ChallengeMode } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
 import { membersTable, pushSubscriptionsTable } from "@/lib/db/schema";
 import { newId } from "@/lib/utils";
@@ -34,8 +34,8 @@ export async function updateMemberAction(input: z.infer<typeof updateMemberSchem
     return { error: "somethingWentWrong" as const };
   }
 
-  const utcToday = formatDateOnly(new Date());
-  const startPassed = hasStartPassed(session.team.startDate, utcToday);
+  const todayLocal = localDateString(new Date(), parsed.data.timeZone || session.member.timeZone);
+  const startPassed = hasStartPassed(session.team.startDate, todayLocal);
   const nextMode = startPassed ? (session.member.mode as ChallengeMode) : parsed.data.mode;
 
   await db
