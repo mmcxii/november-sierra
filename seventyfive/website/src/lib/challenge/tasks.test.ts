@@ -8,8 +8,11 @@ import {
   isJoinAllowed,
   isReminderDue,
   isStartDateInPast,
+  isStartDateSelectable,
+  localDateString,
   recomputeMemberStatus,
   remainingTaskIds,
+  startDateBoundsForTimeZone,
 } from "./tasks";
 
 describe("endDateFromStart", () => {
@@ -56,6 +59,66 @@ describe("isStartDateInPast", () => {
     expect(past).toBe(true);
     expect(todayStart).toBe(false);
     expect(future).toBe(false);
+  });
+});
+
+describe("localDateString with non-UTC timezones", () => {
+  it("keeps America/Los_Angeles on the previous calendar day near UTC midnight", () => {
+    //* Arrange
+    const now = new Date("2026-08-10T00:30:00.000Z");
+
+    //* Act
+    const laDate = localDateString(now, "America/Los_Angeles");
+    const utcDate = localDateString(now, "UTC");
+
+    //* Assert
+    expect(laDate).toBe("2026-08-09");
+    expect(utcDate).toBe("2026-08-10");
+  });
+
+  it("keeps Pacific/Auckland ahead of UTC near midnight", () => {
+    //* Arrange
+    const now = new Date("2026-08-09T12:30:00.000Z");
+
+    //* Act
+    const aucklandDate = localDateString(now, "Pacific/Auckland");
+    const utcDate = localDateString(now, "UTC");
+
+    //* Assert
+    expect(aucklandDate).toBe("2026-08-10");
+    expect(utcDate).toBe("2026-08-09");
+  });
+});
+
+describe("isStartDateSelectable with non-UTC timezones", () => {
+  it("allows local today in America/Los_Angeles when UTC has already rolled forward", () => {
+    //* Arrange
+    const now = new Date("2026-08-10T00:30:00.000Z");
+    const timeZone = "America/Los_Angeles";
+    const localToday = localDateString(now, timeZone);
+
+    //* Act
+    const selectableLocally = isStartDateSelectable(localToday, now, timeZone);
+    const selectableAgainstUtc = isStartDateSelectable(localToday, now, "UTC");
+
+    //* Assert
+    expect(localToday).toBe("2026-08-09");
+    expect(selectableLocally).toBe(true);
+    expect(selectableAgainstUtc).toBe(false);
+  });
+});
+
+describe("startDateBoundsForTimeZone", () => {
+  it("uses America/Los_Angeles today as min, not UTC today", () => {
+    //* Arrange
+    const now = new Date("2026-08-10T00:30:00.000Z");
+
+    //* Act
+    const bounds = startDateBoundsForTimeZone("America/Los_Angeles", now);
+
+    //* Assert
+    expect(bounds.min).toBe("2026-08-09");
+    expect(bounds.defaultValue).toBe("2026-08-10");
   });
 });
 

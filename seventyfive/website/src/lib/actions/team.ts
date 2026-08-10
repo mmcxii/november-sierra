@@ -6,7 +6,7 @@ import {
   endDateFromStart,
   hasStartPassed,
   isJoinAllowed,
-  isStartDateInPast,
+  isStartDateSelectable,
   localDateString,
   type ChallengeMode,
 } from "@/lib/challenge/tasks";
@@ -65,8 +65,7 @@ export async function createTeamAction(input: z.infer<typeof createSchema>): Pro
     return blocked;
   }
 
-  const todayLocal = localDateString(new Date(), parsed.data.timeZone);
-  if (isStartDateInPast(parsed.data.startDate, todayLocal)) {
+  if (!isStartDateSelectable(parsed.data.startDate, new Date(), parsed.data.timeZone)) {
     return { error: "startDateCannotBeInThePast" };
   }
 
@@ -156,7 +155,7 @@ export async function updateTeamAction(input: z.infer<typeof updateTeamSchema>):
   if (hasStartPassed(session.team.startDate, todayLocal)) {
     return { error: "startDateCanNoLongerBeChanged" };
   }
-  if (isStartDateInPast(parsed.data.startDate, todayLocal)) {
+  if (!isStartDateSelectable(parsed.data.startDate, new Date(), session.member.timeZone)) {
     return { error: "startDateCannotBeInThePast" };
   }
 

@@ -6,8 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createTeamAction, joinTeamAction } from "@/lib/actions/team";
-import type { ChallengeMode } from "@/lib/challenge/tasks";
-import { browserLocalDateString, defaultStartDate } from "@/lib/default-start-date";
+import { browserTimeZone } from "@/lib/browser-timezone";
+import { compareDateOnly, startDateBoundsForTimeZone, type ChallengeMode } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -37,12 +37,15 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
   const [invitePassword, setInvitePassword] = React.useState<null | string>(null);
   const [challengeMode, setChallengeMode] = React.useState<ChallengeMode>("hard");
   const [replaceSession, setReplaceSession] = React.useState(false);
+  const [timeZone, setTimeZone] = React.useState<null | string>(null);
+  const [minStartDate, setMinStartDate] = React.useState("");
+  const [startDate, setStartDate] = React.useState("");
 
   //* Handlers
   const onSubmit = (formData: FormData) => {
     setError(null);
     const displayName = String(formData.get("displayName") ?? "");
-    const timeZone = String(formData.get("timeZone") ?? "");
+    const nextTimeZone = String(formData.get("timeZone") ?? timeZone ?? browserTimeZone());
 
     startTransition(async () => {
       if (mode === "create") {
@@ -50,9 +53,9 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
           displayName,
           mode: challengeMode,
           replaceSession,
-          startDate: String(formData.get("startDate") ?? ""),
+          startDate: String(formData.get("startDate") ?? startDate),
           teamName: String(formData.get("teamName") ?? ""),
-          timeZone,
+          timeZone: nextTimeZone,
         });
 
         if ("error" in result) {
@@ -69,7 +72,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
         mode: challengeMode,
         password: String(formData.get("password") ?? ""),
         replaceSession,
-        timeZone,
+        timeZone: nextTimeZone,
       });
 
       if ("error" in result) {
@@ -109,6 +112,33 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
   const handleReplaceSessionChange = (checked: boolean | "indeterminate") => {
     setReplaceSession(checked === true);
   };
+
+  const handleTimeZoneChange = (nextTimeZone: string) => {
+    setTimeZone(nextTimeZone);
+  };
+
+  const handleStartDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setStartDate(event.target.value);
+  };
+
+  //* Effects
+  React.useEffect(() => {
+    setTimeZone(browserTimeZone());
+  }, []);
+
+  React.useEffect(() => {
+    if (timeZone == null) {
+      return;
+    }
+    const bounds = startDateBoundsForTimeZone(timeZone);
+    setMinStartDate(bounds.min);
+    setStartDate((current) => {
+      if (current === "" || compareDateOnly(current, bounds.min) < 0) {
+        return bounds.defaultValue;
+      }
+      return current;
+    });
+  }, [timeZone]);
 
   if (invitePassword != null) {
     return (
@@ -167,17 +197,28 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
               />
             </div>
             <div className="w-full space-y-1.5">
+              <Label className="block w-full" htmlFor="timeZone">
+                {t("timezone")}
+              </Label>
+              {timeZone != null ? (
+                <TimeZoneSelect onValueChange={handleTimeZoneChange} value={timeZone} />
+              ) : (
+                <div className="border-sf-border bg-sf-elevated h-10 w-full rounded-[var(--sf-radius)] border" />
+              )}
+            </div>
+            <div className="w-full space-y-1.5">
               <Label className="block w-full" htmlFor="startDate">
                 {t("startDate")}
               </Label>
               <input
                 className="border-sf-border bg-sf-elevated text-sf-text block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
-                defaultValue={defaultStartDate()}
                 id="startDate"
-                min={browserLocalDateString()}
+                min={minStartDate || undefined}
                 name="startDate"
+                onChange={handleStartDateChange}
                 required
                 type="date"
+                value={startDate}
               />
             </div>
           </>
@@ -213,12 +254,14 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
           />
         </div>
 
-        <div className="w-full space-y-1.5">
-          <Label className="block w-full" htmlFor="timeZone">
-            {t("timezone")}
-          </Label>
-          <TimeZoneSelect />
-        </div>
+        {mode === "join" && timeZone != null ? (
+          <div className="w-full space-y-1.5">
+            <Label className="block w-full" htmlFor="timeZone">
+              {t("timezone")}
+            </Label>
+            <TimeZoneSelect onValueChange={handleTimeZoneChange} value={timeZone} />
+          </div>
+        ) : null}
 
         <div className="w-full space-y-2">
           <Label className="block w-full">{t("challenge")}</Label>
