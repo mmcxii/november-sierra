@@ -246,26 +246,66 @@ export function localTimeHm(now: Date, timeZone: string): string {
   return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
 }
 
+export type DailyReminder =
+  | {
+      daysUntil: number;
+      type: "countdown";
+    }
+  | {
+      type: "incomplete";
+    };
+
+/**
+ * Daily push at the member's reminder time:
+ * - before start: countdown copy once per local day
+ * - on/after start: incomplete-task nudge (skipped when failed or complete)
+ */
+export function resolveDailyReminder(args: {
+  lastReminderDate: null | string;
+  now: Date;
+  reminderEnabled: boolean;
+  reminderTime: string;
+  startDate: string;
+  status: MemberStatus;
+  timeZone: string;
+  todayIncomplete: boolean;
+}): null | DailyReminder {
+  const { lastReminderDate, now, reminderEnabled, reminderTime, startDate, status, timeZone, todayIncomplete } = args;
+
+  if (!reminderEnabled) {
+    return null;
+  }
+
+  const todayLocal = localDateString(now, timeZone);
+  if (lastReminderDate === todayLocal) {
+    return null;
+  }
+
+  if (localTimeHm(now, timeZone) < reminderTime) {
+    return null;
+  }
+
+  const daysUntil = daysUntilStart(startDate, todayLocal);
+  if (daysUntil > 0) {
+    return { daysUntil, type: "countdown" };
+  }
+
+  if (status === "failed" || !todayIncomplete) {
+    return null;
+  }
+
+  return { type: "incomplete" };
+}
+
 export function isReminderDue(args: {
   lastReminderDate: null | string;
   now: Date;
   reminderEnabled: boolean;
   reminderTime: string;
+  startDate: string;
   status: MemberStatus;
   timeZone: string;
   todayIncomplete: boolean;
 }): boolean {
-  const { lastReminderDate, now, reminderEnabled, reminderTime, status, timeZone, todayIncomplete } = args;
-
-  if (!reminderEnabled || !todayIncomplete || status === "failed") {
-    return false;
-  }
-
-  const todayLocal = localDateString(now, timeZone);
-  if (lastReminderDate === todayLocal) {
-    return false;
-  }
-
-  const currentHm = localTimeHm(now, timeZone);
-  return currentHm >= reminderTime;
+  return resolveDailyReminder(args) != null;
 }

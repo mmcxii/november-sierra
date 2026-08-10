@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 export type SettingsFormProps = {
   displayName: string;
@@ -65,14 +66,18 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
     });
   };
 
-  const onSubmit = (formData: FormData) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    // Avoid React 19 form-action reset, which clears controlled checkboxes/radios.
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const nextRemindersOn = remindersOn;
     setError(null);
 
     startTransition(async () => {
       const result = await updateMemberAction({
         displayName: String(formData.get("displayName") ?? ""),
         mode: challengeMode,
-        reminderEnabled: remindersOn,
+        reminderEnabled: nextRemindersOn,
         reminderTime: String(formData.get("reminderTime") ?? "20:00"),
         timeZone: String(formData.get("timeZone") ?? timeZone),
       });
@@ -82,28 +87,54 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
         return;
       }
 
-      if (remindersOn && vapidPublicKey && "serviceWorker" in navigator && "PushManager" in window) {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          const registration = await navigator.serviceWorker.register("/sw.js");
-          const subscription = await registration.pushManager.subscribe({
-            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-            userVisibleOnly: true,
-          });
-          const json = subscription.toJSON();
-          if (json.endpoint != null && json.keys?.auth && json.keys.p256dh) {
-            await savePushSubscriptionAction({
-              auth: json.keys.auth,
-              endpoint: json.endpoint,
-              p256dh: json.keys.p256dh,
-            });
+      // Re-assert after save so a browser form reset cannot leave the UI unchecked.
+      setRemindersOn(nextRemindersOn);
+      setChallengeMode(challengeMode);
+
+      if (nextRemindersOn) {
+        if (vapidPublicKey == null || vapidPublicKey === "") {
+          toast.warning(t("pushNotificationsAreNotConfigured"));
+        } else if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+          toast.warning(t("pushNotificationsAreNotSupportedInThisBrowser"));
+        } else {
+          try {
+            const permission = await Notification.requestPermission();
+            if (permission !== "granted") {
+              toast.warning(t("notificationsWereBlockedEnableThemInYourBrowserToReceiveReminders"));
+            } else {
+              const registration = await navigator.serviceWorker.register("/sw.js");
+              const subscription = await registration.pushManager.subscribe({
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+                userVisibleOnly: true,
+              });
+              const json = subscription.toJSON();
+              if (json.endpoint != null && json.keys?.auth && json.keys.p256dh) {
+                await savePushSubscriptionAction({
+                  auth: json.keys.auth,
+                  endpoint: json.endpoint,
+                  p256dh: json.keys.p256dh,
+                });
+              }
+            }
+          } catch {
+            toast.warning(t("couldNotEnablePushNotifications"));
           }
         }
       }
 
+      toast.success(t("settingsSaved"));
       router.refresh();
     });
   };
+
+  //* Effects
+  React.useEffect(() => {
+    setRemindersOn(reminderEnabled);
+  }, [reminderEnabled]);
+
+  React.useEffect(() => {
+    setChallengeMode(mode);
+  }, [mode]);
 
   return (
     <Container as="main" className="min-h-dvh py-8">
@@ -112,7 +143,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
       </Link>
       <h1 className="font-sf-display mt-6 text-3xl">{t("settings")}</h1>
 
-      <form action={onSubmit} className="mt-8 w-full space-y-8">
+      <form className="mt-8 w-full space-y-8" onSubmit={handleSubmit}>
         <section aria-labelledby="settings-me-heading" className="w-full space-y-4">
           <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase" id="settings-me-heading">
             {t("me")}
@@ -157,9 +188,14 @@ export const SettingsForm: React.FC<SettingsFormProps> = (props) => {
             <TaskPreviewList mode={challengeMode} />
           </div>
 
-          <div className="flex w-full items-center gap-2">
-            <Checkbox checked={remindersOn} id="reminderEnabled" onCheckedChange={handleRemindersChange} />
-            <Label htmlFor="reminderEnabled">{t("enableDailyReminder")}</Label>
+          <div className="w-full space-y-1.5">
+            <div className="flex w-full items-center gap-2">
+              <Checkbox checked={remindersOn} id="reminderEnabled" onCheckedChange={handleRemindersChange} />
+              <Label htmlFor="reminderEnabled">{t("enableDailyReminder")}</Label>
+            </div>
+            <p className="text-sf-muted text-xs">
+              {t("beforeStartYouGetACountdownAfterStartYouGetANudgeIfTasksRemain")}
+            </p>
           </div>
 
           <div className="w-full space-y-1.5">

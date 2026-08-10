@@ -9,13 +9,13 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title || "Seventy Five", {
       body: payload.body || "",
-      data: { url: "/group" },
+      data: { url: payload.url || "/team" },
     }),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/group";
+  const url = event.notification.data?.url || "/team";
   event.waitUntil(clients.openWindow(url));
 });
