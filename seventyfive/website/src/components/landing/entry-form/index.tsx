@@ -12,6 +12,7 @@ import type { TranslationKey } from "@/lib/i18n/i18next";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 export type EntryFormProps = (
   | {
@@ -90,6 +91,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
       return;
     }
     void navigator.clipboard.writeText(invitePassword);
+    toast.success(t("passwordCopied"));
   };
 
   const copyJoinLink = () => {
@@ -98,6 +100,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
     }
     const joinUrl = `${window.location.origin}/join?code=${encodeURIComponent(invitePassword)}`;
     void navigator.clipboard.writeText(joinUrl);
+    toast.success(t("joinLinkCopied"));
   };
 
   const goToTeam = () => {
