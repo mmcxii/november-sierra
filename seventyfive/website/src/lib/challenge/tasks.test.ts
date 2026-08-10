@@ -168,25 +168,27 @@ describe("preStartRosterPulseMs", () => {
     expect(pulseMs).toBeNull();
   });
 
-  it("is slow far out and faster the day before", () => {
+  it("is one second per day out, capped at 30s, with 1.2s tomorrow", () => {
     //* Arrange
     const farOut = 45;
     const monthOut = 30;
     const mid = 15;
+    const twoDays = 2;
     const tomorrow = 1;
 
     //* Act
     const farOutMs = preStartRosterPulseMs(farOut);
     const monthOutMs = preStartRosterPulseMs(monthOut);
     const midMs = preStartRosterPulseMs(mid);
+    const twoDaysMs = preStartRosterPulseMs(twoDays);
     const tomorrowMs = preStartRosterPulseMs(tomorrow);
 
     //* Assert
-    expect(farOutMs).toBe(4000);
-    expect(monthOutMs).toBe(4000);
+    expect(farOutMs).toBe(30_000);
+    expect(monthOutMs).toBe(30_000);
+    expect(midMs).toBe(15_000);
+    expect(twoDaysMs).toBe(2000);
     expect(tomorrowMs).toBe(1200);
-    expect(midMs).toBeGreaterThan(1200);
-    expect(midMs).toBeLessThan(4000);
   });
 });
 
