@@ -43,17 +43,21 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
   const [startDate, setStartDate] = React.useState("");
 
   //* Handlers
-  const onSubmit = (formData: FormData) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    // Avoid React 19 form-action reset, which clears controlled checkboxes/radios.
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     setError(null);
     const displayName = String(formData.get("displayName") ?? "");
     const nextTimeZone = String(formData.get("timeZone") ?? timeZone ?? browserTimeZone());
+    const nextReplaceSession = replaceSession;
 
     startTransition(async () => {
       if (mode === "create") {
         const result = await createTeamAction({
           displayName,
           mode: challengeMode,
-          replaceSession,
+          replaceSession: nextReplaceSession,
           startDate: String(formData.get("startDate") ?? startDate),
           teamName: String(formData.get("teamName") ?? ""),
           timeZone: nextTimeZone,
@@ -61,6 +65,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
 
         if ("error" in result) {
           setError(result.error as TranslationKey);
+          setReplaceSession(nextReplaceSession);
           return;
         }
 
@@ -72,12 +77,13 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
         displayName,
         mode: challengeMode,
         password: String(formData.get("password") ?? ""),
-        replaceSession,
+        replaceSession: nextReplaceSession,
         timeZone: nextTimeZone,
       });
 
       if ("error" in result) {
         setError(result.error as TranslationKey);
+        setReplaceSession(nextReplaceSession);
         return;
       }
 
@@ -181,7 +187,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
   }
 
   return (
-    <form action={onSubmit} className="sf-rise w-full space-y-8">
+    <form className="sf-rise w-full space-y-8" onSubmit={handleSubmit}>
       <section aria-labelledby="entry-team-heading" className="w-full space-y-4">
         <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase" id="entry-team-heading">
           {t("team")}

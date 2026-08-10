@@ -9,11 +9,21 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+const reminderTimeSchema = z
+  .string()
+  .trim()
+  .transform((value) => {
+    // Some browsers submit HH:mm:ss from <input type="time">.
+    const match = /^(\d{2}):(\d{2})(?::\d{2})?$/.exec(value);
+    return match == null ? value : `${match[1]}:${match[2]}`;
+  })
+  .pipe(z.string().regex(/^\d{2}:\d{2}$/));
+
 const updateMemberSchema = z.object({
   displayName: z.string().trim().min(1).max(40),
   mode: z.enum(["hard", "soft"]),
   reminderEnabled: z.boolean(),
-  reminderTime: z.string().regex(/^\d{2}:\d{2}$/),
+  reminderTime: reminderTimeSchema,
   timeZone: z.string().min(1),
 });
 

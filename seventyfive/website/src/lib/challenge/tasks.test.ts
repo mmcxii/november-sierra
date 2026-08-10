@@ -12,6 +12,7 @@ import {
   localDateString,
   recomputeMemberStatus,
   remainingTaskIds,
+  resolveDailyReminder,
   startDateBoundsForTimeZone,
 } from "./tasks";
 
@@ -282,42 +283,127 @@ describe("remainingTaskIds", () => {
   });
 });
 
-describe("isReminderDue", () => {
-  it("fires once when local time reaches reminder time", () => {
+describe("resolveDailyReminder", () => {
+  it("fires incomplete reminder once when local time reaches reminder time", () => {
     //* Arrange
     const now = new Date("2026-09-02T20:05:00.000Z");
 
     //* Act
-    const due = isReminderDue({
+    const reminder = resolveDailyReminder({
       lastReminderDate: null,
       now,
       reminderEnabled: true,
       reminderTime: "20:00",
+      startDate: "2026-09-01",
       status: "active",
       timeZone: "UTC",
       todayIncomplete: true,
     });
 
     //* Assert
-    expect(due).toBe(true);
+    expect(reminder).toEqual({ type: "incomplete" });
+    expect(
+      isReminderDue({
+        lastReminderDate: null,
+        now,
+        reminderEnabled: true,
+        reminderTime: "20:00",
+        startDate: "2026-09-01",
+        status: "active",
+        timeZone: "UTC",
+        todayIncomplete: true,
+      }),
+    ).toBe(true);
   });
 
-  it("does not fire for failed hard members", () => {
+  it("does not fire incomplete reminders for failed hard members", () => {
     //* Arrange
-    const now = new Date("2026-09-02T03:05:00.000Z");
+    const now = new Date("2026-09-02T20:05:00.000Z");
 
     //* Act
-    const due = isReminderDue({
+    const reminder = resolveDailyReminder({
       lastReminderDate: null,
       now,
       reminderEnabled: true,
       reminderTime: "20:00",
+      startDate: "2026-09-01",
       status: "failed",
       timeZone: "UTC",
       todayIncomplete: true,
     });
 
     //* Assert
-    expect(due).toBe(false);
+    expect(reminder).toBeNull();
+  });
+
+  it("sends countdown reminders before the challenge starts", () => {
+    //* Arrange
+    const now = new Date("2026-09-01T20:05:00.000Z");
+
+    //* Act
+    const inTwoDays = resolveDailyReminder({
+      lastReminderDate: null,
+      now,
+      reminderEnabled: true,
+      reminderTime: "20:00",
+      startDate: "2026-09-03",
+      status: "active",
+      timeZone: "UTC",
+      todayIncomplete: true,
+    });
+    const tomorrow = resolveDailyReminder({
+      lastReminderDate: null,
+      now: new Date("2026-09-02T20:05:00.000Z"),
+      reminderEnabled: true,
+      reminderTime: "20:00",
+      startDate: "2026-09-03",
+      status: "active",
+      timeZone: "UTC",
+      todayIncomplete: false,
+    });
+
+    //* Assert
+    expect(inTwoDays).toEqual({ daysUntil: 2, type: "countdown" });
+    expect(tomorrow).toEqual({ daysUntil: 1, type: "countdown" });
+  });
+
+  it("does not send countdown after already reminding today", () => {
+    //* Arrange
+    const now = new Date("2026-09-01T20:05:00.000Z");
+
+    //* Act
+    const reminder = resolveDailyReminder({
+      lastReminderDate: "2026-09-01",
+      now,
+      reminderEnabled: true,
+      reminderTime: "20:00",
+      startDate: "2026-09-03",
+      status: "active",
+      timeZone: "UTC",
+      todayIncomplete: true,
+    });
+
+    //* Assert
+    expect(reminder).toBeNull();
+  });
+
+  it("uses member timezone for pre-start countdown near UTC midnight", () => {
+    //* Arrange — 2026-09-02 07:05 UTC is still 2026-09-01 20:05 in Los Angeles
+    const now = new Date("2026-09-02T03:05:00.000Z");
+
+    //* Act
+    const reminder = resolveDailyReminder({
+      lastReminderDate: null,
+      now,
+      reminderEnabled: true,
+      reminderTime: "20:00",
+      startDate: "2026-09-03",
+      status: "active",
+      timeZone: "America/Los_Angeles",
+      todayIncomplete: true,
+    });
+
+    //* Assert
+    expect(reminder).toEqual({ daysUntil: 2, type: "countdown" });
   });
 });
