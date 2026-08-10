@@ -79,6 +79,22 @@ export function localDateString(now: Date, timeZone: string): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Add whole calendar days to a YYYY-MM-DD value (timezone-agnostic date arithmetic). */
+export function addDaysDateOnly(dateOnly: string, days: number): string {
+  const date = parseDateOnly(dateOnly);
+  date.setUTCDate(date.getUTCDate() + days);
+  return formatDateOnly(date);
+}
+
+/** Earliest selectable start date and a sensible default (tomorrow) in an IANA zone. */
+export function startDateBoundsForTimeZone(timeZone: string, now = new Date()) {
+  const min = localDateString(now, timeZone);
+  return {
+    defaultValue: addDaysDateOnly(min, 1),
+    min,
+  };
+}
+
 export function compareDateOnly(a: string, b: string): number {
   if (a === b) {
     return 0;
@@ -99,6 +115,11 @@ export function hasStartPassed(startDate: string, today: string): boolean {
 /** True when the start date is strictly before today (today is still allowed). */
 export function isStartDateInPast(startDate: string, today: string): boolean {
   return compareDateOnly(today, startDate) > 0;
+}
+
+/** True when `startDate` is today or later in the member's IANA timezone. */
+export function isStartDateSelectable(startDate: string, now: Date, timeZone: string): boolean {
+  return !isStartDateInPast(startDate, localDateString(now, timeZone));
 }
 
 /** Whole days from today until start (0 when started or start is today). */
