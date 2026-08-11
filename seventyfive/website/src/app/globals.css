@@ -189,36 +189,34 @@ select {
 
 /* ── Brand pulse / boot splash / nav pending ─────────────────────────── */
 
+/* Slow breathe (~0.3Hz): calm enough for brief flashes, readable as intentional. */
 @keyframes sf-brand-breathe {
   0%,
   100% {
-    opacity: 0.55;
+    opacity: 0.78;
     transform: scale(1);
+    box-shadow:
+      0 0 0.55rem color-mix(in srgb, var(--sf-accent) 55%, transparent),
+      0 0 1.5rem color-mix(in srgb, var(--sf-accent) 34%, transparent),
+      0 0 3.25rem color-mix(in srgb, var(--sf-accent) 16%, transparent);
   }
   50% {
     opacity: 1;
-    transform: scale(1.14);
-  }
-}
-
-@keyframes sf-boot-rise {
-  from {
-    opacity: 0;
-    transform: translateY(0.55rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0.85rem color-mix(in srgb, var(--sf-accent) 70%, transparent),
+      0 0 2.35rem color-mix(in srgb, var(--sf-accent) 42%, transparent),
+      0 0 4.75rem color-mix(in srgb, var(--sf-accent) 22%, transparent);
   }
 }
 
 @keyframes sf-boot-ember-in {
   from {
     opacity: 0;
-    transform: scale(0.7);
+    transform: scale(0.86);
   }
   to {
-    opacity: 1;
+    opacity: 0.78;
     transform: scale(1);
   }
 }
@@ -242,53 +240,27 @@ select {
 }
 
 .sf-boot-splash-glow {
-  background: radial-gradient(circle, color-mix(in srgb, var(--sf-accent) 22%, transparent), transparent 68%);
-  height: 14rem;
+  background: radial-gradient(circle, color-mix(in srgb, var(--sf-accent) 28%, transparent), transparent 70%);
+  height: 16rem;
   left: 50%;
-  opacity: 0.85;
+  opacity: 0.9;
   pointer-events: none;
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -52%);
-  width: 14rem;
+  transform: translate(-50%, -50%);
+  width: 16rem;
 }
 
 .sf-boot-splash-inner {
-  gap: 1rem;
   position: relative;
   z-index: 1;
-}
-
-.sf-boot-ember {
-  animation:
-    sf-boot-ember-in 520ms ease-out both,
-    sf-brand-breathe 2.6s ease-in-out 520ms infinite;
-  background: color-mix(in srgb, var(--sf-accent) 92%, white);
-  border-radius: 999px;
-  box-shadow:
-    0 0 0.55rem color-mix(in srgb, var(--sf-accent) 45%, transparent),
-    0 0 1.4rem color-mix(in srgb, var(--sf-accent) 28%, transparent);
-  display: block;
-  height: 0.55rem;
-  width: 0.55rem;
-}
-
-.sf-boot-mark {
-  animation: sf-boot-rise 720ms ease-out 90ms both;
-  color: var(--sf-accent);
-  font-family: var(--sf-font-display);
-  font-size: clamp(3.25rem, 14vw, 5.25rem);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  margin: 0;
 }
 
 html[data-sf-booted] #sf-boot-splash,
 #sf-boot-splash[data-phase="out"] {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 380ms ease;
+  transition: opacity 440ms ease;
 }
 
 .sf-nav-pending {
@@ -305,38 +277,32 @@ html[data-sf-booted] #sf-boot-splash,
 .sf-brand-pulse {
   align-items: center;
   display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+  justify-content: center;
 }
 
 .sf-brand-pulse-ember {
-  animation: sf-brand-breathe 2.4s ease-in-out infinite;
-  background: color-mix(in srgb, var(--sf-accent) 92%, white);
+  animation: sf-brand-breathe 3.4s ease-in-out infinite;
+  background: color-mix(in srgb, var(--sf-accent) 88%, white);
   border-radius: 999px;
   box-shadow:
-    0 0 0.4rem color-mix(in srgb, var(--sf-accent) 40%, transparent),
-    0 0 1rem color-mix(in srgb, var(--sf-accent) 22%, transparent);
+    0 0 0.55rem color-mix(in srgb, var(--sf-accent) 55%, transparent),
+    0 0 1.5rem color-mix(in srgb, var(--sf-accent) 34%, transparent),
+    0 0 3.25rem color-mix(in srgb, var(--sf-accent) 16%, transparent);
   display: block;
-  height: 0.4rem;
-  width: 0.4rem;
+  height: 0.85rem;
+  width: 0.85rem;
 }
 
-.sf-brand-pulse-mark {
-  color: var(--sf-accent);
-  font-family: var(--sf-font-display);
-  font-size: 1.65rem;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1;
+.sf-brand-pulse-lg .sf-brand-pulse-ember,
+.sf-brand-pulse-ember-lg {
+  height: 1.15rem;
+  width: 1.15rem;
 }
 
-.sf-brand-pulse-lg .sf-brand-pulse-ember {
-  height: 0.55rem;
-  width: 0.55rem;
-}
-
-.sf-brand-pulse-lg .sf-brand-pulse-mark {
-  font-size: clamp(3.25rem, 14vw, 5.25rem);
+#sf-boot-splash .sf-brand-pulse-ember-lg {
+  animation:
+    sf-boot-ember-in 640ms ease-out both,
+    sf-brand-breathe 3.4s ease-in-out 640ms infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -345,9 +311,8 @@ html[data-sf-booted] #sf-boot-splash,
   .sf-day-settle-finale,
   .sf-progress-ember-bloom,
   .sf-progress-ember-finale,
-  .sf-boot-ember,
-  .sf-boot-mark,
-  .sf-brand-pulse-ember {
+  .sf-brand-pulse-ember,
+  .sf-brand-pulse-ember-lg {
     animation: none;
   }
 
