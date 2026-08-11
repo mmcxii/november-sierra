@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/container";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { savePushSubscriptionAction, updateMemberAction } from "@/lib/actions/member";
-import { deleteTeamAction } from "@/lib/actions/team";
+import { deleteTeamAction, updateTeamAction } from "@/lib/actions/team";
 import type { ChallengeMode } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { urlBase64ToUint8Array } from "@/lib/url-base64-to-uint8-array";
@@ -17,18 +17,33 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 export type TeamSettingsFormProps = {
+  endDate: string;
   isOwner: boolean;
   mode: ChallengeMode;
   reminderEnabled: boolean;
   reminderTime: string;
+  startDate: string;
   startPassed: boolean;
   teamId: string;
   teamName: string;
+  todayLocal: string;
   vapidPublicKey?: string;
 };
 
 export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
-  const { isOwner, mode, reminderEnabled, reminderTime, startPassed, teamId, teamName, vapidPublicKey } = props;
+  const {
+    endDate,
+    isOwner,
+    mode,
+    reminderEnabled,
+    reminderTime,
+    startDate,
+    startPassed,
+    teamId,
+    teamName,
+    todayLocal,
+    vapidPublicKey,
+  } = props;
 
   //* State
   const { t } = useTranslation();
@@ -40,6 +55,25 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
   const [confirmDelete, setConfirmDelete] = React.useState(false);
 
   //* Handlers
+  const handleTeamDetailsSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    setError(null);
+    startTransition(async () => {
+      const result = await updateTeamAction({
+        name: String(formData.get("name") ?? ""),
+        startDate: String(formData.get("startDate") ?? ""),
+        teamId,
+      });
+      if ("error" in result) {
+        setError(result.error as TranslationKey);
+        return;
+      }
+      toast.success(t("settingsSaved"));
+      router.refresh();
+    });
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -136,6 +170,44 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
         {`\u2190 ${t("backTo{{teamName}}", { teamName })}`}
       </Link>
       <h1 className="font-sf-display mt-6 text-3xl">{t("teamSettings")}</h1>
+
+      {isOwner && !startPassed ? (
+        <form className="border-sf-border mt-8 w-full space-y-4 border-b pb-8" onSubmit={handleTeamDetailsSubmit}>
+          <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("team")}</h2>
+          <div className="w-full space-y-1.5">
+            <Label htmlFor="teamName">{t("teamName")}</Label>
+            <input
+              className="border-sf-border bg-sf-elevated block w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              defaultValue={teamName}
+              id="teamName"
+              name="name"
+              required
+            />
+          </div>
+          <div className="w-full space-y-1.5">
+            <Label htmlFor="startDate">{t("startDate")}</Label>
+            <input
+              className="border-sf-border bg-sf-elevated block w-full rounded-[var(--sf-radius)] border px-3 py-2"
+              defaultValue={startDate}
+              id="startDate"
+              min={todayLocal}
+              name="startDate"
+              required
+              type="date"
+            />
+          </div>
+          <p className="text-sf-muted text-xs">
+            {t("endDate")}: {endDate}
+          </p>
+          <button
+            className="bg-sf-accent text-sf-accent-text w-full rounded-[var(--sf-radius)] px-4 py-3 text-sm disabled:opacity-60"
+            disabled={isPending}
+            type="submit"
+          >
+            {t("save")}
+          </button>
+        </form>
+      ) : null}
 
       <form className="mt-8 w-full space-y-8" onSubmit={handleSubmit}>
         <section className="w-full space-y-4">

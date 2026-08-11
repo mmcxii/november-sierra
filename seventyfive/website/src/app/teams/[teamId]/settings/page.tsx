@@ -20,13 +20,16 @@ const TeamSettingsPage = async (props: TeamSettingsPageProps) => {
   return (
     <AppChrome>
       <TeamSettingsForm
+        endDate={session.team.endDate}
         isOwner={session.member.isOwner}
         mode={session.member.mode as ChallengeMode}
         reminderEnabled={session.member.reminderEnabled}
         reminderTime={session.member.reminderTime}
+        startDate={session.team.startDate}
         startPassed={hasStartPassed(session.team.startDate, todayLocal)}
         teamId={session.team.id}
         teamName={session.team.name}
+        todayLocal={todayLocal}
         vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
       />
     </AppChrome>
