@@ -1,10 +1,11 @@
 "use client";
 
+import { DateStepper } from "@/components/team/date-stepper";
 import { RosterRow } from "@/components/team/roster-row";
 import { TaskRow } from "@/components/team/task-row";
 import { Container } from "@/components/ui/container";
 import { setTaskCheckedAction } from "@/lib/actions/tasks";
-import { leaveTeamAction, updateTeamAction } from "@/lib/actions/team";
+import { leaveTeamAction } from "@/lib/actions/team";
 import {
   canEditDay,
   daysUntilStart,
@@ -117,21 +118,6 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     });
   };
 
-  const onOwnerSave = (formData: FormData) => {
-    startTransition(async () => {
-      const result = await updateTeamAction({
-        name: String(formData.get("name") ?? ""),
-        startDate: String(formData.get("startDate") ?? ""),
-        teamId,
-      });
-      if ("error" in result) {
-        setError(result.error as TranslationKey);
-        return;
-      }
-      router.refresh();
-    });
-  };
-
   const toggleInvite = () => {
     setShowInvite((value) => {
       return !value;
@@ -148,9 +134,9 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     toast.success(t("joinLinkCopied"));
   };
 
-  const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onDateChange = (nextDate: string) => {
     const params = new URLSearchParams(window.location.search);
-    params.set("date", event.target.value);
+    params.set("date", nextDate);
     router.push(`/teams/${teamId}?${params.toString()}`);
   };
 
@@ -238,46 +224,15 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
         </section>
       ) : null}
 
-      {isOwner && startDate > todayLocal ? (
-        <form action={onOwnerSave} className="border-sf-border mt-6 w-full space-y-3 border-b pb-6">
-          <label className="block w-full space-y-1 text-sm">
-            <span className="text-sf-muted">{t("teamName")}</span>
-            <input
-              className="border-sf-border bg-sf-elevated block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
-              defaultValue={teamName}
-              name="name"
-            />
-          </label>
-          <label className="block w-full space-y-1 text-sm">
-            <span className="text-sf-muted">{t("startDate")}</span>
-            <input
-              className="border-sf-border bg-sf-elevated block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
-              defaultValue={startDate}
-              min={todayLocal}
-              name="startDate"
-              type="date"
-            />
-          </label>
-          <p className="text-sf-muted text-xs">
-            {t("endDate")}: {endDate}
-          </p>
-          <button className="border-sf-border w-full rounded-[var(--sf-radius)] border px-3 py-2 text-sm" type="submit">
-            {t("save")}
-          </button>
-        </form>
-      ) : null}
-
-      <label className="mt-8 block w-full space-y-1 text-sm">
-        <span className="text-sf-muted">{selectedDate === todayLocal ? t("today") : selectedDate}</span>
-        <input
-          className="border-sf-border bg-sf-elevated block w-full min-w-0 rounded-[var(--sf-radius)] border px-3 py-2"
-          max={endDate}
-          min={startDate}
-          onChange={onDateChange}
-          type="date"
-          value={selectedDate}
+      <div className="mt-8">
+        <DateStepper
+          endDate={endDate}
+          onDateChange={onDateChange}
+          selectedDate={selectedDate}
+          startDate={startDate}
+          todayLocal={todayLocal}
         />
-      </label>
+      </div>
 
       <section className="mt-8">
         <div className="flex items-center justify-between gap-2">
