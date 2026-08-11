@@ -48,8 +48,12 @@ const TeamsPage = async () => {
     checkedByMember.set(day.memberId, checksByDay.get(day.id) ?? []);
   }
 
+  const reminderPushEnabled = memberships.some((row) => {
+    return row.member.reminderEnabled;
+  });
+
   return (
-    <AppChrome>
+    <AppChrome reminderPushEnabled={reminderPushEnabled} vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}>
       <Container as="main" className="flex-1 py-8">
         <h1 className="font-sf-display text-3xl">{t("yourTeams")}</h1>
         {memberships.length === 0 ? (

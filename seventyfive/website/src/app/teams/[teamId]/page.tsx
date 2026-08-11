@@ -108,7 +108,10 @@ const TeamPage = async (props: TeamPageProps) => {
   });
 
   return (
-    <AppChrome>
+    <AppChrome
+      reminderPushEnabled={session.member.reminderEnabled}
+      vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+    >
       <TeamBoard
         checkedTaskIds={checkedTaskIds}
         endDate={session.team.endDate}
