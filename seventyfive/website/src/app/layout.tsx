@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { MigrateLegacySession } from "@/components/auth/migrate-legacy-session";
@@ -51,6 +52,7 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
           {children}
           <Toaster />
         </TranslationsProvider>
+        <Analytics />
       </body>
     </html>
   );
