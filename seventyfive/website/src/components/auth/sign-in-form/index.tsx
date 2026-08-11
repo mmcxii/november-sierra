@@ -31,7 +31,7 @@ export const SignInForm: React.FC = () => {
         setError("invalidUsernameOrPassword");
         return;
       }
-      router.push("/teams");
+      router.push("/");
       router.refresh();
     });
   };
