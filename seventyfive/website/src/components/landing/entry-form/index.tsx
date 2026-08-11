@@ -1,6 +1,7 @@
 "use client";
 
 import { TaskPreviewList } from "@/components/challenge/task-preview-list";
+import { usePendingRouter } from "@/components/navigation-pending";
 import { TimeZoneSelect } from "@/components/timezone-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,6 @@ import { browserTimeZone } from "@/lib/browser-timezone";
 import { compareDateOnly, startDateBoundsForTimeZone, type ChallengeMode } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ export const EntryForm: React.FC<EntryFormProps> = (props) => {
 
   //* State
   const { t } = useTranslation();
-  const router = useRouter();
+  const router = usePendingRouter();
   const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<null | TranslationKey>(null);
   const [creds, setCreds] = React.useState<null | CredsState>(null);

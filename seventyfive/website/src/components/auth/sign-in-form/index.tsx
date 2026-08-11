@@ -1,17 +1,17 @@
 "use client";
 
+import { usePendingRouter } from "@/components/navigation-pending";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/better-auth/client";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 export const SignInForm: React.FC = () => {
   //* State
   const { t } = useTranslation();
-  const router = useRouter();
+  const router = usePendingRouter();
   const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<null | TranslationKey>(null);
 
