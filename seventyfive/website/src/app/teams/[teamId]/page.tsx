@@ -1,6 +1,7 @@
 import { AppChrome } from "@/components/app-chrome";
 import { TeamBoard } from "@/components/team/board";
 import { getMembershipContext } from "@/lib/auth/session";
+import { elapsedProgressForMember } from "@/lib/challenge/progress";
 import {
   hasSoftStumble,
   listChallengeDates,
@@ -92,6 +93,19 @@ const TeamPage = async (props: TeamPageProps) => {
 
   const selfDay = relevantDays.find((day) => day.memberId === session.member.id);
   const checkedTaskIds = selfDay != null ? (checksByDay.get(selfDay.id) ?? []) : [];
+  const memberMode = session.member.mode as ChallengeMode;
+  const selfProgress = elapsedProgressForMember({
+    completions: (daysByMember.get(session.member.id) ?? []).map((day) => {
+      return {
+        checkedTaskIds: checksByDay.get(day.id) ?? [],
+        date: day.date,
+      };
+    }),
+    endDate: session.team.endDate,
+    mode: memberMode,
+    startDate: session.team.startDate,
+    todayLocal,
+  });
 
   return (
     <AppChrome>
@@ -101,8 +115,10 @@ const TeamPage = async (props: TeamPageProps) => {
         inviteCode={session.team.inviteCode}
         isOwner={session.member.isOwner}
         memberId={session.member.id}
-        memberMode={session.member.mode as ChallengeMode}
+        memberMode={memberMode}
         memberStatus={session.member.status as MemberStatus}
+        progressElapsedComplete={selfProgress.elapsedComplete}
+        progressLastElapsedIsToday={selfProgress.lastElapsedIsToday}
         roster={roster}
         selectedDate={selectedDate}
         startDate={session.team.startDate}
