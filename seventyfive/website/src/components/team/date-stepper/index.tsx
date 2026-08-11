@@ -79,44 +79,48 @@ export const DateStepper: React.FC<DateStepperProps> = (props) => {
   };
 
   return (
-    <div className="bg-sf-elevated/80 flex w-full items-center rounded-full p-1">
-      <button
-        aria-label={t("previousDay")}
-        className={cn(
-          "text-sf-text flex size-10 shrink-0 items-center justify-center rounded-full transition-opacity",
-          { "opacity-30": !canGoBack },
-        )}
-        disabled={!canGoBack}
-        onClick={goBack}
-        type="button"
-      >
-        <ChevronLeft aria-hidden className="size-5" strokeWidth={2.25} />
-      </button>
+    <div className="relative w-full min-w-0">
+      <div className="bg-sf-elevated/80 flex w-full min-w-0 items-center rounded-full p-1">
+        <button
+          aria-label={t("previousDay")}
+          className={cn(
+            "text-sf-text flex size-10 shrink-0 items-center justify-center rounded-full transition-opacity",
+            { "opacity-30": !canGoBack },
+          )}
+          disabled={!canGoBack}
+          onClick={goBack}
+          type="button"
+        >
+          <ChevronLeft aria-hidden className="size-5" strokeWidth={2.25} />
+        </button>
 
-      <button
-        aria-label={t("selectDate")}
-        className="bg-sf-bg text-sf-text min-w-0 flex-1 rounded-full px-3 py-2.5 text-center text-sm font-semibold tracking-[0.08em] uppercase"
-        onClick={openPicker}
-        type="button"
-      >
-        {label}
-      </button>
+        <button
+          aria-label={t("selectDate")}
+          className="bg-sf-bg text-sf-text min-w-0 flex-1 truncate rounded-full px-3 py-2.5 text-center text-sm font-semibold tracking-[0.08em] uppercase"
+          onClick={openPicker}
+          type="button"
+        >
+          {label}
+        </button>
 
-      <button
-        aria-label={t("nextDay")}
-        className={cn(
-          "text-sf-text flex size-10 shrink-0 items-center justify-center rounded-full transition-opacity",
-          { "opacity-30": !canGoForward },
-        )}
-        disabled={!canGoForward}
-        onClick={goForward}
-        type="button"
-      >
-        <ChevronRight aria-hidden className="size-5" strokeWidth={2.25} />
-      </button>
+        <button
+          aria-label={t("nextDay")}
+          className={cn(
+            "text-sf-text flex size-10 shrink-0 items-center justify-center rounded-full transition-opacity",
+            { "opacity-30": !canGoForward },
+          )}
+          disabled={!canGoForward}
+          onClick={goForward}
+          type="button"
+        >
+          <ChevronRight aria-hidden className="size-5" strokeWidth={2.25} />
+        </button>
+      </div>
 
+      {/* Keep out of the flex row: global input { width:100% } would overflow the stepper. */}
       <input
-        className="sr-only"
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-0 h-px !w-px max-w-px opacity-0"
         max={maxDate}
         min={startDate}
         onChange={handlePickerChange}

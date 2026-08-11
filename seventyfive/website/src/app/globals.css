@@ -106,7 +106,7 @@ main {
   z-index: 1;
 }
 
-input:not([type="checkbox"]):not([type="radio"]),
+input:not([type="checkbox"]):not([type="radio"]):not([aria-hidden="true"]),
 textarea,
 select {
   appearance: none;

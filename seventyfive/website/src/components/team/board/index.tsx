@@ -173,13 +173,13 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   }, [rosterPulseIntervalMs]);
 
   return (
-    <Container as="main" className="min-h-dvh py-8">
+    <Container as="main" className="min-h-dvh overflow-x-hidden py-8">
       <header className="flex items-start justify-between gap-4">
-        <div>
-          <p className="font-sf-display text-3xl tracking-tight">{teamName}</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-sf-display text-3xl tracking-tight break-words">{teamName}</p>
           <p className="text-sf-muted mt-1 text-sm">{challengeProgressLabel}</p>
         </div>
-        <div className="flex flex-wrap justify-end gap-2 text-sm">
+        <div className="flex shrink-0 flex-wrap justify-end gap-2 text-sm">
           <Link className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-1.5" href="/teams">
             {t("yourTeams")}
           </Link>
