@@ -105,12 +105,15 @@ export async function GET(request: Request) {
     }
 
     let body: string;
+    let title: string;
     if (reminder.type === "countdown") {
+      title = t("countdown");
       body =
         reminder.daysUntil === 1
           ? t("challengeStartsTomorrow")
           : t("challengeStartsIn{{count}}Days", { count: reminder.daysUntil });
     } else {
+      title = t("dailyUpdate");
       const remaining = remainingTaskIds(mode, checkedTaskIds)
         .map((id) => {
           const task = tasksForMode(mode).find((item) => {
@@ -138,7 +141,7 @@ export async function GET(request: Request) {
         { auth: sub.auth, endpoint: sub.endpoint, p256dh: sub.p256dh },
         {
           body,
-          title: t("seventyFive"),
+          title,
           url: "/teams",
         },
       );
