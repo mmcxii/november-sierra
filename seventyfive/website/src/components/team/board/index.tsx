@@ -9,6 +9,13 @@ import { Container } from "@/components/ui/container";
 import { setTaskCheckedAction } from "@/lib/actions/tasks";
 import { leaveTeamAction } from "@/lib/actions/team";
 import {
+  challengeDayNumber,
+  dayCelebratedStorageKey,
+  daysRemainingAfter,
+  resolveCheckCelebration,
+  type CheckCelebration,
+} from "@/lib/challenge/celebrations";
+import {
   canEditDay,
   daysUntilStart,
   preStartRosterPulseMs,
@@ -78,6 +85,8 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const [showInvite, setShowInvite] = React.useState(false);
   const [error, setError] = React.useState<null | TranslationKey>(null);
   const [rosterPulseNonce, setRosterPulseNonce] = React.useState(0);
+  const [celebration, setCelebration] = React.useState<null | Exclude<CheckCelebration, "none">>(null);
+  const [celebrationNonce, setCelebrationNonce] = React.useState(0);
 
   //* Variables
   const editable = canEditDay({
@@ -91,17 +100,58 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const checked = new Set(checkedTaskIds);
   const daysUntil = daysUntilStart(startDate, todayLocal);
   const rosterPulseIntervalMs = preStartRosterPulseMs(daysUntil);
-  const dayNumber =
-    Math.floor((Date.parse(`${selectedDate}T00:00:00.000Z`) - Date.parse(`${startDate}T00:00:00.000Z`)) / 86_400_000) +
-    1;
+  const dayNumber = challengeDayNumber(startDate, selectedDate) ?? 1;
   const joinUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/join?code=${encodeURIComponent(inviteCode)}`
       : `/join?code=${encodeURIComponent(inviteCode)}`;
 
   //* Handlers
+  const celebrateDay = (kind: Exclude<CheckCelebration, "none">) => {
+    const storageKey = dayCelebratedStorageKey(teamId, todayLocal);
+    try {
+      if (sessionStorage.getItem(storageKey) != null) {
+        return;
+      }
+      sessionStorage.setItem(storageKey, kind);
+    } catch {
+      // Private mode / disabled storage — still celebrate once this render path.
+    }
+
+    setCelebration(kind);
+    setCelebrationNonce((nonce) => {
+      return nonce + 1;
+    });
+
+    const todayDay = challengeDayNumber(startDate, todayLocal);
+    if (kind === "finale") {
+      toast.success(t("challengeCompletedCongratulations"));
+      return;
+    }
+    if (todayDay == null) {
+      return;
+    }
+    toast.success(
+      t("day{{day}}Complete{{count}}MoreToGo", {
+        count: daysRemainingAfter(todayDay),
+        day: todayDay,
+      }),
+    );
+  };
+
   const onToggle = (taskId: string, nextChecked: boolean) => {
     setError(null);
+    const celebrationKind = resolveCheckCelebration({
+      checkedTaskIdsBefore: checkedTaskIds,
+      endDate,
+      mode: memberMode,
+      nextChecked,
+      selectedDate,
+      startDate,
+      taskId,
+      todayLocal,
+    });
+
     startTransition(async () => {
       const result = await setTaskCheckedAction({
         checked: nextChecked,
@@ -112,6 +162,9 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       if ("error" in result) {
         setError(result.error ?? "somethingWentWrong");
         return;
+      }
+      if (celebrationKind !== "none") {
+        celebrateDay(celebrationKind);
       }
       router.refresh();
     });
@@ -177,6 +230,8 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
         <p className="font-sf-display text-3xl tracking-tight break-words">{teamName}</p>
         <ChallengeProgress
           actions={<BoardActionsMenu onInvite={toggleInvite} teamId={teamId} />}
+          celebration={celebration}
+          celebrationNonce={celebrationNonce}
           className="mt-1"
           daysUntilStart={daysUntil}
           elapsedComplete={progressElapsedComplete}
@@ -259,7 +314,13 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
         {memberStatus === "failed" && selectedDate === todayLocal ? (
           <p className="text-sf-danger mt-3 text-sm">{t("fixPastDaysToContinue")}</p>
         ) : null}
-        <ul className="mt-4 space-y-3">
+        <ul
+          className={cn("mt-4 space-y-3", {
+            "sf-day-settle": celebration === "day",
+            "sf-day-settle-finale": celebration === "finale",
+          })}
+          key={celebrationNonce > 0 ? `checklist-${celebrationNonce}` : "checklist"}
+        >
           {tasks.map((task) => {
             return (
               <TaskRow
