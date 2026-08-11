@@ -1,5 +1,6 @@
 "use client";
 
+import { BoardActionsMenu } from "@/components/team/board/board-actions-menu";
 import { DateStepper } from "@/components/team/date-stepper";
 import { RosterRow } from "@/components/team/roster-row";
 import { TaskRow } from "@/components/team/task-row";
@@ -17,7 +18,6 @@ import {
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -173,29 +173,12 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   }, [rosterPulseIntervalMs]);
 
   return (
-    <Container as="main" className="min-h-dvh overflow-x-hidden py-8">
-      <header className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="font-sf-display text-3xl tracking-tight break-words">{teamName}</p>
-          <p className="text-sf-muted mt-1 text-sm">{challengeProgressLabel}</p>
-        </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-2 text-sm">
-          <Link className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-1.5" href="/teams">
-            {t("yourTeams")}
-          </Link>
-          <button
-            className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-1.5"
-            onClick={toggleInvite}
-            type="button"
-          >
-            {t("invite")}
-          </button>
-          <Link
-            className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-1.5"
-            href={`/teams/${teamId}/settings`}
-          >
-            {t("settings")}
-          </Link>
+    <Container as="main" className="flex-1 overflow-x-hidden py-8">
+      <header>
+        <p className="font-sf-display text-3xl tracking-tight break-words">{teamName}</p>
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <p className="text-sf-muted min-w-0 flex-1 text-sm">{challengeProgressLabel}</p>
+          <BoardActionsMenu onInvite={toggleInvite} teamId={teamId} />
         </div>
       </header>
 
