@@ -131,8 +131,8 @@ export async function sendTestPushAction() {
     const result = await sendPushNotification(
       { auth: sub.auth, endpoint: sub.endpoint, p256dh: sub.p256dh },
       {
-        body: t("thisIsATestReminderFromSeventyFive"),
-        title: t("seventyFive"),
+        body: t("thisIsATestReminderFromTeamSeventyfive"),
+        title: t("testNotification"),
         url: "/teams",
       },
     );

@@ -1,5 +1,5 @@
 self.addEventListener("push", (event) => {
-  let payload = { body: "", title: "Seventy Five" };
+  let payload = { body: "", title: "Team SeventyFive" };
   try {
     payload = event.data ? event.data.json() : payload;
   } catch {
@@ -7,7 +7,7 @@ self.addEventListener("push", (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(payload.title || "Seventy Five", {
+    self.registration.showNotification(payload.title || "Team SeventyFive", {
       body: payload.body || "",
       data: { url: payload.url || "/" },
     }),
