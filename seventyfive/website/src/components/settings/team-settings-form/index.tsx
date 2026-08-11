@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Container } from "@/components/ui/container";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { savePushSubscriptionAction, updateMemberAction } from "@/lib/actions/member";
+import { savePushSubscriptionAction, sendTestPushAction, updateMemberAction } from "@/lib/actions/member";
 import { deleteTeamAction, updateTeamAction } from "@/lib/actions/team";
 import { ensurePushSubscription, isIosDevice, isStandaloneDisplayMode } from "@/lib/browser/ensure-push-subscription";
 import type { ChallengeMode } from "@/lib/challenge/tasks";
@@ -79,13 +79,59 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const nextRemindersOn = remindersOn;
+    const nextReminderTime = String(formData.get("reminderTime") ?? "20:00");
     setError(null);
 
     startTransition(async () => {
+      if (nextRemindersOn) {
+        if (vapidPublicKey == null || vapidPublicKey === "") {
+          toast.warning(t("pushNotificationsAreNotConfigured"));
+          setRemindersOn(false);
+          return;
+        }
+        if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+          toast.warning(t("pushNotificationsAreNotSupportedInThisBrowser"));
+          setRemindersOn(false);
+          return;
+        }
+        if (isIosDevice() && !isStandaloneDisplayMode()) {
+          toast.warning(t("onIphoneAddThisAppToYourHomeScreenToReceiveReminders"));
+          setRemindersOn(false);
+          return;
+        }
+
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") {
+            toast.warning(t("notificationsWereBlockedEnableThemInYourBrowserToReceiveReminders"));
+            setRemindersOn(false);
+            return;
+          }
+
+          const payload = await ensurePushSubscription(vapidPublicKey, { rotate: true });
+          if (payload == null) {
+            toast.warning(t("couldNotEnablePushNotifications"));
+            setRemindersOn(false);
+            return;
+          }
+
+          const saveResult = await savePushSubscriptionAction(payload);
+          if ("error" in saveResult) {
+            toast.warning(t("couldNotEnablePushNotifications"));
+            setRemindersOn(false);
+            return;
+          }
+        } catch {
+          toast.warning(t("couldNotEnablePushNotifications"));
+          setRemindersOn(false);
+          return;
+        }
+      }
+
       const result = await updateMemberAction({
         mode: challengeMode,
         reminderEnabled: nextRemindersOn,
-        reminderTime: String(formData.get("reminderTime") ?? "20:00"),
+        reminderTime: nextReminderTime,
         teamId,
       });
 
@@ -95,36 +141,6 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
       }
 
       setRemindersOn(nextRemindersOn);
-
-      if (nextRemindersOn) {
-        if (vapidPublicKey == null || vapidPublicKey === "") {
-          toast.warning(t("pushNotificationsAreNotConfigured"));
-        } else if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-          toast.warning(t("pushNotificationsAreNotSupportedInThisBrowser"));
-        } else if (isIosDevice() && !isStandaloneDisplayMode()) {
-          toast.warning(t("onIphoneAddThisAppToYourHomeScreenToReceiveReminders"));
-        } else {
-          try {
-            const permission = await Notification.requestPermission();
-            if (permission !== "granted") {
-              toast.warning(t("notificationsWereBlockedEnableThemInYourBrowserToReceiveReminders"));
-            } else {
-              const payload = await ensurePushSubscription(vapidPublicKey);
-              if (payload == null) {
-                toast.warning(t("couldNotEnablePushNotifications"));
-              } else {
-                const saveResult = await savePushSubscriptionAction(payload);
-                if ("error" in saveResult) {
-                  toast.warning(t("couldNotEnablePushNotifications"));
-                }
-              }
-            }
-          } catch {
-            toast.warning(t("couldNotEnablePushNotifications"));
-          }
-        }
-      }
-
       toast.success(t("settingsSaved"));
       router.refresh();
     });
@@ -140,6 +156,17 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
 
   const handleConfirmDeleteChange = (checked: boolean | "indeterminate") => {
     setConfirmDelete(checked === true);
+  };
+
+  const onSendTestNotification = () => {
+    startTransition(async () => {
+      const result = await sendTestPushAction();
+      if ("error" in result) {
+        toast.warning(t(result.error ?? "somethingWentWrong"));
+        return;
+      }
+      toast.success(t("testNotificationSent"));
+    });
   };
 
   const onDeleteTeam = () => {
@@ -272,6 +299,17 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
           {t("save")}
         </button>
       </form>
+
+      {reminderEnabled ? (
+        <button
+          className="border-sf-border mt-4 w-full rounded-[var(--sf-radius)] border px-4 py-3 text-sm disabled:opacity-60"
+          disabled={isPending}
+          onClick={onSendTestNotification}
+          type="button"
+        >
+          {t("sendTestNotification")}
+        </button>
+      ) : null}
 
       <p className="mt-8 text-sm">
         <Link className="text-sf-muted underline" href="/settings">

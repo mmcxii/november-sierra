@@ -6,12 +6,35 @@ export type PushSubscriptionPayload = {
   p256dh: string;
 };
 
+export type EnsurePushSubscriptionOptions = {
+  /** Drop any existing browser subscription and create a fresh one (settings save). */
+  rotate?: boolean;
+};
+
+function applicationServerKeysEqual(existing: undefined | null | ArrayBuffer, expected: Uint8Array): boolean {
+  if (existing == null) {
+    return false;
+  }
+  const bytes = new Uint8Array(existing);
+  if (bytes.byteLength !== expected.byteLength) {
+    return false;
+  }
+  for (let index = 0; index < bytes.byteLength; index += 1) {
+    if (bytes[index] !== expected[index]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
- * Register the push SW, reuse an existing subscription when present, and return
- * the payload to persist. Does not prompt for permission — caller must ensure
- * Notification.permission is "granted" (or request it) before calling.
+ * Register the push SW and return a subscription payload to persist.
+ * Does not prompt for permission — caller must ensure Notification.permission is "granted".
  */
-export async function ensurePushSubscription(vapidPublicKey: string): Promise<null | PushSubscriptionPayload> {
+export async function ensurePushSubscription(
+  vapidPublicKey: string,
+  options: EnsurePushSubscriptionOptions = {},
+): Promise<null | PushSubscriptionPayload> {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
     return null;
   }
@@ -20,13 +43,24 @@ export async function ensurePushSubscription(vapidPublicKey: string): Promise<nu
     return null;
   }
 
+  const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
   const registration = await navigator.serviceWorker.register("/sw.js");
   await navigator.serviceWorker.ready;
 
   let subscription = await registration.pushManager.getSubscription();
+  const shouldRotate =
+    options.rotate === true ||
+    (subscription != null &&
+      !applicationServerKeysEqual(subscription.options.applicationServerKey, applicationServerKey));
+
+  if (subscription != null && shouldRotate) {
+    await subscription.unsubscribe();
+    subscription = null;
+  }
+
   if (subscription == null) {
     subscription = await registration.pushManager.subscribe({
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+      applicationServerKey: applicationServerKey as BufferSource,
       userVisibleOnly: true,
     });
   }

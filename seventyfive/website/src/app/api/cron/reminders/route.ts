@@ -19,18 +19,10 @@ import {
 } from "@/lib/db/schema";
 import { envSchema } from "@/lib/env";
 import { initTranslations } from "@/lib/i18n/server";
+import { configureWebPush, sendPushNotification } from "@/lib/push/send-push-notification";
 import { eq } from "drizzle-orm";
-import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
-
-function pushErrorStatusCode(error: unknown): null | number {
-  if (typeof error !== "object" || error == null || !("statusCode" in error)) {
-    return null;
-  }
-  const statusCode = Number((error as { statusCode: unknown }).statusCode);
-  return Number.isFinite(statusCode) ? statusCode : null;
-}
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -38,11 +30,10 @@ export async function GET(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  if (!envSchema.VAPID_PUBLIC_KEY || !envSchema.VAPID_PRIVATE_KEY) {
-    return Response.json({ reason: "missing vapid keys", skipped: true });
+  const vapid = configureWebPush();
+  if (!vapid.ok) {
+    return Response.json({ reason: vapid.reason, skipped: true });
   }
-
-  webpush.setVapidDetails(envSchema.VAPID_SUBJECT, envSchema.VAPID_PUBLIC_KEY, envSchema.VAPID_PRIVATE_KEY);
 
   const { t } = await initTranslations();
   const now = new Date();
@@ -66,6 +57,8 @@ export async function GET(request: Request) {
 
   let sent = 0;
   let dueWithoutDelivery = 0;
+  let dueWithoutSubscription = 0;
+  const sendFailures: Record<string, number> = {};
 
   for (const member of members) {
     if (member.userId == null) {
@@ -133,27 +126,34 @@ export async function GET(request: Request) {
       return sub.userId === member.userId;
     });
 
+    if (memberSubs.length === 0) {
+      dueWithoutSubscription += 1;
+      dueWithoutDelivery += 1;
+      continue;
+    }
+
     let delivered = 0;
     for (const sub of memberSubs) {
-      try {
-        await webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: { auth: sub.auth, p256dh: sub.p256dh },
-          },
-          JSON.stringify({
-            body,
-            title: t("seventyFive"),
-            url: "/teams",
-          }),
-        );
+      const result = await sendPushNotification(
+        { auth: sub.auth, endpoint: sub.endpoint, p256dh: sub.p256dh },
+        {
+          body,
+          title: t("seventyFive"),
+          url: "/teams",
+        },
+      );
+
+      if (result.ok) {
         delivered += 1;
         sent += 1;
-      } catch (error) {
-        const statusCode = pushErrorStatusCode(error);
-        if (statusCode === 404 || statusCode === 410) {
-          await db.delete(pushSubscriptionsTable).where(eq(pushSubscriptionsTable.id, sub.id));
-        }
+        continue;
+      }
+
+      const key = result.statusCode == null ? "unknown" : String(result.statusCode);
+      sendFailures[key] = (sendFailures[key] ?? 0) + 1;
+
+      if (result.statusCode === 404 || result.statusCode === 410) {
+        await db.delete(pushSubscriptionsTable).where(eq(pushSubscriptionsTable.id, sub.id));
       }
     }
 
@@ -169,5 +169,11 @@ export async function GET(request: Request) {
     }
   }
 
-  return Response.json({ dueWithoutDelivery, ok: true, sent });
+  return Response.json({
+    dueWithoutDelivery,
+    dueWithoutSubscription,
+    ok: true,
+    sendFailures,
+    sent,
+  });
 }
