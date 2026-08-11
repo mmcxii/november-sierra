@@ -12,7 +12,7 @@ Quiet brand feedback for cold start and in-app navigation — no skeleton lists,
 
 - Keep the current route mounted until the next RSC is ready (default App Router soft nav; **do not** add segment `loading.tsx` that replaces content).
 - On pending navigation, show a **soft full-viewport veil** (paper/dark tint ~40–50% opacity) with a **breathing olive ember orb** centered on top — no “75” text.
-- Orb: a bit more prominent than a progress-bar spark; glow should read clearly in a short glance without flashing. Breathe ~3.4s ease-in-out, gentle scale (~8%), soft multi-stop olive halo.
+- Orb: a bit more prominent than a progress-bar spark; glow should read clearly in a short (~1s) glance without flashing. Breathe ~1s ease-in-out with peak around 40% so a bloom lands in the first ~400ms; soft multi-stop olive halo.
 - Previous content remains visible underneath (readable, not wiped).
 - Triggers:
   - Capture same-origin internal `<a>` / `Link` clicks (ignore new-tab, modified clicks, hash-only, external).
@@ -25,7 +25,7 @@ Quiet brand feedback for cold start and in-app navigation — no skeleton lists,
 ## Cold start
 
 - Client `BootSplash` SSR’d in root layout (first HTML paint); same paper/dark tokens (respect `data-theme` from `ThemeScript`).
-- Centered ember orb (larger than nav) + soft ambient radial wash; slow enter then the same calm breathe. No “75” on the splash.
+- Centered ember orb (larger than nav) + soft ambient radial wash; brief enter (~180ms) then the same ~1s breathe (no long delay before motion). No “75” on the splash.
 - After hydrate: fade out and unmount for the session (no flash on later navigations).
 - PWA `background_color` / viewport themeColor already align with paper; splash bridges OS chrome → first React paint.
 
