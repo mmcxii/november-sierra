@@ -1,5 +1,6 @@
 "use client";
 
+import { ChallengeProgress } from "@/components/challenge/challenge-progress";
 import { BoardActionsMenu } from "@/components/team/board/board-actions-menu";
 import { DateStepper } from "@/components/team/date-stepper";
 import { RosterRow } from "@/components/team/roster-row";
@@ -40,6 +41,8 @@ export type TeamBoardProps = {
   memberId: string;
   memberMode: ChallengeMode;
   memberStatus: MemberStatus;
+  progressElapsedComplete: readonly boolean[];
+  progressLastElapsedIsToday: boolean;
   roster: RosterMember[];
   selectedDate: string;
   startDate: string;
@@ -57,6 +60,8 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     memberId,
     memberMode,
     memberStatus,
+    progressElapsedComplete,
+    progressLastElapsedIsToday,
     roster,
     selectedDate,
     startDate,
@@ -89,12 +94,6 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const dayNumber =
     Math.floor((Date.parse(`${selectedDate}T00:00:00.000Z`) - Date.parse(`${startDate}T00:00:00.000Z`)) / 86_400_000) +
     1;
-  let challengeProgressLabel = t("challengeStartsIn{{count}}Days", { count: daysUntil });
-  if (daysUntil === 0) {
-    challengeProgressLabel = t("day{{day}}Of75", { day: dayNumber });
-  } else if (daysUntil === 1) {
-    challengeProgressLabel = t("challengeStartsTomorrow");
-  }
   const joinUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/join?code=${encodeURIComponent(inviteCode)}`
@@ -176,10 +175,16 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     <Container as="main" className="flex-1 overflow-x-hidden py-8">
       <header>
         <p className="font-sf-display text-3xl tracking-tight break-words">{teamName}</p>
-        <div className="mt-1 flex items-center justify-between gap-3">
-          <p className="text-sf-muted min-w-0 flex-1 text-sm">{challengeProgressLabel}</p>
-          <BoardActionsMenu onInvite={toggleInvite} teamId={teamId} />
-        </div>
+        <ChallengeProgress
+          actions={<BoardActionsMenu onInvite={toggleInvite} teamId={teamId} />}
+          className="mt-1"
+          daysUntilStart={daysUntil}
+          elapsedComplete={progressElapsedComplete}
+          lastElapsedIsToday={progressLastElapsedIsToday}
+          memberMode={memberMode}
+          memberStatus={memberStatus}
+          selectedDayNumber={dayNumber}
+        />
       </header>
 
       {showInvite ? (

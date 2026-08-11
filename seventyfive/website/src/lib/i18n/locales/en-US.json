@@ -26,6 +26,7 @@
   "currentPassword": "Current password",
   "dark": "Dark",
   "day{{day}}Of75": "Day {{day}} of 75",
+  "day{{day}}Of75{{count}}DaysMissed": "Day {{day}} of 75, {{count}} days missed",
   "deleteAccount": "Delete account",
   "deleteTeam": "Delete team",
   "drink1GallonOfWater": "Drink 1 gallon of water",
