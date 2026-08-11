@@ -71,9 +71,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const [isRefreshing, startRefreshTransition] = React.useTransition();
   const [showInvite, setShowInvite] = React.useState(false);
   const [error, setError] = React.useState<null | TranslationKey>(null);
-
-  //* Refs
-  const rosterListRef = React.useRef<HTMLUListElement>(null);
+  const [rosterPulseNonce, setRosterPulseNonce] = React.useState(0);
 
   //* Variables
   const editable = canEditDay({
@@ -86,7 +84,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const tasks = tasksForMode(memberMode);
   const checked = new Set(checkedTaskIds);
   const daysUntil = daysUntilStart(startDate, todayLocal);
-  const rosterPulseMs = preStartRosterPulseMs(daysUntil);
+  const rosterPulseIntervalMs = preStartRosterPulseMs(daysUntil);
   const dayNumber =
     Math.floor((Date.parse(`${selectedDate}T00:00:00.000Z`) - Date.parse(`${startDate}T00:00:00.000Z`)) / 86_400_000) +
     1;
@@ -170,16 +168,23 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
 
   //* Effects
   React.useEffect(() => {
-    const list = rosterListRef.current;
-    if (list == null) {
+    if (rosterPulseIntervalMs == null) {
       return;
     }
-    if (rosterPulseMs == null) {
-      list.style.removeProperty("--sf-roster-pulse-ms");
-      return;
-    }
-    list.style.setProperty("--sf-roster-pulse-ms", `${rosterPulseMs}ms`);
-  }, [rosterPulseMs]);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const intervalMs = reducedMotion ? 30_000 : rosterPulseIntervalMs;
+    setRosterPulseNonce((nonce) => {
+      return nonce + 1;
+    });
+    const timer = window.setInterval(() => {
+      setRosterPulseNonce((nonce) => {
+        return nonce + 1;
+      });
+    }, intervalMs);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [rosterPulseIntervalMs]);
 
   return (
     <Container as="main" className="min-h-dvh py-8">
@@ -287,7 +292,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
             <RefreshCw aria-hidden className={cn("size-3.5", { "animate-spin": isRefreshing })} strokeWidth={1.75} />
           </button>
         </div>
-        <ul className="divide-sf-border mt-3 divide-y" ref={rosterListRef}>
+        <ul className="divide-sf-border mt-3 divide-y">
           {roster.map((member) => {
             return (
               <RosterRow
@@ -296,7 +301,8 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
                 isSelf={member.id === memberId}
                 key={member.id}
                 mode={member.mode}
-                pulse={rosterPulseMs != null}
+                pulse={rosterPulseIntervalMs != null}
+                pulseNonce={rosterPulseNonce}
                 softStumble={member.softStumble}
                 status={member.status}
               />
