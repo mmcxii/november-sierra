@@ -1,7 +1,13 @@
 import { AppChrome } from "@/components/app-chrome";
+import { TeamListRow } from "@/components/team/team-list-row";
 import { Container } from "@/components/ui/container";
 import { getAuthUser, listMembershipsForUser } from "@/lib/auth/session";
+import { challengeDayNumber } from "@/lib/challenge/celebrations";
+import { daysUntilStart, localDateString, type ChallengeMode } from "@/lib/challenge/tasks";
+import { db } from "@/lib/db/client";
+import { dayCompletionsTable, taskChecksTable } from "@/lib/db/schema";
 import { initTranslations } from "@/lib/i18n/server";
+import { and, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -13,6 +19,34 @@ const TeamsPage = async () => {
 
   const memberships = await listMembershipsForUser(user.id);
   const { t } = await initTranslations();
+  const todayLocal = localDateString(new Date(), user.timeZone);
+
+  const memberIds = memberships.map((row) => row.member.id);
+  const todayDays =
+    memberIds.length === 0
+      ? []
+      : await db
+          .select()
+          .from(dayCompletionsTable)
+          .where(and(inArray(dayCompletionsTable.memberId, memberIds), eq(dayCompletionsTable.date, todayLocal)));
+
+  const dayIds = todayDays.map((day) => day.id);
+  const checks =
+    dayIds.length === 0
+      ? []
+      : await db.select().from(taskChecksTable).where(inArray(taskChecksTable.dayCompletionId, dayIds));
+
+  const checksByDay = new Map<string, string[]>();
+  for (const check of checks) {
+    const list = checksByDay.get(check.dayCompletionId) ?? [];
+    list.push(check.taskId);
+    checksByDay.set(check.dayCompletionId, list);
+  }
+
+  const checkedByMember = new Map<string, string[]>();
+  for (const day of todayDays) {
+    checkedByMember.set(day.memberId, checksByDay.get(day.id) ?? []);
+  }
 
   return (
     <AppChrome>
@@ -23,12 +57,24 @@ const TeamsPage = async () => {
         ) : (
           <ul className="divide-sf-border mt-8 divide-y">
             {memberships.map((row) => {
+              const daysUntil = daysUntilStart(row.team.startDate, todayLocal);
+              let progressLabel = t("challengeStartsIn{{count}}Days", { count: daysUntil });
+              if (daysUntil === 0) {
+                const dayNumber = challengeDayNumber(row.team.startDate, todayLocal) ?? 75;
+                progressLabel = t("day{{day}}Of75", { day: dayNumber });
+              } else if (daysUntil === 1) {
+                progressLabel = t("challengeStartsTomorrow");
+              }
+
               return (
-                <li key={row.team.id}>
-                  <Link className="block py-4 text-lg" href={`/teams/${row.team.id}`}>
-                    {row.team.name}
-                  </Link>
-                </li>
+                <TeamListRow
+                  checkedTaskIds={checkedByMember.get(row.member.id) ?? []}
+                  key={row.team.id}
+                  mode={row.member.mode as ChallengeMode}
+                  progressLabel={progressLabel}
+                  teamId={row.team.id}
+                  teamName={row.team.name}
+                />
               );
             })}
           </ul>
