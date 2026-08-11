@@ -187,6 +187,176 @@ select {
   animation: sf-day-settle 720ms ease-out;
 }
 
+/* ── Brand pulse / boot splash / nav pending ─────────────────────────── */
+
+@keyframes sf-brand-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.14);
+  }
+}
+
+@keyframes sf-boot-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.55rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sf-boot-ember-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+#sf-boot-splash {
+  background:
+    radial-gradient(1000px 520px at 18% -8%, color-mix(in srgb, var(--sf-accent) 16%, transparent), transparent),
+    radial-gradient(820px 460px at 88% 4%, color-mix(in srgb, var(--sf-warn) 11%, transparent), transparent),
+    var(--sf-bg);
+  inset: 0;
+  position: fixed;
+  z-index: 10000;
+}
+
+#sf-boot-splash,
+.sf-boot-splash-inner {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sf-boot-splash-glow {
+  background: radial-gradient(circle, color-mix(in srgb, var(--sf-accent) 22%, transparent), transparent 68%);
+  height: 14rem;
+  left: 50%;
+  opacity: 0.85;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -52%);
+  width: 14rem;
+}
+
+.sf-boot-splash-inner {
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.sf-boot-ember {
+  animation:
+    sf-boot-ember-in 520ms ease-out both,
+    sf-brand-breathe 2.6s ease-in-out 520ms infinite;
+  background: color-mix(in srgb, var(--sf-accent) 92%, white);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0.55rem color-mix(in srgb, var(--sf-accent) 45%, transparent),
+    0 0 1.4rem color-mix(in srgb, var(--sf-accent) 28%, transparent);
+  display: block;
+  height: 0.55rem;
+  width: 0.55rem;
+}
+
+.sf-boot-mark {
+  animation: sf-boot-rise 720ms ease-out 90ms both;
+  color: var(--sf-accent);
+  font-family: var(--sf-font-display);
+  font-size: clamp(3.25rem, 14vw, 5.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0;
+}
+
+html[data-sf-booted] #sf-boot-splash,
+#sf-boot-splash[data-phase="out"] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 380ms ease;
+}
+
+.sf-nav-pending {
+  align-items: center;
+  background: color-mix(in srgb, var(--sf-bg) 48%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  pointer-events: none;
+  position: fixed;
+  z-index: 9990;
+}
+
+.sf-brand-pulse {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sf-brand-pulse-ember {
+  animation: sf-brand-breathe 2.4s ease-in-out infinite;
+  background: color-mix(in srgb, var(--sf-accent) 92%, white);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0.4rem color-mix(in srgb, var(--sf-accent) 40%, transparent),
+    0 0 1rem color-mix(in srgb, var(--sf-accent) 22%, transparent);
+  display: block;
+  height: 0.4rem;
+  width: 0.4rem;
+}
+
+.sf-brand-pulse-mark {
+  color: var(--sf-accent);
+  font-family: var(--sf-font-display);
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.sf-brand-pulse-lg .sf-brand-pulse-ember {
+  height: 0.55rem;
+  width: 0.55rem;
+}
+
+.sf-brand-pulse-lg .sf-brand-pulse-mark {
+  font-size: clamp(3.25rem, 14vw, 5.25rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-task-flash,
+  .sf-day-settle,
+  .sf-day-settle-finale,
+  .sf-progress-ember-bloom,
+  .sf-progress-ember-finale,
+  .sf-boot-ember,
+  .sf-boot-mark,
+  .sf-brand-pulse-ember {
+    animation: none;
+  }
+
+  html[data-sf-booted] #sf-boot-splash,
+  #sf-boot-splash[data-phase="out"] {
+    transition: none;
+  }
+}
+
 .sf-progress-ember {
   --sf-ember-size: 0.28rem;
   --sf-ember-glow: 0.14rem;
@@ -277,16 +447,6 @@ select {
 
 .sf-progress-ember-finale {
   animation: sf-ember-bloom 900ms ease-out;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sf-task-flash,
-  .sf-day-settle,
-  .sf-day-settle-finale,
-  .sf-progress-ember-bloom,
-  .sf-progress-ember-finale {
-    animation: none;
-  }
 }
 
 @keyframes sf-roster-check-pulse {

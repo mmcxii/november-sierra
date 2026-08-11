@@ -2,6 +2,8 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { MigrateLegacySession } from "@/components/auth/migrate-legacy-session";
+import { BootSplash } from "@/components/boot-splash";
+import { NavigationPendingProvider } from "@/components/navigation-pending";
 import { ThemeScript } from "@/components/theme-script";
 import { Toaster } from "@/components/ui/sonner";
 import { SITE_URL } from "@/lib/constants";
@@ -47,10 +49,13 @@ const RootLayout: React.FC<RootLayoutProps> = async (props) => {
       </head>
       <body>
         <ThemeScript />
+        <BootSplash />
         <TranslationsProvider locale="en-US" resources={resources}>
-          <MigrateLegacySession />
-          {children}
-          <Toaster />
+          <NavigationPendingProvider>
+            <MigrateLegacySession />
+            {children}
+            <Toaster />
+          </NavigationPendingProvider>
         </TranslationsProvider>
         <Analytics />
       </body>

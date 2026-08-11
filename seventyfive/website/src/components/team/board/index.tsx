@@ -1,6 +1,7 @@
 "use client";
 
 import { ChallengeProgress } from "@/components/challenge/challenge-progress";
+import { usePendingRouter } from "@/components/navigation-pending";
 import { BoardActionsMenu } from "@/components/team/board/board-actions-menu";
 import { DateStepper } from "@/components/team/date-stepper";
 import { RosterRow } from "@/components/team/roster-row";
@@ -26,7 +27,6 @@ import {
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -79,7 +79,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
 
   //* State
   const { t } = useTranslation();
-  const router = useRouter();
+  const router = usePendingRouter();
   const [isPending, startTransition] = React.useTransition();
   const [isRefreshing, startRefreshTransition] = React.useTransition();
   const [showInvite, setShowInvite] = React.useState(false);
