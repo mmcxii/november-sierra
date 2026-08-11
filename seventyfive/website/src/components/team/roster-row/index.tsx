@@ -13,14 +13,16 @@ export type RosterRowProps = {
   displayName: string;
   isSelf: boolean;
   mode: ChallengeMode;
-  /** When true, icons pulse unchecked↔checked (duration from parent CSS var). */
+  /** When true, icons run a quick unchecked↔checked fade on each pulseNonce. */
   pulse?: boolean;
+  /** Bumps to restart the synced one-shot pulse animation. */
+  pulseNonce?: number;
   softStumble: boolean;
   status: MemberStatus;
 };
 
 export const RosterRow: React.FC<RosterRowProps> = (props) => {
-  const { checkedTaskIds, displayName, isSelf, mode, pulse = false, softStumble, status } = props;
+  const { checkedTaskIds, displayName, isSelf, mode, pulse = false, pulseNonce = 0, softStumble, status } = props;
 
   //* State
   const { t } = useTranslation();
@@ -56,8 +58,9 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
                   className={cn("size-3.5", {
                     "sf-roster-icon-pulse": pulse,
                     "text-sf-accent": !pulse && isChecked,
-                    "text-sf-muted/35": !pulse && !isChecked,
+                    "text-sf-muted/35": pulse || !isChecked,
                   })}
+                  key={pulse ? `${task.id}-${pulseNonce}` : task.id}
                   strokeWidth={1.75}
                 />
                 <span className="sr-only">

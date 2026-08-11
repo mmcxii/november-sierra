@@ -161,14 +161,10 @@ select {
   }
 }
 
+/* Fixed quick fade; interval between runs is driven in JS. */
 .sf-roster-icon-pulse {
-  animation: sf-roster-check-pulse var(--sf-roster-pulse-ms, 30000ms) ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sf-roster-icon-pulse {
-    --sf-roster-pulse-ms: 30000ms;
-  }
+  color: color-mix(in srgb, var(--sf-text-muted) 35%, transparent);
+  animation: sf-roster-check-pulse 1.2s ease-in-out 1;
 }
 
 /* ── Sonner toaster ───────────────────────────────────────────────────── */

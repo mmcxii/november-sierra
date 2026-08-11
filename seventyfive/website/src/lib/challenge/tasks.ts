@@ -133,7 +133,7 @@ const PRE_START_PULSE_TOMORROW_MS = 1200;
 const PRE_START_PULSE_SPAN_DAYS = 30;
 
 /**
- * Roster icon pulse cycle while the challenge has not started.
+ * Interval between pre-start roster icon pulses (fade itself stays a fixed quick animation).
  * ~1s per day out (capped at 30s for ≥30 days) → 1.2s the day before;
  * `null` once started (daysUntil === 0).
  */

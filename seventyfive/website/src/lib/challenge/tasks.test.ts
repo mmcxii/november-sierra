@@ -168,7 +168,7 @@ describe("preStartRosterPulseMs", () => {
     expect(pulseMs).toBeNull();
   });
 
-  it("is one second per day out, capped at 30s, with 1.2s tomorrow", () => {
+  it("scales the pulse interval by one second per day out", () => {
     //* Arrange
     const farOut = 45;
     const monthOut = 30;

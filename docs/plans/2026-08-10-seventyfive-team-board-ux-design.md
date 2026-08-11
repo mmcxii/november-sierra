@@ -22,9 +22,9 @@ Small board/hub polish from interview: teams hub, settings back nav, roster refr
 ### Pre-start roster icon pulse
 
 - While `today < startDate`, every roster task icon pulses unchecked ↔ checked **in sync** (all rows/icons share one phase).
-- Cycle length: **~1s per day** until start (**30s** at ≥30 days out → **1.2s** the day before).
+- Fade itself is a fixed quick ~1.2s animation; the **interval between pulses** scales (~1s per day out, **30s** at ≥30 days → **1.2s** tomorrow).
 - Stops when the challenge has started (`daysUntilStart === 0`).
-- `prefers-reduced-motion: reduce`: still pulse, but fixed at the slow **30s** rate.
+- `prefers-reduced-motion: reduce`: still pulse with the quick fade, but interval stays at the **30s** cap.
 
 ## Out of scope
 
