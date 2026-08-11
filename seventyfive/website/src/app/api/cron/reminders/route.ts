@@ -24,6 +24,14 @@ import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
 
+function pushErrorStatusCode(error: unknown): null | number {
+  if (typeof error !== "object" || error == null || !("statusCode" in error)) {
+    return null;
+  }
+  const statusCode = Number((error as { statusCode: unknown }).statusCode);
+  return Number.isFinite(statusCode) ? statusCode : null;
+}
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (!envSchema.CRON_SECRET || authHeader !== `Bearer ${envSchema.CRON_SECRET}`) {
@@ -57,6 +65,7 @@ export async function GET(request: Request) {
   const subscriptions = await db.select().from(pushSubscriptionsTable);
 
   let sent = 0;
+  let dueWithoutDelivery = 0;
 
   for (const member of members) {
     if (member.userId == null) {
@@ -123,6 +132,8 @@ export async function GET(request: Request) {
     const memberSubs = subscriptions.filter((sub) => {
       return sub.userId === member.userId;
     });
+
+    let delivered = 0;
     for (const sub of memberSubs) {
       try {
         await webpush.sendNotification(
@@ -136,17 +147,27 @@ export async function GET(request: Request) {
             url: "/teams",
           }),
         );
+        delivered += 1;
         sent += 1;
-      } catch {
-        // Drop dead subscriptions silently in v0.1
+      } catch (error) {
+        const statusCode = pushErrorStatusCode(error);
+        if (statusCode === 404 || statusCode === 410) {
+          await db.delete(pushSubscriptionsTable).where(eq(pushSubscriptionsTable.id, sub.id));
+        }
       }
     }
 
-    await db
-      .update(membersTable)
-      .set({ lastReminderDate: todayLocal, updatedAt: new Date() })
-      .where(eq(membersTable.id, member.id));
+    // Only stamp the day when at least one push was accepted. Otherwise a missing
+    // or dead subscription would silently burn the reminder for the local day.
+    if (delivered > 0) {
+      await db
+        .update(membersTable)
+        .set({ lastReminderDate: todayLocal, updatedAt: new Date() })
+        .where(eq(membersTable.id, member.id));
+    } else {
+      dueWithoutDelivery += 1;
+    }
   }
 
-  return Response.json({ ok: true, sent });
+  return Response.json({ dueWithoutDelivery, ok: true, sent });
 }

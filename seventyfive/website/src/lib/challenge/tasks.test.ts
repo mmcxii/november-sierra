@@ -443,4 +443,24 @@ describe("resolveDailyReminder", () => {
     //* Assert
     expect(reminder).toEqual({ daysUntil: 2, type: "countdown" });
   });
+
+  it("treats HH:mm:ss reminder times the same as HH:mm", () => {
+    //* Arrange — lexicographic compare of "20:05" < "20:00:00" is true and would skip forever
+    const now = new Date("2026-09-02T20:05:00.000Z");
+
+    //* Act
+    const reminder = resolveDailyReminder({
+      lastReminderDate: null,
+      now,
+      reminderEnabled: true,
+      reminderTime: "20:00:00",
+      startDate: "2026-09-01",
+      status: "active",
+      timeZone: "UTC",
+      todayIncomplete: true,
+    });
+
+    //* Assert
+    expect(reminder).toEqual({ type: "incomplete" });
+  });
 });

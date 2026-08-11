@@ -49,6 +49,8 @@ export async function updateMemberAction(input: z.infer<typeof updateMemberSchem
   await db
     .update(membersTable)
     .set({
+      // Clear so a failed/no-subscription day can retry after the user re-saves.
+      lastReminderDate: parsed.data.reminderEnabled ? null : session.member.lastReminderDate,
       mode: nextMode,
       reminderEnabled: parsed.data.reminderEnabled,
       reminderTime: parsed.data.reminderTime,

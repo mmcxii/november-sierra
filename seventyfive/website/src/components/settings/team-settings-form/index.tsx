@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { savePushSubscriptionAction, updateMemberAction } from "@/lib/actions/member";
 import { deleteTeamAction, updateTeamAction } from "@/lib/actions/team";
+import { ensurePushSubscription, isIosDevice, isStandaloneDisplayMode } from "@/lib/browser/ensure-push-subscription";
 import type { ChallengeMode } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
-import { urlBase64ToUint8Array } from "@/lib/url-base64-to-uint8-array";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -53,6 +53,7 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
   const [challengeMode, setChallengeMode] = React.useState<ChallengeMode>(mode);
   const [remindersOn, setRemindersOn] = React.useState(reminderEnabled);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [showIosHomeScreenHint, setShowIosHomeScreenHint] = React.useState(false);
 
   //* Handlers
   const handleTeamDetailsSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -100,24 +101,22 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
           toast.warning(t("pushNotificationsAreNotConfigured"));
         } else if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
           toast.warning(t("pushNotificationsAreNotSupportedInThisBrowser"));
+        } else if (isIosDevice() && !isStandaloneDisplayMode()) {
+          toast.warning(t("onIphoneAddThisAppToYourHomeScreenToReceiveReminders"));
         } else {
           try {
             const permission = await Notification.requestPermission();
             if (permission !== "granted") {
               toast.warning(t("notificationsWereBlockedEnableThemInYourBrowserToReceiveReminders"));
             } else {
-              const registration = await navigator.serviceWorker.register("/sw.js");
-              const subscription = await registration.pushManager.subscribe({
-                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-                userVisibleOnly: true,
-              });
-              const json = subscription.toJSON();
-              if (json.endpoint != null && json.keys?.auth && json.keys.p256dh) {
-                await savePushSubscriptionAction({
-                  auth: json.keys.auth,
-                  endpoint: json.endpoint,
-                  p256dh: json.keys.p256dh,
-                });
+              const payload = await ensurePushSubscription(vapidPublicKey);
+              if (payload == null) {
+                toast.warning(t("couldNotEnablePushNotifications"));
+              } else {
+                const saveResult = await savePushSubscriptionAction(payload);
+                if ("error" in saveResult) {
+                  toast.warning(t("couldNotEnablePushNotifications"));
+                }
               }
             }
           } catch {
@@ -163,6 +162,10 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
   React.useEffect(() => {
     setChallengeMode(mode);
   }, [mode]);
+
+  React.useEffect(() => {
+    setShowIosHomeScreenHint(isIosDevice() && !isStandaloneDisplayMode());
+  }, []);
 
   return (
     <Container as="main" className="flex-1 py-8">
@@ -239,13 +242,19 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
             <p className="text-sf-muted text-xs">
               {t("beforeStartYouGetACountdownAfterStartYouGetANudgeIfTasksRemain")}
             </p>
+            {remindersOn && showIosHomeScreenHint ? (
+              <p className="text-sf-muted text-xs">{t("onIphoneAddThisAppToYourHomeScreenToReceiveReminders")}</p>
+            ) : null}
+            {remindersOn ? (
+              <p className="text-sf-muted text-xs">{t("remindersMayArriveUpToAnHourAfterTheSetTime")}</p>
+            ) : null}
           </div>
 
           <div className="w-full space-y-1.5">
             <Label htmlFor="reminderTime">{t("reminderTime")}</Label>
             <input
               className="border-sf-border bg-sf-elevated block w-full rounded-[var(--sf-radius)] border px-3 py-2"
-              defaultValue={reminderTime}
+              defaultValue={reminderTime.slice(0, 5)}
               id="reminderTime"
               name="reminderTime"
               type="time"

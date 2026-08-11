@@ -18,7 +18,10 @@ const TeamSettingsPage = async (props: TeamSettingsPageProps) => {
   const todayLocal = localDateString(new Date(), session.user.timeZone);
 
   return (
-    <AppChrome>
+    <AppChrome
+      reminderPushEnabled={session.member.reminderEnabled}
+      vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+    >
       <TeamSettingsForm
         endDate={session.team.endDate}
         isOwner={session.member.isOwner}

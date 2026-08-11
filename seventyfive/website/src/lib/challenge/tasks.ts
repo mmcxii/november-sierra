@@ -268,6 +268,12 @@ export function localTimeHm(now: Date, timeZone: string): string {
   return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
 }
 
+/** Normalize stored reminder times (`HH:mm` or `HH:mm:ss`) for lexicographic compare with `localTimeHm`. */
+export function normalizeReminderTime(value: string): string {
+  const match = /^(\d{2}):(\d{2})(?::\d{2})?$/.exec(value.trim());
+  return match == null ? value : `${match[1]}:${match[2]}`;
+}
+
 export type DailyReminder =
   | {
       daysUntil: number;
@@ -303,7 +309,7 @@ export function resolveDailyReminder(args: {
     return null;
   }
 
-  if (localTimeHm(now, timeZone) < reminderTime) {
+  if (localTimeHm(now, timeZone) < normalizeReminderTime(reminderTime)) {
     return null;
   }
 
