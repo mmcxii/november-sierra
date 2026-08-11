@@ -102,7 +102,7 @@ export function compareDateOnly(a: string, b: string): number {
   return a < b ? -1 : 1;
 }
 
-/** Join is open on or before the start date (including day one). `today` should be the member's local calendar date. */
+/** Join is open through day 1 (the start date); locked from day 2 on. `today` is the member's local calendar date. */
 export function isJoinAllowed(startDate: string, today: string): boolean {
   return compareDateOnly(today, startDate) <= 0;
 }

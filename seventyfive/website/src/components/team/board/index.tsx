@@ -3,6 +3,7 @@
 import { ChallengeProgress } from "@/components/challenge/challenge-progress";
 import { usePendingRouter } from "@/components/navigation-pending";
 import { BoardActionsMenu } from "@/components/team/board/board-actions-menu";
+import { InviteModal } from "@/components/team/board/invite-modal";
 import { DateStepper } from "@/components/team/date-stepper";
 import { RosterRow } from "@/components/team/roster-row";
 import { TaskRow } from "@/components/team/task-row";
@@ -19,6 +20,7 @@ import {
 import {
   canEditDay,
   daysUntilStart,
+  isJoinAllowed,
   preStartRosterPulseMs,
   tasksForMode,
   type ChallengeMode,
@@ -99,6 +101,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const tasks = tasksForMode(memberMode);
   const checked = new Set(checkedTaskIds);
   const daysUntil = daysUntilStart(startDate, todayLocal);
+  const inviteAvailable = isJoinAllowed(startDate, todayLocal);
   const rosterPulseIntervalMs = preStartRosterPulseMs(daysUntil);
   const dayNumber = challengeDayNumber(startDate, selectedDate) ?? 1;
   const joinUrl =
@@ -170,20 +173,12 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     });
   };
 
-  const toggleInvite = () => {
-    setShowInvite((value) => {
-      return !value;
-    });
+  const openInvite = () => {
+    setShowInvite(true);
   };
 
-  const copyPassword = () => {
-    void navigator.clipboard.writeText(inviteCode);
-    toast.success(t("teamInvitePasswordCopied"));
-  };
-
-  const copyJoinLink = () => {
-    void navigator.clipboard.writeText(joinUrl);
-    toast.success(t("joinLinkCopied"));
+  const closeInvite = () => {
+    setShowInvite(false);
   };
 
   const onDateChange = (nextDate: string) => {
@@ -205,6 +200,12 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   };
 
   //* Effects
+  React.useEffect(() => {
+    if (!inviteAvailable) {
+      setShowInvite(false);
+    }
+  }, [inviteAvailable]);
+
   React.useEffect(() => {
     if (rosterPulseIntervalMs == null) {
       return;
@@ -229,7 +230,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       <header>
         <p className="font-sf-display text-3xl tracking-tight break-words">{teamName}</p>
         <ChallengeProgress
-          actions={<BoardActionsMenu onInvite={toggleInvite} teamId={teamId} />}
+          actions={<BoardActionsMenu inviteAvailable={inviteAvailable} onInvite={openInvite} teamId={teamId} />}
           celebration={celebration}
           celebrationNonce={celebrationNonce}
           className="mt-1"
@@ -242,29 +243,8 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
         />
       </header>
 
-      {showInvite ? (
-        <section className="sf-rise border-sf-border bg-sf-elevated mt-6 space-y-3 rounded-[var(--sf-radius)] border p-4">
-          <p className="text-sf-muted text-sm">
-            {t("shareThisPasswordWithYourTeamAnyoneWithItCanJoinBeforeTheStartDate")}
-          </p>
-          <code className="block text-xs break-all">{inviteCode}</code>
-          <div className="flex flex-col gap-2">
-            <button
-              className="bg-sf-accent text-sf-accent-text rounded-[var(--sf-radius)] px-3 py-2 text-sm"
-              onClick={copyPassword}
-              type="button"
-            >
-              {t("copyTeamInvitePassword")}
-            </button>
-            <button
-              className="border-sf-border rounded-[var(--sf-radius)] border px-3 py-2 text-sm"
-              onClick={copyJoinLink}
-              type="button"
-            >
-              {t("copyJoinLink")}
-            </button>
-          </div>
-        </section>
+      {showInvite && inviteAvailable ? (
+        <InviteModal inviteCode={inviteCode} joinUrl={joinUrl} onClose={closeInvite} />
       ) : null}
 
       <div className="mt-8">

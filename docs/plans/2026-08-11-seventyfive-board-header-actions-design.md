@@ -14,7 +14,7 @@ Give the team name the full content width and collapse board actions into a comp
 - Replace the **Your teams** / **Invite** / **Settings** button cluster with a single `⋯` trigger using the existing shadcn/Radix `DropdownMenu` (same primitive as the theme toggle).
 - Menu items:
   - **Your teams** → `/teams`
-  - **Invite** → toggles the existing inline invite panel (unchanged)
+  - **Invite** → opens the invite modal (hidden once joining locks after day 1)
   - **Settings** → `/teams/[teamId]/settings`
 - Trigger sits on the countdown row (`shrink-0`, end-aligned); theme toggle remains in `AppChrome` and is not part of this menu.
 
@@ -27,6 +27,5 @@ Give the team name the full content width and collapse board actions into a comp
 
 ### Out of scope
 
-- Moving Invite into a modal/sheet
 - Combining theme toggle into the board actions menu
 - Bottom tab bar / navigation shell
