@@ -1,17 +1,16 @@
+import { pickHomeTeam } from "@/lib/auth/home-team";
 import { getAuthUser, listMembershipsForUser } from "@/lib/auth/session";
 
-/** Cheapest signed-in landing: only/most-recent team, else /teams. */
+/** Signed-in landing: team closest to finishing (earliest start), else /teams. */
 export async function resolveSignedInHomePath(): Promise<string> {
   const user = await getAuthUser();
   if (user == null) {
     return "/";
   }
   const memberships = await listMembershipsForUser(user.id);
-  if (memberships.length === 0) {
+  const home = pickHomeTeam(memberships);
+  if (home == null) {
     return "/teams";
   }
-  if (memberships.length === 1) {
-    return `/teams/${memberships[0].team.id}`;
-  }
-  return "/teams";
+  return `/teams/${home.team.id}`;
 }
