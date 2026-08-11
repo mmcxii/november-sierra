@@ -151,6 +151,144 @@ select {
   transform: scale(1.06);
 }
 
+@keyframes sf-task-flash {
+  0% {
+    background-color: transparent;
+  }
+  35% {
+    background-color: color-mix(in srgb, var(--sf-accent) 14%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.sf-task-flash {
+  animation: sf-task-flash 420ms ease-out;
+  border-radius: var(--sf-radius);
+}
+
+@keyframes sf-day-settle {
+  0% {
+    opacity: 0.72;
+    transform: translateY(0.2rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sf-day-settle {
+  animation: sf-day-settle 480ms ease-out;
+}
+
+.sf-day-settle-finale {
+  animation: sf-day-settle 720ms ease-out;
+}
+
+.sf-progress-ember {
+  --sf-ember-size: 0.28rem;
+  --sf-ember-glow: 0.14rem;
+  --sf-ember-alpha: 0.28;
+  width: var(--sf-ember-size);
+  height: var(--sf-ember-size);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sf-ember-color, var(--sf-accent)) 92%, white);
+  box-shadow:
+    0 0 var(--sf-ember-glow) color-mix(in srgb, var(--sf-ember-color, var(--sf-accent)) calc(var(--sf-ember-alpha) * 100%), transparent),
+    0 0 calc(var(--sf-ember-glow) * 2.2) color-mix(in srgb, var(--sf-ember-color, var(--sf-accent)) calc(var(--sf-ember-alpha) * 55%), transparent);
+  pointer-events: none;
+}
+
+.sf-progress-ember[data-level="1"] {
+  --sf-ember-size: 0.31rem;
+  --sf-ember-glow: 0.18rem;
+  --sf-ember-alpha: 0.32;
+}
+.sf-progress-ember[data-level="2"] {
+  --sf-ember-size: 0.35rem;
+  --sf-ember-glow: 0.22rem;
+  --sf-ember-alpha: 0.36;
+}
+.sf-progress-ember[data-level="3"] {
+  --sf-ember-size: 0.38rem;
+  --sf-ember-glow: 0.26rem;
+  --sf-ember-alpha: 0.41;
+}
+.sf-progress-ember[data-level="4"] {
+  --sf-ember-size: 0.42rem;
+  --sf-ember-glow: 0.31rem;
+  --sf-ember-alpha: 0.45;
+}
+.sf-progress-ember[data-level="5"] {
+  --sf-ember-size: 0.45rem;
+  --sf-ember-glow: 0.35rem;
+  --sf-ember-alpha: 0.49;
+}
+.sf-progress-ember[data-level="6"] {
+  --sf-ember-size: 0.48rem;
+  --sf-ember-glow: 0.39rem;
+  --sf-ember-alpha: 0.53;
+}
+.sf-progress-ember[data-level="7"] {
+  --sf-ember-size: 0.52rem;
+  --sf-ember-glow: 0.43rem;
+  --sf-ember-alpha: 0.58;
+}
+.sf-progress-ember[data-level="8"] {
+  --sf-ember-size: 0.55rem;
+  --sf-ember-glow: 0.48rem;
+  --sf-ember-alpha: 0.62;
+}
+.sf-progress-ember[data-level="9"] {
+  --sf-ember-size: 0.59rem;
+  --sf-ember-glow: 0.52rem;
+  --sf-ember-alpha: 0.66;
+}
+.sf-progress-ember[data-level="10"] {
+  --sf-ember-size: 0.62rem;
+  --sf-ember-glow: 0.56rem;
+  --sf-ember-alpha: 0.7;
+}
+
+.sf-progress-ember-failed {
+  --sf-ember-color: var(--sf-danger);
+}
+
+@keyframes sf-ember-bloom {
+  0% {
+    filter: brightness(1);
+    transform: translate(-50%, -50%) scale(1);
+  }
+  45% {
+    filter: brightness(1.35);
+    transform: translate(-50%, -50%) scale(1.35);
+  }
+  100% {
+    filter: brightness(1);
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.sf-progress-ember-bloom {
+  animation: sf-ember-bloom 560ms ease-out;
+}
+
+.sf-progress-ember-finale {
+  animation: sf-ember-bloom 900ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-task-flash,
+  .sf-day-settle,
+  .sf-day-settle-finale,
+  .sf-progress-ember-bloom,
+  .sf-progress-ember-finale {
+    animation: none;
+  }
+}
+
 @keyframes sf-roster-check-pulse {
   0%,
   100% {
@@ -175,3 +313,81 @@ select {
   --normal-border: var(--sf-border);
   --normal-text: var(--sf-text);
 }
+
+/* Ember left edge by challenge day (0 = pre-start). */
+.sf-progress-ember[data-day="0"] { left: calc(100% * 0 / 75); }
+.sf-progress-ember[data-day="1"] { left: calc(100% * 1 / 75); }
+.sf-progress-ember[data-day="2"] { left: calc(100% * 2 / 75); }
+.sf-progress-ember[data-day="3"] { left: calc(100% * 3 / 75); }
+.sf-progress-ember[data-day="4"] { left: calc(100% * 4 / 75); }
+.sf-progress-ember[data-day="5"] { left: calc(100% * 5 / 75); }
+.sf-progress-ember[data-day="6"] { left: calc(100% * 6 / 75); }
+.sf-progress-ember[data-day="7"] { left: calc(100% * 7 / 75); }
+.sf-progress-ember[data-day="8"] { left: calc(100% * 8 / 75); }
+.sf-progress-ember[data-day="9"] { left: calc(100% * 9 / 75); }
+.sf-progress-ember[data-day="10"] { left: calc(100% * 10 / 75); }
+.sf-progress-ember[data-day="11"] { left: calc(100% * 11 / 75); }
+.sf-progress-ember[data-day="12"] { left: calc(100% * 12 / 75); }
+.sf-progress-ember[data-day="13"] { left: calc(100% * 13 / 75); }
+.sf-progress-ember[data-day="14"] { left: calc(100% * 14 / 75); }
+.sf-progress-ember[data-day="15"] { left: calc(100% * 15 / 75); }
+.sf-progress-ember[data-day="16"] { left: calc(100% * 16 / 75); }
+.sf-progress-ember[data-day="17"] { left: calc(100% * 17 / 75); }
+.sf-progress-ember[data-day="18"] { left: calc(100% * 18 / 75); }
+.sf-progress-ember[data-day="19"] { left: calc(100% * 19 / 75); }
+.sf-progress-ember[data-day="20"] { left: calc(100% * 20 / 75); }
+.sf-progress-ember[data-day="21"] { left: calc(100% * 21 / 75); }
+.sf-progress-ember[data-day="22"] { left: calc(100% * 22 / 75); }
+.sf-progress-ember[data-day="23"] { left: calc(100% * 23 / 75); }
+.sf-progress-ember[data-day="24"] { left: calc(100% * 24 / 75); }
+.sf-progress-ember[data-day="25"] { left: calc(100% * 25 / 75); }
+.sf-progress-ember[data-day="26"] { left: calc(100% * 26 / 75); }
+.sf-progress-ember[data-day="27"] { left: calc(100% * 27 / 75); }
+.sf-progress-ember[data-day="28"] { left: calc(100% * 28 / 75); }
+.sf-progress-ember[data-day="29"] { left: calc(100% * 29 / 75); }
+.sf-progress-ember[data-day="30"] { left: calc(100% * 30 / 75); }
+.sf-progress-ember[data-day="31"] { left: calc(100% * 31 / 75); }
+.sf-progress-ember[data-day="32"] { left: calc(100% * 32 / 75); }
+.sf-progress-ember[data-day="33"] { left: calc(100% * 33 / 75); }
+.sf-progress-ember[data-day="34"] { left: calc(100% * 34 / 75); }
+.sf-progress-ember[data-day="35"] { left: calc(100% * 35 / 75); }
+.sf-progress-ember[data-day="36"] { left: calc(100% * 36 / 75); }
+.sf-progress-ember[data-day="37"] { left: calc(100% * 37 / 75); }
+.sf-progress-ember[data-day="38"] { left: calc(100% * 38 / 75); }
+.sf-progress-ember[data-day="39"] { left: calc(100% * 39 / 75); }
+.sf-progress-ember[data-day="40"] { left: calc(100% * 40 / 75); }
+.sf-progress-ember[data-day="41"] { left: calc(100% * 41 / 75); }
+.sf-progress-ember[data-day="42"] { left: calc(100% * 42 / 75); }
+.sf-progress-ember[data-day="43"] { left: calc(100% * 43 / 75); }
+.sf-progress-ember[data-day="44"] { left: calc(100% * 44 / 75); }
+.sf-progress-ember[data-day="45"] { left: calc(100% * 45 / 75); }
+.sf-progress-ember[data-day="46"] { left: calc(100% * 46 / 75); }
+.sf-progress-ember[data-day="47"] { left: calc(100% * 47 / 75); }
+.sf-progress-ember[data-day="48"] { left: calc(100% * 48 / 75); }
+.sf-progress-ember[data-day="49"] { left: calc(100% * 49 / 75); }
+.sf-progress-ember[data-day="50"] { left: calc(100% * 50 / 75); }
+.sf-progress-ember[data-day="51"] { left: calc(100% * 51 / 75); }
+.sf-progress-ember[data-day="52"] { left: calc(100% * 52 / 75); }
+.sf-progress-ember[data-day="53"] { left: calc(100% * 53 / 75); }
+.sf-progress-ember[data-day="54"] { left: calc(100% * 54 / 75); }
+.sf-progress-ember[data-day="55"] { left: calc(100% * 55 / 75); }
+.sf-progress-ember[data-day="56"] { left: calc(100% * 56 / 75); }
+.sf-progress-ember[data-day="57"] { left: calc(100% * 57 / 75); }
+.sf-progress-ember[data-day="58"] { left: calc(100% * 58 / 75); }
+.sf-progress-ember[data-day="59"] { left: calc(100% * 59 / 75); }
+.sf-progress-ember[data-day="60"] { left: calc(100% * 60 / 75); }
+.sf-progress-ember[data-day="61"] { left: calc(100% * 61 / 75); }
+.sf-progress-ember[data-day="62"] { left: calc(100% * 62 / 75); }
+.sf-progress-ember[data-day="63"] { left: calc(100% * 63 / 75); }
+.sf-progress-ember[data-day="64"] { left: calc(100% * 64 / 75); }
+.sf-progress-ember[data-day="65"] { left: calc(100% * 65 / 75); }
+.sf-progress-ember[data-day="66"] { left: calc(100% * 66 / 75); }
+.sf-progress-ember[data-day="67"] { left: calc(100% * 67 / 75); }
+.sf-progress-ember[data-day="68"] { left: calc(100% * 68 / 75); }
+.sf-progress-ember[data-day="69"] { left: calc(100% * 69 / 75); }
+.sf-progress-ember[data-day="70"] { left: calc(100% * 70 / 75); }
+.sf-progress-ember[data-day="71"] { left: calc(100% * 71 / 75); }
+.sf-progress-ember[data-day="72"] { left: calc(100% * 72 / 75); }
+.sf-progress-ember[data-day="73"] { left: calc(100% * 73 / 75); }
+.sf-progress-ember[data-day="74"] { left: calc(100% * 74 / 75); }
+.sf-progress-ember[data-day="75"] { left: calc(100% * 75 / 75); }
