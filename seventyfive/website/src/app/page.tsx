@@ -16,7 +16,7 @@ const HomePage = async () => {
 
   return (
     <AppChrome>
-      <Container as="main" className="flex min-h-dvh flex-col justify-end pt-24 pb-16">
+      <Container as="main" className="flex flex-1 flex-col justify-end pt-12 pb-16">
         <p className="sf-rise text-sf-muted text-base">{t("team")}</p>
         <p className="sf-rise sf-rise-delay-1 font-sf-display text-sf-text text-5xl leading-none tracking-tight md:text-6xl">
           {t("seventyFive")}

@@ -7,11 +7,11 @@ export const AppChrome: React.FC<AppChromeProps> = (props) => {
   const { children } = props;
 
   return (
-    <div className="relative min-h-dvh overflow-x-hidden">
-      <div className="absolute top-4 right-5 z-10 sm:right-6 md:top-6">
+    <div className="relative flex min-h-dvh flex-col overflow-x-hidden">
+      <div className="flex shrink-0 justify-end px-5 pt-4 sm:px-6 md:pt-6">
         <ThemeToggle />
       </div>
-      {children}
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   );
 };

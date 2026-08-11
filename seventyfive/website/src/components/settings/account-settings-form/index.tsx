@@ -119,7 +119,7 @@ export const AccountSettingsForm: React.FC<AccountSettingsFormProps> = (props) =
   };
 
   return (
-    <Container as="main" className="min-h-dvh py-8">
+    <Container as="main" className="flex-1 py-8">
       <Link className="text-sf-muted text-sm" href="/teams">
         {t("yourTeams")}
       </Link>

@@ -11,7 +11,7 @@ const CreatePage = async () => {
 
   return (
     <AppChrome>
-      <Container as="main" className="min-h-dvh py-10">
+      <Container as="main" className="flex-1 py-10">
         <Link className="text-sf-muted text-sm" href="/">
           {t("teamSeventyfive")}
         </Link>

@@ -165,7 +165,7 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
   }, [mode]);
 
   return (
-    <Container as="main" className="min-h-dvh py-8">
+    <Container as="main" className="flex-1 py-8">
       <Link className="text-sf-muted text-sm" href={`/teams/${teamId}`}>
         {`\u2190 ${t("backTo{{teamName}}", { teamName })}`}
       </Link>

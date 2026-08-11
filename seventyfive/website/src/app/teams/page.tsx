@@ -16,7 +16,7 @@ const TeamsPage = async () => {
 
   return (
     <AppChrome>
-      <Container as="main" className="min-h-dvh py-8">
+      <Container as="main" className="flex-1 py-8">
         <h1 className="font-sf-display text-3xl">{t("yourTeams")}</h1>
         {memberships.length === 0 ? (
           <p className="text-sf-muted mt-8 text-sm">{t("youAreNotOnATeamYet")}</p>
