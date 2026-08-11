@@ -24,7 +24,7 @@ export const BootSplash: React.FC = () => {
     setPhase("out");
     const timer = window.setTimeout(() => {
       setPhase("gone");
-    }, 420);
+    }, 480);
 
     return () => {
       window.clearTimeout(timer);
@@ -39,8 +39,7 @@ export const BootSplash: React.FC = () => {
     <div aria-hidden="true" data-phase={phase} id="sf-boot-splash">
       <div className="sf-boot-splash-glow" />
       <div className="sf-boot-splash-inner">
-        <span className="sf-boot-ember" />
-        <p className="sf-boot-mark">75</p>
+        <span className="sf-brand-pulse-ember sf-brand-pulse-ember-lg" />
       </div>
     </div>
   );
