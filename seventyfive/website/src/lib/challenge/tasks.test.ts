@@ -31,7 +31,7 @@ describe("endDateFromStart", () => {
 });
 
 describe("isJoinAllowed", () => {
-  it("allows join on or before the start date", () => {
+  it("allows join through day 1 and locks from day 2", () => {
     //* Arrange
     const startDate = "2026-09-01";
 

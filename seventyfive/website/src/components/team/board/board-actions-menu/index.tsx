@@ -12,12 +12,13 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 
 export type BoardActionsMenuProps = {
+  inviteAvailable?: boolean;
   teamId: string;
   onInvite: () => void;
 };
 
 export const BoardActionsMenu: React.FC<BoardActionsMenuProps> = (props) => {
-  const { onInvite, teamId } = props;
+  const { inviteAvailable = true, onInvite, teamId } = props;
 
   //* State
   const { t } = useTranslation();
@@ -40,10 +41,12 @@ export const BoardActionsMenu: React.FC<BoardActionsMenuProps> = (props) => {
             {t("yourTeams")}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onInvite}>
-          <UserPlus aria-hidden className="size-4 shrink-0" strokeWidth={1.75} />
-          {t("invite")}
-        </DropdownMenuItem>
+        {inviteAvailable ? (
+          <DropdownMenuItem onSelect={onInvite}>
+            <UserPlus aria-hidden className="size-4 shrink-0" strokeWidth={1.75} />
+            {t("invite")}
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem asChild>
           <Link href={`/teams/${teamId}/settings`}>
             <Settings aria-hidden className="size-4 shrink-0" strokeWidth={1.75} />

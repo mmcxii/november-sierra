@@ -192,7 +192,7 @@ export async function joinTeamAction(input: z.infer<typeof joinSchema>): Promise
 
     const todayLocal = localDateString(new Date(), timeZone);
     if (!isJoinAllowed(matched.startDate, todayLocal)) {
-      return { error: "challengeAlreadyStarted" };
+      return { error: "joiningClosedAfterTheFirstDay" };
     }
 
     const [existingMembership] = await db
