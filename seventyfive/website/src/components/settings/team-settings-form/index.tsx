@@ -5,7 +5,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Container } from "@/components/ui/container";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { savePushSubscriptionAction, sendTestPushAction, updateMemberAction } from "@/lib/actions/member";
+import {
+  savePushSubscriptionAction,
+  sendDueReminderAction,
+  sendTestPushAction,
+  updateMemberAction,
+} from "@/lib/actions/member";
 import { deleteTeamAction, updateTeamAction } from "@/lib/actions/team";
 import { ensurePushSubscription, isIosDevice, isStandaloneDisplayMode } from "@/lib/browser/ensure-push-subscription";
 import type { ChallengeMode } from "@/lib/challenge/tasks";
@@ -169,6 +174,17 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
     });
   };
 
+  const onSendTodaysReminder = () => {
+    startTransition(async () => {
+      const result = await sendDueReminderAction();
+      if ("error" in result) {
+        toast.warning(t(result.error ?? "somethingWentWrong"));
+        return;
+      }
+      toast.success(t("todaysReminderSent"));
+    });
+  };
+
   const onDeleteTeam = () => {
     if (!confirmDelete) {
       return;
@@ -301,14 +317,27 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
       </form>
 
       {reminderEnabled ? (
-        <button
-          className="border-sf-border mt-4 w-full rounded-[var(--sf-radius)] border px-4 py-3 text-sm disabled:opacity-60"
-          disabled={isPending}
-          onClick={onSendTestNotification}
-          type="button"
-        >
-          {t("sendTestNotification")}
-        </button>
+        <div className="mt-4 w-full space-y-3">
+          <button
+            className="border-sf-border w-full rounded-[var(--sf-radius)] border px-4 py-3 text-sm disabled:opacity-60"
+            disabled={isPending}
+            onClick={onSendTestNotification}
+            type="button"
+          >
+            {t("sendTestNotification")}
+          </button>
+          <button
+            className="border-sf-border w-full rounded-[var(--sf-radius)] border px-4 py-3 text-sm disabled:opacity-60"
+            disabled={isPending}
+            onClick={onSendTodaysReminder}
+            type="button"
+          >
+            {t("sendTodaysReminder")}
+          </button>
+          <p className="text-sf-muted text-xs">
+            {t("todaysReminderUsesTheSameCountdownOrDailyUpdatePathAsTheScheduledJob")}
+          </p>
+        </div>
       ) : null}
 
       <p className="mt-8 text-sm">

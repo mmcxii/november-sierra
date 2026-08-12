@@ -1,0 +1,30 @@
+name: SeventyFive Reminders Cron
+
+on:
+  schedule:
+    # Hobby Vercel crons are once-daily per expression; this backup hits the same
+    # route hourly so reminder times are actually reachable across timezones.
+    - cron: "5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: seventyfive-reminders-cron
+  cancel-in-progress: false
+
+jobs:
+  remind:
+    name: Trigger reminder cron
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST due reminders
+        env:
+          CRON_SECRET: ${{ secrets.SEVENTYFIVE_CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "SEVENTYFIVE_CRON_SECRET is not set in repo secrets."
+            exit 1
+          fi
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Cache-Control: no-store" \
+            "https://seventyfive.team/api/cron/reminders"

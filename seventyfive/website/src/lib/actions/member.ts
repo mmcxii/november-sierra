@@ -5,6 +5,7 @@ import { hasStartPassed, localDateString, type ChallengeMode } from "@/lib/chall
 import { db } from "@/lib/db/client";
 import { membersTable, pushSubscriptionsTable } from "@/lib/db/schema";
 import { initTranslations } from "@/lib/i18n/server";
+import { processDailyReminders } from "@/lib/push/process-daily-reminders";
 import { configureWebPush, sendPushNotification } from "@/lib/push/send-push-notification";
 import { newId } from "@/lib/utils";
 import { eq } from "drizzle-orm";
@@ -152,4 +153,34 @@ export async function sendTestPushAction() {
   }
 
   return { ok: true as const, sent };
+}
+
+/** Runs the same due-reminder path as cron for the signed-in user. */
+export async function sendDueReminderAction() {
+  const user = await getAuthUser();
+  if (user == null) {
+    return { error: "somethingWentWrong" as const };
+  }
+
+  const { t } = await initTranslations();
+  // Ignore wall-clock gate so settings can verify the real countdown/daily payload path.
+  // Still respects lastReminderDate dedupe for the local day.
+  const result = await processDailyReminders({ ignoreReminderTime: true, t, userId: user.id });
+
+  if (result.skipped) {
+    return { error: "pushNotificationsAreNotConfigured" as const };
+  }
+
+  if (result.dueMembers === 0) {
+    return { error: "noReminderIsDueYet" as const };
+  }
+
+  if (result.sent === 0) {
+    if (result.dueWithoutSubscription > 0) {
+      return { error: "couldNotEnablePushNotifications" as const };
+    }
+    return { error: "couldNotSendTestNotification" as const };
+  }
+
+  return { ok: true as const, sent: result.sent };
 }
