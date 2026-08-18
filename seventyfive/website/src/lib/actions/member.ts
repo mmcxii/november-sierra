@@ -7,7 +7,6 @@ import { db } from "@/lib/db/client";
 import { membersTable, pushSubscriptionsTable } from "@/lib/db/schema";
 import { initTranslations } from "@/lib/i18n/server";
 import { processDailyReminders } from "@/lib/push/process-daily-reminders";
-import { configureWebPush, sendPushNotification } from "@/lib/push/send-push-notification";
 import { newId } from "@/lib/utils";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -106,57 +105,7 @@ export async function savePushSubscriptionAction(input: z.infer<typeof pushSchem
   return { ok: true as const };
 }
 
-export async function sendTestPushAction() {
-  const user = await getAuthUser();
-  if (user == null) {
-    return { error: "somethingWentWrong" as const };
-  }
-
-  const vapid = configureWebPush();
-  if (!vapid.ok) {
-    return { error: "pushNotificationsAreNotConfigured" as const };
-  }
-
-  const subscriptions = await db
-    .select()
-    .from(pushSubscriptionsTable)
-    .where(eq(pushSubscriptionsTable.userId, user.id));
-
-  if (subscriptions.length === 0) {
-    return { error: "couldNotSendTestNotification" as const };
-  }
-
-  const { t } = await initTranslations();
-  let sent = 0;
-
-  for (const sub of subscriptions) {
-    const result = await sendPushNotification(
-      { auth: sub.auth, endpoint: sub.endpoint, p256dh: sub.p256dh },
-      {
-        body: t("thisIsATestReminderFromTeamSeventyfive"),
-        title: t("testNotification"),
-        url: "/teams",
-      },
-    );
-
-    if (result.ok) {
-      sent += 1;
-      continue;
-    }
-
-    if (result.statusCode === 404 || result.statusCode === 410) {
-      await db.delete(pushSubscriptionsTable).where(eq(pushSubscriptionsTable.id, sub.id));
-    }
-  }
-
-  if (sent === 0) {
-    return { error: "couldNotSendTestNotification" as const };
-  }
-
-  return { ok: true as const, sent };
-}
-
-/** Runs the same due-reminder path as cron for the signed-in user. */
+/** Runs the same due-reminder path as cron for the signed-in user, without consuming the daily stamp. */
 export async function sendDueReminderAction() {
   const user = await getAuthUser();
   if (user == null) {
@@ -165,8 +114,12 @@ export async function sendDueReminderAction() {
 
   const { t } = await initTranslations();
   // Ignore wall-clock gate so settings can verify the real countdown/daily payload path.
-  // Still respects lastReminderDate dedupe for the local day.
-  const result = await processDailyReminders({ ignoreReminderTime: true, t, userId: user.id });
+  const result = await processDailyReminders({
+    ignoreReminderTime: true,
+    stampLastReminderDate: false,
+    t,
+    userId: user.id,
+  });
 
   if (result.skipped) {
     return { error: "pushNotificationsAreNotConfigured" as const };

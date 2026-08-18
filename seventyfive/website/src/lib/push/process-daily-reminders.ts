@@ -47,10 +47,12 @@ export async function processDailyReminders(args: {
   dryRun?: boolean;
   ignoreReminderTime?: boolean;
   now?: Date;
+  /** Cron stamps the local day so later hourly scans do not resend. Manual sends skip this. */
+  stampLastReminderDate?: boolean;
   t: TFunction;
   userId?: string;
 }): Promise<ProcessDailyRemindersResult | ProcessDailyRemindersSkipped> {
-  const { dryRun = false, ignoreReminderTime = false, t, userId } = args;
+  const { dryRun = false, ignoreReminderTime = false, stampLastReminderDate = true, t, userId } = args;
   const now = args.now ?? new Date();
 
   const vapid = configureWebPush();
@@ -182,12 +184,12 @@ export async function processDailyReminders(args: {
 
     // Only stamp the day when at least one push was accepted. Otherwise a missing
     // or dead subscription would silently burn the reminder for the local day.
-    if (delivered > 0) {
+    if (delivered > 0 && stampLastReminderDate) {
       await db
         .update(membersTable)
         .set({ lastReminderDate: todayLocal, updatedAt: new Date() })
         .where(eq(membersTable.id, member.id));
-    } else {
+    } else if (delivered === 0) {
       dueWithoutDelivery += 1;
     }
   }
