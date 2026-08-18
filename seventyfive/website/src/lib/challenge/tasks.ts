@@ -21,7 +21,8 @@ export const HARD_TASKS: readonly TaskDefinition[] = [
 
 export const SOFT_TASKS: readonly TaskDefinition[] = [
   { id: "workout", labelKey: "45MinExercise" },
-  { id: "diet", labelKey: "nutritiousMealsNoAlcoholUnlessSocial" },
+  { id: "diet", labelKey: "nutritiousMeals" },
+  { id: "alcohol", labelKey: "noAlcohol" },
   { id: "water", labelKey: "drink3LitersOfWater" },
   { id: "reading", labelKey: "read10Pages" },
 ] as const;
@@ -156,7 +157,7 @@ export type DayCompletionInput = {
   mode: ChallengeMode;
 };
 
-export type MemberStatus = "active" | "failed";
+export type MemberStatus = "active" | "exited" | "failed";
 
 export type RecomputeStatusInput = {
   challengeDates: readonly string[];
@@ -177,8 +178,8 @@ export function remainingTaskIds(mode: ChallengeMode, checkedTaskIds: readonly s
 }
 
 /**
- * Hard: any past incomplete challenge day ⇒ failed.
- * Soft: always active (stumble is derived separately).
+ * Hard: any past incomplete challenge day ⇒ failed (until they choose Soft or exit).
+ * Soft and exited: always active / sticky exited (handled by caller).
  */
 export function recomputeMemberStatus(input: RecomputeStatusInput): MemberStatus {
   if (input.mode === "soft") {
@@ -219,6 +220,43 @@ export function hasSoftStumble(input: Omit<RecomputeStatusInput, "mode">): boole
   return false;
 }
 
+/** Count of past challenge days complete under Hard rules (used when converting to Soft). */
+export function countCompletedHardDays(input: Omit<RecomputeStatusInput, "mode">): number {
+  const byDate = new Map(input.completions.map((completion) => [completion.date, completion]));
+  let completed = 0;
+
+  for (const date of input.challengeDates) {
+    if (compareDateOnly(date, input.todayLocal) >= 0) {
+      continue;
+    }
+    const completion = byDate.get(date);
+    const checked = completion?.checkedTaskIds ?? [];
+    if (isDayComplete("hard", checked)) {
+      completed += 1;
+    }
+  }
+
+  return completed;
+}
+
+/** First past challenge day that is incomplete for the member's current mode. */
+export function firstIncompletePastDate(input: RecomputeStatusInput): null | string {
+  const byDate = new Map(input.completions.map((completion) => [completion.date, completion]));
+
+  for (const date of input.challengeDates) {
+    if (compareDateOnly(date, input.todayLocal) >= 0) {
+      continue;
+    }
+    const completion = byDate.get(date);
+    const checked = completion?.checkedTaskIds ?? [];
+    if (!isDayComplete(input.mode, checked)) {
+      return date;
+    }
+  }
+
+  return null;
+}
+
 export function listChallengeDates(startDate: string, endDate: string): string[] {
   const dates: string[] = [];
   let cursor = parseDateOnly(startDate);
@@ -246,6 +284,9 @@ export function canEditDay(args: {
     return false;
   }
   if (compareDateOnly(selectedDate, todayLocal) > 0) {
+    return false;
+  }
+  if (status === "exited") {
     return false;
   }
   if (mode === "hard" && status === "failed" && selectedDate === todayLocal) {
@@ -318,7 +359,7 @@ export function resolveDailyReminder(args: {
     return { daysUntil, type: "countdown" };
   }
 
-  if (status === "failed" || !todayIncomplete) {
+  if (status === "failed" || status === "exited" || !todayIncomplete) {
     return null;
   }
 

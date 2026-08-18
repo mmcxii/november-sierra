@@ -81,7 +81,7 @@ export const ChallengeProgress: React.FC<ChallengeProgressProps> = (props) => {
   const progress = emberProgress(elapsedDayCount);
   const level = emberLevel(isPreStart ? 0 : progress);
   const day = emberDay(elapsedDayCount, isPreStart);
-  const emberFailed = memberMode === "hard" && memberStatus === "failed";
+  const emberFailed = memberMode === "hard" && (memberStatus === "failed" || memberStatus === "exited");
 
   return (
     <div className={cn("w-full min-w-0", className)}>
