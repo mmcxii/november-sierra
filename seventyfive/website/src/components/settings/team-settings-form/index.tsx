@@ -5,12 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Container } from "@/components/ui/container";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  savePushSubscriptionAction,
-  sendDueReminderAction,
-  sendTestPushAction,
-  updateMemberAction,
-} from "@/lib/actions/member";
+import { savePushSubscriptionAction, sendDueReminderAction, updateMemberAction } from "@/lib/actions/member";
 import { deleteTeamAction, updateTeamAction } from "@/lib/actions/team";
 import { ensurePushSubscription, isIosDevice, isStandaloneDisplayMode } from "@/lib/browser/ensure-push-subscription";
 import type { ChallengeMode } from "@/lib/challenge/tasks";
@@ -163,17 +158,6 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
     setConfirmDelete(checked === true);
   };
 
-  const onSendTestNotification = () => {
-    startTransition(async () => {
-      const result = await sendTestPushAction();
-      if ("error" in result) {
-        toast.warning(t(result.error ?? "somethingWentWrong"));
-        return;
-      }
-      toast.success(t("testNotificationSent"));
-    });
-  };
-
   const onSendTodaysReminder = () => {
     startTransition(async () => {
       const result = await sendDueReminderAction();
@@ -318,14 +302,6 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
 
       {reminderEnabled ? (
         <div className="mt-4 w-full space-y-3">
-          <button
-            className="border-sf-border w-full rounded-[var(--sf-radius)] border px-4 py-3 text-sm disabled:opacity-60"
-            disabled={isPending}
-            onClick={onSendTestNotification}
-            type="button"
-          >
-            {t("sendTestNotification")}
-          </button>
           <button
             className="border-sf-border w-full rounded-[var(--sf-radius)] border px-4 py-3 text-sm disabled:opacity-60"
             disabled={isPending}
