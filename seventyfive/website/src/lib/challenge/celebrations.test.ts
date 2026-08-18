@@ -21,12 +21,12 @@ describe("challengeDayNumber", () => {
 });
 
 describe("resolveCheckCelebration", () => {
-  const softComplete = ["workout", "diet", "water", "reading"] as const;
+  const softComplete = ["workout", "diet", "alcohol", "water", "reading"] as const;
 
   it("returns none when unchecking", () => {
     //* Act
     const result = resolveCheckCelebration({
-      checkedTaskIdsBefore: softComplete.slice(0, 3),
+      checkedTaskIdsBefore: softComplete.slice(0, 4),
       endDate: "2026-11-14",
       mode: "soft",
       nextChecked: false,
@@ -43,7 +43,7 @@ describe("resolveCheckCelebration", () => {
   it("returns none when catching up a past day", () => {
     //* Act
     const result = resolveCheckCelebration({
-      checkedTaskIdsBefore: softComplete.slice(0, 3),
+      checkedTaskIdsBefore: softComplete.slice(0, 4),
       endDate: "2026-11-14",
       mode: "soft",
       nextChecked: true,
@@ -60,7 +60,7 @@ describe("resolveCheckCelebration", () => {
   it("returns day when finishing today before the finale", () => {
     //* Act
     const result = resolveCheckCelebration({
-      checkedTaskIdsBefore: softComplete.slice(0, 3),
+      checkedTaskIdsBefore: softComplete.slice(0, 4),
       endDate: "2026-11-14",
       mode: "soft",
       nextChecked: true,
@@ -78,7 +78,7 @@ describe("resolveCheckCelebration", () => {
   it("returns finale when finishing the end date today", () => {
     //* Act
     const result = resolveCheckCelebration({
-      checkedTaskIdsBefore: softComplete.slice(0, 3),
+      checkedTaskIdsBefore: softComplete.slice(0, 4),
       endDate: "2026-11-14",
       mode: "soft",
       nextChecked: true,

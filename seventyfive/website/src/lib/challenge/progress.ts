@@ -27,7 +27,7 @@ export function buildChallengeProgressSlices(input: BuildChallengeProgressSlices
   });
   const elapsed = Math.min(input.elapsedComplete.length, totalDays);
 
-  if (input.mode === "hard" && input.status === "failed") {
+  if ((input.mode === "hard" && input.status === "failed") || input.status === "exited") {
     for (let index = 0; index < elapsed; index += 1) {
       slices[index] = "failed";
     }

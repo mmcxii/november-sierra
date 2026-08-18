@@ -1,7 +1,8 @@
 "use server";
 
 import { getAuthUser, getMembershipContext } from "@/lib/auth/session";
-import { hasStartPassed, localDateString, type ChallengeMode } from "@/lib/challenge/tasks";
+import { convertHardMemberToSoft, exitHardChallenge, refreshMemberStatus } from "@/lib/challenge/status";
+import { hasStartPassed, localDateString, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
 import { membersTable, pushSubscriptionsTable } from "@/lib/db/schema";
 import { initTranslations } from "@/lib/i18n/server";
@@ -183,4 +184,63 @@ export async function sendDueReminderAction() {
   }
 
   return { ok: true as const, sent: result.sent };
+}
+
+const resolveHardFailSchema = z.object({
+  choice: z.enum(["exit", "fix", "soft"]),
+  teamId: z.string().min(1),
+});
+
+export async function resolveHardFailAction(input: z.infer<typeof resolveHardFailSchema>) {
+  const parsed = resolveHardFailSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "somethingWentWrong" as const };
+  }
+
+  const session = await getMembershipContext(parsed.data.teamId);
+  if (session == null) {
+    return { error: "somethingWentWrong" as const };
+  }
+
+  const mode = session.member.mode as ChallengeMode;
+  const currentStatus = session.member.status as MemberStatus;
+  if (mode !== "hard" || currentStatus === "exited") {
+    return { error: "somethingWentWrong" as const };
+  }
+
+  const refreshed = await refreshMemberStatus({
+    endDate: session.team.endDate,
+    memberId: session.member.id,
+    mode,
+    startDate: session.team.startDate,
+    status: currentStatus,
+    timeZone: session.user.timeZone,
+  });
+
+  if (refreshed.status !== "failed") {
+    revalidatePath(`/teams/${parsed.data.teamId}`);
+    return { ok: true as const };
+  }
+
+  if (parsed.data.choice === "fix") {
+    revalidatePath(`/teams/${parsed.data.teamId}`);
+    return { incompleteDate: refreshed.firstIncompletePastDate ?? null, ok: true as const };
+  }
+
+  if (parsed.data.choice === "soft") {
+    await convertHardMemberToSoft({
+      endDate: session.team.endDate,
+      memberId: session.member.id,
+      startDate: session.team.startDate,
+      timeZone: session.user.timeZone,
+    });
+    revalidatePath(`/teams/${parsed.data.teamId}`);
+    revalidatePath(`/teams/${parsed.data.teamId}/settings`);
+    return { ok: true as const };
+  }
+
+  await exitHardChallenge(session.member.id);
+  revalidatePath(`/teams/${parsed.data.teamId}`);
+  revalidatePath(`/teams/${parsed.data.teamId}/settings`);
+  return { ok: true as const };
 }

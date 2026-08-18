@@ -1,4 +1,6 @@
 import {
+  countCompletedHardDays,
+  firstIncompletePastDate,
   hasSoftStumble,
   listChallengeDates,
   localDateString,
@@ -8,13 +10,20 @@ import {
 } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
 import { dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/schema";
+import { newId } from "@/lib/utils";
 import { and, eq, inArray } from "drizzle-orm";
 
-export async function loadMemberCompletions(memberId: string) {
+export type MemberDayCompletion = {
+  checkedTaskIds: string[];
+  date: string;
+  dayCompletionId: string;
+};
+
+export async function loadMemberCompletions(memberId: string): Promise<MemberDayCompletion[]> {
   const days = await db.select().from(dayCompletionsTable).where(eq(dayCompletionsTable.memberId, memberId));
 
   if (days.length === 0) {
-    return [] as { checkedTaskIds: string[]; date: string; mode: ChallengeMode }[];
+    return [];
   }
 
   const checks = await db
@@ -37,7 +46,7 @@ export async function loadMemberCompletions(memberId: string) {
   return days.map((day) => ({
     checkedTaskIds: checksByDay.get(day.id) ?? [],
     date: day.date,
-    mode: "hard" as ChallengeMode,
+    dayCompletionId: day.id,
   }));
 }
 
@@ -46,15 +55,25 @@ export async function refreshMemberStatus(args: {
   memberId: string;
   mode: ChallengeMode;
   startDate: string;
+  status?: MemberStatus;
   timeZone: string;
-}): Promise<{ softStumble: boolean; status: MemberStatus }> {
+}): Promise<{ firstIncompletePastDate: null | string; softStumble: boolean; status: MemberStatus }> {
   const todayLocal = localDateString(new Date(), args.timeZone);
   const challengeDates = listChallengeDates(args.startDate, args.endDate);
   const completions = await loadMemberCompletions(args.memberId);
+  const completionInputs = completions.map((completion) => ({
+    checkedTaskIds: completion.checkedTaskIds,
+    date: completion.date,
+    mode: args.mode,
+  }));
+
+  if (args.status === "exited") {
+    return { firstIncompletePastDate: null, softStumble: false, status: "exited" };
+  }
 
   const status = recomputeMemberStatus({
     challengeDates,
-    completions: completions.map((c) => ({ ...c, mode: args.mode })),
+    completions: completionInputs,
     mode: args.mode,
     todayLocal,
   });
@@ -63,14 +82,76 @@ export async function refreshMemberStatus(args: {
     args.mode === "soft" &&
     hasSoftStumble({
       challengeDates,
-      completions: completions.map((c) => ({ ...c, mode: "soft" })),
+      completions: completionInputs,
       todayLocal,
     });
+
+  const incompletePastDate =
+    args.mode === "hard" && status === "failed"
+      ? firstIncompletePastDate({
+          challengeDates,
+          completions: completionInputs,
+          mode: "hard",
+          todayLocal,
+        })
+      : null;
 
   await db
     .update(membersTable)
     .set({ status, updatedAt: new Date() })
     .where(and(eq(membersTable.id, args.memberId)));
 
-  return { softStumble, status };
+  return { firstIncompletePastDate: incompletePastDate, softStumble, status };
+}
+
+export async function convertHardMemberToSoft(args: {
+  endDate: string;
+  memberId: string;
+  startDate: string;
+  timeZone: string;
+}): Promise<{ hardCompletedDays: number; status: MemberStatus }> {
+  const todayLocal = localDateString(new Date(), args.timeZone);
+  const challengeDates = listChallengeDates(args.startDate, args.endDate);
+  const completions = await loadMemberCompletions(args.memberId);
+  const completionInputs = completions.map((completion) => ({
+    checkedTaskIds: completion.checkedTaskIds,
+    date: completion.date,
+    mode: "hard" as const,
+  }));
+
+  const hardCompletedDays = countCompletedHardDays({
+    challengeDates,
+    completions: completionInputs,
+    todayLocal,
+  });
+
+  for (const completion of completions) {
+    if (!completion.checkedTaskIds.includes("diet") || completion.checkedTaskIds.includes("alcohol")) {
+      continue;
+    }
+    await db.insert(taskChecksTable).values({
+      dayCompletionId: completion.dayCompletionId,
+      id: newId(),
+      taskId: "alcohol",
+    });
+  }
+
+  await db
+    .update(membersTable)
+    .set({
+      hardCompletedDays,
+      mode: "soft",
+      status: "active",
+      updatedAt: new Date(),
+    })
+    .where(eq(membersTable.id, args.memberId));
+
+  return { hardCompletedDays, status: "active" };
+}
+
+export async function exitHardChallenge(memberId: string): Promise<void> {
+  await db
+    .update(membersTable)
+    .set({ reminderEnabled: false, status: "exited", updatedAt: new Date() })
+    .where(eq(membersTable.id, memberId));
 }

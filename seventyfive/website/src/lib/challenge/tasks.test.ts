@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   canEditDay,
+  countCompletedHardDays,
   daysUntilStart,
   endDateFromStart,
+  firstIncompletePastDate,
   hasSoftStumble,
   hasStartPassed,
   isJoinAllowed,
@@ -305,6 +307,61 @@ describe("canEditDay", () => {
     //* Assert
     expect(editable).toBe(true);
   });
+
+  it("blocks every day after a hard member exits", () => {
+    //* Arrange
+    const input = {
+      mode: "hard" as const,
+      selectedDate: "2026-09-01",
+      startDate: "2026-09-01",
+      status: "exited" as const,
+      todayLocal: "2026-09-03",
+    };
+
+    //* Act
+    const editable = canEditDay(input);
+
+    //* Assert
+    expect(editable).toBe(false);
+  });
+});
+
+describe("countCompletedHardDays", () => {
+  it("counts only past complete hard days", () => {
+    //* Arrange
+    const hardComplete = ["workout", "outdoorWorkout", "water", "diet", "reading", "progressPhoto"];
+
+    //* Act
+    const completed = countCompletedHardDays({
+      challengeDates: ["2026-09-01", "2026-09-02", "2026-09-03"],
+      completions: [
+        { checkedTaskIds: hardComplete, date: "2026-09-01", mode: "hard" },
+        { checkedTaskIds: ["workout"], date: "2026-09-02", mode: "hard" },
+      ],
+      todayLocal: "2026-09-03",
+    });
+
+    //* Assert
+    expect(completed).toBe(1);
+  });
+});
+
+describe("firstIncompletePastDate", () => {
+  it("returns the earliest incomplete past hard day", () => {
+    //* Arrange
+    const hardComplete = ["workout", "outdoorWorkout", "water", "diet", "reading", "progressPhoto"];
+
+    //* Act
+    const date = firstIncompletePastDate({
+      challengeDates: ["2026-09-01", "2026-09-02", "2026-09-03"],
+      completions: [{ checkedTaskIds: hardComplete, date: "2026-09-01", mode: "hard" }],
+      mode: "hard",
+      todayLocal: "2026-09-03",
+    });
+
+    //* Assert
+    expect(date).toBe("2026-09-02");
+  });
 });
 
 describe("remainingTaskIds", () => {
@@ -316,7 +373,7 @@ describe("remainingTaskIds", () => {
     const remaining = remainingTaskIds("soft", checked);
 
     //* Assert
-    expect(remaining).toEqual(["diet", "reading"]);
+    expect(remaining).toEqual(["diet", "alcohol", "reading"]);
   });
 });
 

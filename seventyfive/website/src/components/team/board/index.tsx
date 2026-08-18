@@ -3,11 +3,13 @@
 import { ChallengeProgress } from "@/components/challenge/challenge-progress";
 import { usePendingRouter } from "@/components/navigation-pending";
 import { BoardActionsMenu } from "@/components/team/board/board-actions-menu";
+import { HardFailModal } from "@/components/team/board/hard-fail-modal";
 import { InviteModal } from "@/components/team/board/invite-modal";
 import { DateStepper } from "@/components/team/date-stepper";
 import { RosterRow } from "@/components/team/roster-row";
 import { TaskRow } from "@/components/team/task-row";
 import { Container } from "@/components/ui/container";
+import { resolveHardFailAction } from "@/lib/actions/member";
 import { setTaskCheckedAction } from "@/lib/actions/tasks";
 import { leaveTeamAction } from "@/lib/actions/team";
 import {
@@ -36,6 +38,7 @@ import { toast } from "sonner";
 export type RosterMember = {
   checkedTaskIds: readonly string[];
   displayName: string;
+  hardCompletedDays: null | number;
   id: string;
   mode: ChallengeMode;
   softStumble: boolean;
@@ -45,6 +48,7 @@ export type RosterMember = {
 export type TeamBoardProps = {
   checkedTaskIds: string[];
   endDate: string;
+  firstIncompletePastDate: null | string;
   inviteCode: string;
   isOwner: boolean;
   memberId: string;
@@ -64,6 +68,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const {
     checkedTaskIds,
     endDate,
+    firstIncompletePastDate,
     inviteCode,
     isOwner,
     memberId,
@@ -199,6 +204,38 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     });
   };
 
+  const resolveHardFail = (choice: "exit" | "fix" | "soft") => {
+    startTransition(async () => {
+      const result = await resolveHardFailAction({ choice, teamId });
+      if ("error" in result) {
+        setError(result.error ?? "somethingWentWrong");
+        return;
+      }
+      if (choice === "fix") {
+        const nextDate = result.incompleteDate ?? firstIncompletePastDate;
+        if (nextDate != null) {
+          const params = new URLSearchParams(window.location.search);
+          params.set("date", nextDate);
+          router.push(`/teams/${teamId}?${params.toString()}`);
+          return;
+        }
+      }
+      router.refresh();
+    });
+  };
+
+  const onFixHardFail = () => {
+    resolveHardFail("fix");
+  };
+
+  const onMoveToSoft = () => {
+    resolveHardFail("soft");
+  };
+
+  const onExitChallenge = () => {
+    resolveHardFail("exit");
+  };
+
   //* Effects
   React.useEffect(() => {
     if (!inviteAvailable) {
@@ -247,6 +284,15 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
         <InviteModal inviteCode={inviteCode} joinUrl={joinUrl} onClose={closeInvite} />
       ) : null}
 
+      {memberMode === "hard" && memberStatus === "failed" ? (
+        <HardFailModal
+          disabled={isPending}
+          onExit={onExitChallenge}
+          onFix={onFixHardFail}
+          onMoveToSoft={onMoveToSoft}
+        />
+      ) : null}
+
       <div className="mt-8">
         <DateStepper
           endDate={endDate}
@@ -276,6 +322,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
               <RosterRow
                 checkedTaskIds={member.checkedTaskIds}
                 displayName={member.displayName}
+                hardCompletedDays={member.hardCompletedDays}
                 isSelf={member.id === memberId}
                 key={member.id}
                 mode={member.mode}
@@ -294,6 +341,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
         {memberStatus === "failed" && selectedDate === todayLocal ? (
           <p className="text-sf-danger mt-3 text-sm">{t("fixPastDaysToContinue")}</p>
         ) : null}
+        {memberStatus === "exited" ? <p className="text-sf-danger mt-3 text-sm">{t("failed")}</p> : null}
         <ul
           className={cn("mt-4 space-y-3", {
             "sf-day-settle": celebration === "day",

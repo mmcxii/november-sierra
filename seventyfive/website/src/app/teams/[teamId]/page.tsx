@@ -2,7 +2,9 @@ import { AppChrome } from "@/components/app-chrome";
 import { TeamBoard } from "@/components/team/board";
 import { getMembershipContext } from "@/lib/auth/session";
 import { elapsedProgressForMember } from "@/lib/challenge/progress";
+import { refreshMemberStatus } from "@/lib/challenge/status";
 import {
+  firstIncompletePastDate,
   hasSoftStumble,
   listChallengeDates,
   localDateString,
@@ -27,8 +29,19 @@ const TeamPage = async (props: TeamPageProps) => {
     redirect("/teams");
   }
 
-  const searchParams = await props.searchParams;
   const todayLocal = localDateString(new Date(), session.user.timeZone);
+  const memberMode = session.member.mode as ChallengeMode;
+  const refreshed = await refreshMemberStatus({
+    endDate: session.team.endDate,
+    memberId: session.member.id,
+    mode: memberMode,
+    startDate: session.team.startDate,
+    status: session.member.status as MemberStatus,
+    timeZone: session.user.timeZone,
+  });
+  const memberStatus = refreshed.status;
+
+  const searchParams = await props.searchParams;
   const selectedDate = searchParams.date ?? todayLocal;
   const challengeDates = listChallengeDates(session.team.startDate, session.team.endDate);
 
@@ -84,28 +97,40 @@ const TeamPage = async (props: TeamPageProps) => {
     return {
       checkedTaskIds: checkedTaskIds.filter((id) => taskIdsForMode(mode).includes(id)),
       displayName: row.user?.name ?? row.member.displayName,
+      hardCompletedDays: row.member.hardCompletedDays,
       id: row.member.id,
       mode,
       softStumble,
-      status: row.member.status as MemberStatus,
+      status: (row.member.id === session.member.id ? memberStatus : row.member.status) as MemberStatus,
     };
   });
 
   const selfDay = relevantDays.find((day) => day.memberId === session.member.id);
   const checkedTaskIds = selfDay != null ? (checksByDay.get(selfDay.id) ?? []) : [];
-  const memberMode = session.member.mode as ChallengeMode;
+  const selfCompletions = (daysByMember.get(session.member.id) ?? []).map((day) => {
+    return {
+      checkedTaskIds: checksByDay.get(day.id) ?? [],
+      date: day.date,
+      mode: memberMode,
+    };
+  });
   const selfProgress = elapsedProgressForMember({
-    completions: (daysByMember.get(session.member.id) ?? []).map((day) => {
-      return {
-        checkedTaskIds: checksByDay.get(day.id) ?? [],
-        date: day.date,
-      };
-    }),
+    completions: selfCompletions,
     endDate: session.team.endDate,
     mode: memberMode,
     startDate: session.team.startDate,
     todayLocal,
   });
+  const incompletePastDate =
+    refreshed.firstIncompletePastDate ??
+    (memberMode === "hard" && memberStatus === "failed"
+      ? firstIncompletePastDate({
+          challengeDates,
+          completions: selfCompletions,
+          mode: memberMode,
+          todayLocal,
+        })
+      : null);
 
   return (
     <AppChrome
@@ -115,11 +140,12 @@ const TeamPage = async (props: TeamPageProps) => {
       <TeamBoard
         checkedTaskIds={checkedTaskIds}
         endDate={session.team.endDate}
+        firstIncompletePastDate={incompletePastDate}
         inviteCode={session.team.inviteCode}
         isOwner={session.member.isOwner}
         memberId={session.member.id}
         memberMode={memberMode}
-        memberStatus={session.member.status as MemberStatus}
+        memberStatus={memberStatus}
         progressElapsedComplete={selfProgress.elapsedComplete}
         progressLastElapsedIsToday={selfProgress.lastElapsedIsToday}
         roster={roster}

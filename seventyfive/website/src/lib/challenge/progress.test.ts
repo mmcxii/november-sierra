@@ -112,7 +112,7 @@ describe("elapsedProgressForMember", () => {
     const startDate = "2026-09-01";
     const endDate = "2026-09-05";
     const todayLocal = "2026-09-03";
-    const softTasks = ["workout", "diet", "water", "reading"];
+    const softTasks = ["workout", "diet", "alcohol", "water", "reading"];
 
     //* Act
     const result = elapsedProgressForMember({

@@ -6,7 +6,7 @@ Accountability tracker for 75 Hard / 75 Soft private groups. No signup: group se
 
 - Private groups via auto-generated 64-char password
 - Mixed Hard/Soft members in one group
-- Daily task checkoffs; Hard fail → readonly until retroactive fix; Soft stumble (visual only)
+- Daily task checkoffs; Hard fail → modal (fix yesterday, move to Soft, or exit); Soft stumble (visual only)
 - PWA install + one opt-in daily web push listing remaining tasks
 - No persistent user accounts or long-term history product surface in v0.1
 
@@ -78,9 +78,10 @@ Invite code is a high-entropy capability secret stored so any member can copy pa
 **Soft**
 
 1. `workout` — 45 min exercise
-2. `diet` — Nutritious meals; no alcohol unless social (self-defined standards)
-3. `water` — Drink 3 liters of water
-4. `reading` — Read 10 pages
+2. `diet` — Nutritious meals
+3. `alcohol` — No alcohol
+4. `water` — Drink 3 liters of water
+5. `reading` — Read 10 pages
 
 ## Domain rules
 
@@ -88,7 +89,7 @@ Invite code is a high-entropy capability secret stored so any member can copy pa
 - Owner: edit name + start date until start has passed; end recomputed.
 - Any member can invite (copy password + `/join?code=`).
 - Day picker: view start→end; edit today + past only; future disabled.
-- Hard: past incomplete day ⇒ `failed`, today locked until history fixed; retroactive checks restore `active`.
+- Hard: past incomplete day ⇒ `failed` and a blocking modal (fix history, move to Soft, or exit). Soft conversion stores `hardCompletedDays`. Exit is sticky (`exited`, all days readonly).
 - Soft: never readonly; incomplete past days ⇒ stumble/off-track visual.
 - Hard↔Soft switchable only before group start. Display name, TZ, reminder prefs anytime.
 - Replacing session (create/join while already in a group) requires confirm.

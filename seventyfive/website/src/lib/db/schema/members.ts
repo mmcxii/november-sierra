@@ -1,4 +1,4 @@
-import { boolean, date, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { boolean, date, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { betterAuthUserTable } from "./better-auth";
 import { teamsTable } from "./teams";
 
@@ -8,6 +8,8 @@ export const membersTable = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     /** @deprecated Prefer user.name; kept populated for roster/migration compatibility. */
     displayName: text("display_name").notNull(),
+    /** Completed Hard days at the moment of a Hard→Soft conversion. Null if they never left Hard. */
+    hardCompletedDays: integer("hard_completed_days"),
     id: text("id").primaryKey(),
     isOwner: boolean("is_owner").default(false).notNull(),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),

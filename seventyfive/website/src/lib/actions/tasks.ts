@@ -2,7 +2,13 @@
 
 import { getMembershipContext } from "@/lib/auth/session";
 import { refreshMemberStatus } from "@/lib/challenge/status";
-import { canEditDay, localDateString, taskIdsForMode, type ChallengeMode } from "@/lib/challenge/tasks";
+import {
+  canEditDay,
+  localDateString,
+  taskIdsForMode,
+  type ChallengeMode,
+  type MemberStatus,
+} from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
 import { dayCompletionsTable, taskChecksTable } from "@/lib/db/schema";
 import { newId } from "@/lib/utils";
@@ -34,7 +40,7 @@ export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>)
     mode,
     selectedDate: parsed.data.date,
     startDate: session.team.startDate,
-    status: session.member.status as "active" | "failed",
+    status: session.member.status as MemberStatus,
     todayLocal,
   });
 
@@ -85,6 +91,7 @@ export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>)
     memberId: session.member.id,
     mode,
     startDate: session.team.startDate,
+    status: session.member.status as MemberStatus,
     timeZone: session.user.timeZone,
   });
 

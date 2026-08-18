@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 export type RosterRowProps = {
   checkedTaskIds: readonly string[];
   displayName: string;
+  hardCompletedDays?: null | number;
   isSelf: boolean;
   mode: ChallengeMode;
   /** When true, icons run a quick unchecked↔checked fade on each pulseNonce. */
@@ -21,17 +22,32 @@ export type RosterRowProps = {
 };
 
 export const RosterRow: React.FC<RosterRowProps> = (props) => {
-  const { checkedTaskIds, displayName, isSelf, mode, pulse = false, pulseNonce = 0, softStumble, status } = props;
+  const {
+    checkedTaskIds,
+    displayName,
+    hardCompletedDays = null,
+    isSelf,
+    mode,
+    pulse = false,
+    pulseNonce = 0,
+    softStumble,
+    status,
+  } = props;
 
   //* State
   const { t } = useTranslation();
 
   //* Variables
   let statusLabel: null | TranslationKey = null;
-  if (status === "failed") {
+  if (status === "failed" || status === "exited") {
     statusLabel = "failed";
   } else if (mode === "soft" && softStumble) {
     statusLabel = "offTrack";
+  }
+  const modeLabel = mode === "hard" ? t("hard") : t("soft");
+  let hardDaysKey: null | TranslationKey = null;
+  if (mode === "soft" && hardCompletedDays != null) {
+    hardDaysKey = hardCompletedDays === 1 ? "{{count}}DayOnHard" : "{{count}}DaysOnHard";
   }
 
   return (
@@ -41,16 +57,24 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
           {displayName}
           {isSelf ? <span aria-hidden="true">{`\u00b7`}</span> : null}
         </p>
-        <p className="text-sf-muted text-xs">{mode === "hard" ? t("hard") : t("soft")}</p>
+        <p className="text-sf-muted text-xs">
+          {modeLabel}
+          {hardDaysKey != null && hardCompletedDays != null ? (
+            <>
+              <span aria-hidden="true">{` \u00b7 `}</span>
+              <span className="tabular-nums">{t(hardDaysKey, { count: hardCompletedDays })}</span>
+            </>
+          ) : null}
+        </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <TaskIconStrip checkedTaskIds={checkedTaskIds} mode={mode} pulse={pulse} pulseNonce={pulseNonce} />
         {statusLabel != null ? (
           <span
             className={cn("text-xs", {
-              "text-sf-danger": status === "failed",
-              "text-sf-muted": status !== "failed" && !softStumble,
-              "text-sf-warn": status !== "failed" && softStumble,
+              "text-sf-danger": status === "failed" || status === "exited",
+              "text-sf-muted": status !== "failed" && status !== "exited" && !softStumble,
+              "text-sf-warn": status !== "failed" && status !== "exited" && softStumble,
             })}
           >
             {t(statusLabel)}
