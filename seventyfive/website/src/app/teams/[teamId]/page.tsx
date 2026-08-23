@@ -2,6 +2,7 @@ import { AppChrome } from "@/components/app-chrome";
 import { TeamBoard } from "@/components/team/board";
 import { getMembershipContext } from "@/lib/auth/session";
 import { elapsedProgressForMember } from "@/lib/challenge/progress";
+import { quoteForTeamDay } from "@/lib/challenge/quotes";
 import { refreshMemberStatus } from "@/lib/challenge/status";
 import {
   firstIncompletePastDate,
@@ -185,6 +186,11 @@ const TeamPage = async (props: TeamPageProps) => {
     >
       <TeamBoard
         checkedTaskIds={checkedTaskIds}
+        dayQuote={quoteForTeamDay({
+          date: selectedDate,
+          startDate: session.team.startDate,
+          teamId: session.team.id,
+        })}
         endDate={session.team.endDate}
         firstIncompletePastDate={incompletePastDate}
         inviteCode={session.team.inviteCode}
