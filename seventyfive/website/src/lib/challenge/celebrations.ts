@@ -1,7 +1,7 @@
 import { CHALLENGE_DAY_COUNT } from "@/lib/challenge/progress";
 import { isDayComplete, type ChallengeMode } from "@/lib/challenge/tasks";
 
-export type CheckCelebration = "day" | "finale" | "none";
+export type CheckCelebration = "day" | "finale" | "none" | "team";
 
 export type ResolveCheckCelebrationInput = {
   checkedTaskIdsBefore: readonly string[];
@@ -71,4 +71,8 @@ export function daysRemainingAfter(dayNumber: number): number {
 
 export function dayCelebratedStorageKey(teamId: string, todayLocal: string): string {
   return `sf-day-celebrated:${teamId}:${todayLocal}`;
+}
+
+export function teamCelebratedStorageKey(teamId: string, date: string): string {
+  return `sf-team-celebrated:${teamId}:${date}`;
 }

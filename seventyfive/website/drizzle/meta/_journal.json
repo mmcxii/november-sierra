@@ -28,6 +28,13 @@
       "tag": "0003_progress_photo_ends_only",
       "version": "7",
       "when": 1787500000000
+    },
+    {
+      "breakpoints": true,
+      "idx": 4,
+      "tag": "0004_last_team_celebration_date",
+      "version": "7",
+      "when": 1787516184486
     }
   ],
   "version": "7"

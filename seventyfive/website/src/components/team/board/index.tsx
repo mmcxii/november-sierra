@@ -17,6 +17,7 @@ import {
   dayCelebratedStorageKey,
   daysRemainingAfter,
   resolveCheckCelebration,
+  teamCelebratedStorageKey,
   type CheckCelebration,
 } from "@/lib/challenge/celebrations";
 import {
@@ -28,6 +29,7 @@ import {
   type ChallengeMode,
   type MemberStatus,
 } from "@/lib/challenge/tasks";
+import { teamCelebrationIsFinale } from "@/lib/challenge/team-day";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
@@ -55,6 +57,7 @@ export type TeamBoardProps = {
   memberId: string;
   memberMode: ChallengeMode;
   memberStatus: MemberStatus;
+  pendingTeamCelebrationDate: null | string;
   progressElapsedComplete: readonly boolean[];
   progressLastElapsedIsToday: boolean;
   progressPhotoEndsOnly: boolean;
@@ -76,6 +79,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     memberId,
     memberMode,
     memberStatus,
+    pendingTeamCelebrationDate,
     progressElapsedComplete,
     progressLastElapsedIsToday,
     progressPhotoEndsOnly,
@@ -97,6 +101,9 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const [rosterPulseNonce, setRosterPulseNonce] = React.useState(0);
   const [celebration, setCelebration] = React.useState<null | Exclude<CheckCelebration, "none">>(null);
   const [celebrationNonce, setCelebrationNonce] = React.useState(0);
+
+  //* Refs
+  const pendingTeamPlayedRef = React.useRef<null | string>(null);
 
   //* Variables
   const editable = canEditDay({
@@ -123,6 +130,40 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       : `/join?code=${encodeURIComponent(inviteCode)}`;
 
   //* Handlers
+  const playCelebration = React.useCallback((kind: Exclude<CheckCelebration, "none">) => {
+    setCelebration(kind);
+    setCelebrationNonce((nonce) => {
+      return nonce + 1;
+    });
+  }, []);
+
+  const celebrateTeam = React.useCallback(
+    (date: string) => {
+      const storageKey = teamCelebratedStorageKey(teamId, date);
+      try {
+        if (sessionStorage.getItem(storageKey) != null) {
+          return;
+        }
+        sessionStorage.setItem(storageKey, "team");
+      } catch {
+        // Private mode / disabled storage — still celebrate once this render path.
+      }
+
+      const day = challengeDayNumber(startDate, date);
+      const isFinale = teamCelebrationIsFinale(startDate, endDate, date);
+      playCelebration(isFinale ? "finale" : "team");
+      if (isFinale) {
+        toast.success(t("theTeamFinishedTheChallenge"));
+        return;
+      }
+      if (day == null) {
+        return;
+      }
+      toast.success(t("theTeamFinishedDay{{day}}", { day }));
+    },
+    [endDate, playCelebration, startDate, t, teamId],
+  );
+
   const celebrateDay = (kind: Exclude<CheckCelebration, "none">) => {
     const storageKey = dayCelebratedStorageKey(teamId, todayLocal);
     try {
@@ -134,10 +175,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       // Private mode / disabled storage — still celebrate once this render path.
     }
 
-    setCelebration(kind);
-    setCelebrationNonce((nonce) => {
-      return nonce + 1;
-    });
+    playCelebration(kind);
 
     const todayDay = challengeDayNumber(startDate, todayLocal);
     if (kind === "finale") {
@@ -180,7 +218,9 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
         setError(result.error ?? "somethingWentWrong");
         return;
       }
-      if (celebrationKind !== "none") {
+      if (result.teamCelebration) {
+        celebrateTeam(selectedDate);
+      } else if (celebrationKind !== "none") {
         celebrateDay(celebrationKind);
       }
       router.refresh();
@@ -246,6 +286,17 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   };
 
   //* Effects
+  React.useEffect(() => {
+    if (pendingTeamCelebrationDate == null) {
+      return;
+    }
+    if (pendingTeamPlayedRef.current === pendingTeamCelebrationDate) {
+      return;
+    }
+    pendingTeamPlayedRef.current = pendingTeamCelebrationDate;
+    celebrateTeam(pendingTeamCelebrationDate);
+  }, [celebrateTeam, pendingTeamCelebrationDate]);
+
   React.useEffect(() => {
     if (!inviteAvailable) {
       setShowInvite(false);
@@ -359,6 +410,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
           className={cn("mt-4 space-y-3", {
             "sf-day-settle": celebration === "day",
             "sf-day-settle-finale": celebration === "finale",
+            "sf-day-settle-team": celebration === "team",
           })}
           key={celebrationNonce > 0 ? `checklist-${celebrationNonce}` : "checklist"}
         >

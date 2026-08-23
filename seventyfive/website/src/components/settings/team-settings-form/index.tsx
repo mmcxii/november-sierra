@@ -290,10 +290,12 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
           <div className="w-full space-y-1.5">
             <div className="flex w-full items-center gap-2">
               <Checkbox checked={remindersOn} id="reminderEnabled" onCheckedChange={handleRemindersChange} />
-              <Label htmlFor="reminderEnabled">{t("enableDailyReminder")}</Label>
+              <Label htmlFor="reminderEnabled">{t("enableNotifications")}</Label>
             </div>
             <p className="text-sf-muted text-xs">
-              {t("beforeStartYouGetACountdownAfterStartYouGetANudgeIfTasksRemain")}
+              {t(
+                "beforeStartYouGetACountdownAfterStartYouGetANudgeIfTasksRemainYoullAlsoHearWhenATeammateFinishesTheDay",
+              )}
             </p>
             {remindersOn && showIosHomeScreenHint ? (
               <p className="text-sf-muted text-xs">{t("onIphoneAddThisAppToYourHomeScreenToReceiveReminders")}</p>
