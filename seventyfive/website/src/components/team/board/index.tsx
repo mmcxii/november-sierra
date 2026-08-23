@@ -3,6 +3,7 @@
 import { ChallengeProgress } from "@/components/challenge/challenge-progress";
 import { usePendingRouter } from "@/components/navigation-pending";
 import { BoardActionsMenu } from "@/components/team/board/board-actions-menu";
+import { DayQuote, type DayQuoteProps } from "@/components/team/board/day-quote";
 import { HardFailModal } from "@/components/team/board/hard-fail-modal";
 import { InviteModal } from "@/components/team/board/invite-modal";
 import { DateStepper } from "@/components/team/date-stepper";
@@ -50,6 +51,7 @@ export type RosterMember = {
 
 export type TeamBoardProps = {
   checkedTaskIds: string[];
+  dayQuote: null | DayQuoteProps;
   endDate: string;
   firstIncompletePastDate: null | string;
   inviteCode: string;
@@ -72,6 +74,7 @@ export type TeamBoardProps = {
 export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const {
     checkedTaskIds,
+    dayQuote,
     endDate,
     firstIncompletePastDate,
     inviteCode,
@@ -428,6 +431,8 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
           })}
         </ul>
       </section>
+
+      {dayQuote != null ? <DayQuote author={dayQuote.author} text={dayQuote.text} /> : null}
 
       {error != null ? <p className="text-sf-danger mt-4 text-sm">{t(error)}</p> : null}
 
