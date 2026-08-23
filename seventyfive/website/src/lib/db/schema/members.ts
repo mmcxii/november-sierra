@@ -15,6 +15,8 @@ export const membersTable = pgTable(
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
     lastReminderDate: date("last_reminder_date"),
     mode: text("mode").notNull(),
+    /** When true, Hard requires a progress photo only on startDate and endDate. */
+    progressPhotoEndsOnly: boolean("progress_photo_ends_only").default(false).notNull(),
     reminderEnabled: boolean("reminder_enabled").default(false).notNull(),
     reminderTime: text("reminder_time").default("20:00").notNull(),
     status: text("status").default("active").notNull(),

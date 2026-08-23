@@ -1,7 +1,7 @@
 "use client";
 
 import { TASK_ICONS } from "@/lib/challenge/task-icons";
-import { tasksForMode, type ChallengeMode } from "@/lib/challenge/tasks";
+import { tasksForDay, type ChallengeMode } from "@/lib/challenge/tasks";
 import { cn } from "@/lib/utils";
 import { Dumbbell } from "lucide-react";
 import * as React from "react";
@@ -10,21 +10,40 @@ import { useTranslation } from "react-i18next";
 export type TaskIconStripProps = {
   checkedTaskIds: readonly string[];
   className?: string;
+  date?: string;
+  endDate?: string;
   mode: ChallengeMode;
+  progressPhotoEndsOnly?: boolean;
   /** When true, icons run a quick unchecked↔checked fade on each pulseNonce. */
   pulse?: boolean;
   /** Bumps to restart the synced one-shot pulse animation. */
   pulseNonce?: number;
+  startDate?: string;
 };
 
 export const TaskIconStrip: React.FC<TaskIconStripProps> = (props) => {
-  const { checkedTaskIds, className, mode, pulse = false, pulseNonce = 0 } = props;
+  const {
+    checkedTaskIds,
+    className,
+    date,
+    endDate,
+    mode,
+    progressPhotoEndsOnly,
+    pulse = false,
+    pulseNonce = 0,
+    startDate,
+  } = props;
 
   //* State
   const { t } = useTranslation();
 
   //* Variables
-  const tasks = tasksForMode(mode);
+  const tasks = tasksForDay(
+    mode,
+    date != null && endDate != null && startDate != null
+      ? { date, endDate, progressPhotoEndsOnly, startDate }
+      : undefined,
+  );
   const checked = new Set(checkedTaskIds);
 
   return (

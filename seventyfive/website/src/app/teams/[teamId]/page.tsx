@@ -8,7 +8,7 @@ import {
   hasSoftStumble,
   listChallengeDates,
   localDateString,
-  taskIdsForMode,
+  taskIdsForDay,
   type ChallengeMode,
   type MemberStatus,
 } from "@/lib/challenge/tasks";
@@ -35,6 +35,7 @@ const TeamPage = async (props: TeamPageProps) => {
     endDate: session.team.endDate,
     memberId: session.member.id,
     mode: memberMode,
+    progressPhotoEndsOnly: session.member.progressPhotoEndsOnly,
     startDate: session.team.startDate,
     status: session.member.status as MemberStatus,
     timeZone: session.user.timeZone,
@@ -95,11 +96,19 @@ const TeamPage = async (props: TeamPageProps) => {
       });
 
     return {
-      checkedTaskIds: checkedTaskIds.filter((id) => taskIdsForMode(mode).includes(id)),
+      checkedTaskIds: checkedTaskIds.filter((id) =>
+        taskIdsForDay(mode, {
+          date: selectedDate,
+          endDate: session.team.endDate,
+          progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+          startDate: session.team.startDate,
+        }).includes(id),
+      ),
       displayName: row.user?.name ?? row.member.displayName,
       hardCompletedDays: row.member.hardCompletedDays,
       id: row.member.id,
       mode,
+      progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
       softStumble,
       status: (row.member.id === session.member.id ? memberStatus : row.member.status) as MemberStatus,
     };
@@ -118,6 +127,7 @@ const TeamPage = async (props: TeamPageProps) => {
     completions: selfCompletions,
     endDate: session.team.endDate,
     mode: memberMode,
+    progressPhotoEndsOnly: session.member.progressPhotoEndsOnly,
     startDate: session.team.startDate,
     todayLocal,
   });
@@ -128,6 +138,7 @@ const TeamPage = async (props: TeamPageProps) => {
           challengeDates,
           completions: selfCompletions,
           mode: memberMode,
+          progressPhotoEndsOnly: session.member.progressPhotoEndsOnly,
           todayLocal,
         })
       : null);
@@ -148,6 +159,7 @@ const TeamPage = async (props: TeamPageProps) => {
         memberStatus={memberStatus}
         progressElapsedComplete={selfProgress.elapsedComplete}
         progressLastElapsedIsToday={selfProgress.lastElapsedIsToday}
+        progressPhotoEndsOnly={session.member.progressPhotoEndsOnly}
         roster={roster}
         selectedDate={selectedDate}
         startDate={session.team.startDate}

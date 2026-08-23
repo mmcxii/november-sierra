@@ -10,14 +10,18 @@ import { useTranslation } from "react-i18next";
 export type RosterRowProps = {
   checkedTaskIds: readonly string[];
   displayName: string;
+  endDate: string;
   hardCompletedDays?: null | number;
   isSelf: boolean;
   mode: ChallengeMode;
+  progressPhotoEndsOnly?: boolean;
   /** When true, icons run a quick unchecked↔checked fade on each pulseNonce. */
   pulse?: boolean;
   /** Bumps to restart the synced one-shot pulse animation. */
   pulseNonce?: number;
+  selectedDate: string;
   softStumble: boolean;
+  startDate: string;
   status: MemberStatus;
 };
 
@@ -25,12 +29,16 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
   const {
     checkedTaskIds,
     displayName,
+    endDate,
     hardCompletedDays = null,
     isSelf,
     mode,
+    progressPhotoEndsOnly = false,
     pulse = false,
     pulseNonce = 0,
+    selectedDate,
     softStumble,
+    startDate,
     status,
   } = props;
 
@@ -68,7 +76,16 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
         </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <TaskIconStrip checkedTaskIds={checkedTaskIds} mode={mode} pulse={pulse} pulseNonce={pulseNonce} />
+        <TaskIconStrip
+          checkedTaskIds={checkedTaskIds}
+          date={selectedDate}
+          endDate={endDate}
+          mode={mode}
+          progressPhotoEndsOnly={progressPhotoEndsOnly}
+          pulse={pulse}
+          pulseNonce={pulseNonce}
+          startDate={startDate}
+        />
         {statusLabel != null ? (
           <span
             className={cn("text-xs", {

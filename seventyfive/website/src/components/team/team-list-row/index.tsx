@@ -7,14 +7,19 @@ import * as React from "react";
 
 export type TeamListRowProps = {
   checkedTaskIds: readonly string[];
+  date: string;
+  endDate: string;
   mode: ChallengeMode;
   progressLabel: string;
+  progressPhotoEndsOnly: boolean;
+  startDate: string;
   teamId: string;
   teamName: string;
 };
 
 export const TeamListRow: React.FC<TeamListRowProps> = (props) => {
-  const { checkedTaskIds, mode, progressLabel, teamId, teamName } = props;
+  const { checkedTaskIds, date, endDate, mode, progressLabel, progressPhotoEndsOnly, startDate, teamId, teamName } =
+    props;
 
   return (
     <li>
@@ -23,7 +28,15 @@ export const TeamListRow: React.FC<TeamListRowProps> = (props) => {
           <p className="truncate text-lg font-medium">{teamName}</p>
           <p className="text-sf-muted mt-0.5 text-xs">{progressLabel}</p>
         </div>
-        <TaskIconStrip checkedTaskIds={checkedTaskIds} className="shrink-0" mode={mode} />
+        <TaskIconStrip
+          checkedTaskIds={checkedTaskIds}
+          className="shrink-0"
+          date={date}
+          endDate={endDate}
+          mode={mode}
+          progressPhotoEndsOnly={progressPhotoEndsOnly}
+          startDate={startDate}
+        />
       </Link>
     </li>
   );

@@ -130,4 +130,25 @@ describe("elapsedProgressForMember", () => {
     expect(result.lastElapsedIsToday).toBe(true);
     expect(result.elapsedComplete).toEqual([true, false, false]);
   });
+
+  it("treats a middle Hard day as complete without a photo when the flag is on", () => {
+    //* Arrange
+    const hardWithoutPhoto = ["workout", "outdoorWorkout", "water", "diet", "reading"];
+
+    //* Act
+    const result = elapsedProgressForMember({
+      completions: [
+        { checkedTaskIds: [...hardWithoutPhoto, "progressPhoto"], date: "2026-09-01" },
+        { checkedTaskIds: hardWithoutPhoto, date: "2026-09-02" },
+      ],
+      endDate: "2026-11-14",
+      mode: "hard",
+      progressPhotoEndsOnly: true,
+      startDate: "2026-09-01",
+      todayLocal: "2026-09-02",
+    });
+
+    //* Assert
+    expect(result.elapsedComplete).toEqual([true, true]);
+  });
 });

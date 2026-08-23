@@ -24,7 +24,7 @@ import {
   daysUntilStart,
   isJoinAllowed,
   preStartRosterPulseMs,
-  tasksForMode,
+  tasksForDay,
   type ChallengeMode,
   type MemberStatus,
 } from "@/lib/challenge/tasks";
@@ -41,6 +41,7 @@ export type RosterMember = {
   hardCompletedDays: null | number;
   id: string;
   mode: ChallengeMode;
+  progressPhotoEndsOnly: boolean;
   softStumble: boolean;
   status: MemberStatus;
 };
@@ -56,6 +57,7 @@ export type TeamBoardProps = {
   memberStatus: MemberStatus;
   progressElapsedComplete: readonly boolean[];
   progressLastElapsedIsToday: boolean;
+  progressPhotoEndsOnly: boolean;
   roster: RosterMember[];
   selectedDate: string;
   startDate: string;
@@ -76,6 +78,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     memberStatus,
     progressElapsedComplete,
     progressLastElapsedIsToday,
+    progressPhotoEndsOnly,
     roster,
     selectedDate,
     startDate,
@@ -103,7 +106,12 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     status: memberStatus,
     todayLocal,
   });
-  const tasks = tasksForMode(memberMode);
+  const tasks = tasksForDay(memberMode, {
+    date: selectedDate,
+    endDate,
+    progressPhotoEndsOnly,
+    startDate,
+  });
   const checked = new Set(checkedTaskIds);
   const daysUntil = daysUntilStart(startDate, todayLocal);
   const inviteAvailable = isJoinAllowed(startDate, todayLocal);
@@ -154,6 +162,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       endDate,
       mode: memberMode,
       nextChecked,
+      progressPhotoEndsOnly,
       selectedDate,
       startDate,
       taskId,
@@ -322,13 +331,17 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
               <RosterRow
                 checkedTaskIds={member.checkedTaskIds}
                 displayName={member.displayName}
+                endDate={endDate}
                 hardCompletedDays={member.hardCompletedDays}
                 isSelf={member.id === memberId}
                 key={member.id}
                 mode={member.mode}
+                progressPhotoEndsOnly={member.progressPhotoEndsOnly}
                 pulse={rosterPulseIntervalMs != null}
                 pulseNonce={rosterPulseNonce}
+                selectedDate={selectedDate}
                 softStumble={member.softStumble}
+                startDate={startDate}
                 status={member.status}
               />
             );

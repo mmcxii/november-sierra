@@ -8,6 +8,7 @@ export type ResolveCheckCelebrationInput = {
   endDate: string;
   mode: ChallengeMode;
   nextChecked: boolean;
+  progressPhotoEndsOnly?: boolean;
   selectedDate: string;
   startDate: string;
   taskId: string;
@@ -43,11 +44,17 @@ export function resolveCheckCelebration(input: ResolveCheckCelebrationInput): Ch
   const nextIds = new Set(input.checkedTaskIdsBefore);
   nextIds.add(input.taskId);
   const nextList = [...nextIds];
+  const context = {
+    date: input.selectedDate,
+    endDate: input.endDate,
+    progressPhotoEndsOnly: input.progressPhotoEndsOnly,
+    startDate: input.startDate,
+  };
 
-  if (isDayComplete(input.mode, input.checkedTaskIdsBefore)) {
+  if (isDayComplete(input.mode, input.checkedTaskIdsBefore, context)) {
     return "none";
   }
-  if (!isDayComplete(input.mode, nextList)) {
+  if (!isDayComplete(input.mode, nextList, context)) {
     return "none";
   }
 
