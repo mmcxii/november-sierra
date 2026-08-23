@@ -187,6 +187,10 @@ select {
   animation: sf-day-settle 720ms ease-out;
 }
 
+.sf-day-settle-team {
+  animation: sf-day-settle 600ms ease-out;
+}
+
 /* ── Brand pulse / boot splash / nav pending ─────────────────────────── */
 
 /*
@@ -312,8 +316,10 @@ html[data-sf-booted] #sf-boot-splash,
   .sf-task-flash,
   .sf-day-settle,
   .sf-day-settle-finale,
+  .sf-day-settle-team,
   .sf-progress-ember-bloom,
   .sf-progress-ember-finale,
+  .sf-progress-ember-team,
   .sf-brand-pulse-ember,
   .sf-brand-pulse-ember-lg {
     animation: none;
@@ -415,6 +421,24 @@ html[data-sf-booted] #sf-boot-splash,
 
 .sf-progress-ember-finale {
   animation: sf-ember-bloom 900ms ease-out;
+}
+
+.sf-progress-ember-team {
+  animation: sf-ember-bloom 640ms ease-out;
+}
+
+.sf-progress-ember-team[data-level="6"],
+.sf-progress-ember-team[data-level="7"] {
+  animation-duration: 720ms;
+}
+
+.sf-progress-ember-team[data-level="8"],
+.sf-progress-ember-team[data-level="9"] {
+  animation-duration: 800ms;
+}
+
+.sf-progress-ember-team[data-level="10"] {
+  animation-duration: 900ms;
 }
 
 @keyframes sf-roster-check-pulse {

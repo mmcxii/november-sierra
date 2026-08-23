@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 
 export type ChallengeProgressProps = {
   actions?: React.ReactNode;
-  celebration?: null | "day" | "finale";
+  celebration?: null | "day" | "finale" | "team";
   celebrationNonce?: number;
   className?: string;
   daysUntilStart: number;
@@ -106,6 +106,7 @@ export const ChallengeProgress: React.FC<ChallengeProgressProps> = (props) => {
             "sf-progress-ember-bloom": celebration === "day",
             "sf-progress-ember-failed": emberFailed,
             "sf-progress-ember-finale": celebration === "finale",
+            "sf-progress-ember-team": celebration === "team",
           })}
           data-day={day}
           data-level={level}

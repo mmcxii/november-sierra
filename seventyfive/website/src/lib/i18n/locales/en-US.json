@@ -7,6 +7,7 @@
   "alreadyInATeamConfirmToSwitch": "Already in a team. Confirm to switch.",
   "backTo{{teamName}}": "Back to {{teamName}}",
   "beforeStartYouGetACountdownAfterStartYouGetANudgeIfTasksRemain": "Before start you get a countdown. After start you get a nudge if tasks remain.",
+  "beforeStartYouGetACountdownAfterStartYouGetANudgeIfTasksRemainYoullAlsoHearWhenATeammateFinishesTheDay": "Before start you get a countdown. After start you get a nudge if tasks remain. You'll also hear when a teammate finishes the day.",
   "challenge": "Challenge",
   "challengeCompletedCongratulations": "Challenge completed, congratulations!",
   "challengeStartsIn{{count}}Days": "Challenge starts in {{count}} days",
@@ -38,6 +39,7 @@
   "drink1GallonOfWater": "Drink 1 gallon of water",
   "drink3LitersOfWater": "Drink 3 liters of water",
   "enableDailyReminder": "Enable daily reminder",
+  "enableNotifications": "Enable notifications",
   "endDate": "End date",
   "failAndExitTheChallenge": "Fail and exit the challenge",
   "failed": "Failed",
@@ -118,7 +120,10 @@
   "teamPassword": "Team password",
   "teamSettings": "Team settings",
   "teamSeventyfive": "Team SeventyFive",
+  "teamUpdate": "Team update",
   "theQuietPracticeOfShowingUp": "The quiet practice of showing up.",
+  "theTeamFinishedDay{{day}}": "The team finished day {{day}}.",
+  "theTeamFinishedTheChallenge": "The team finished the challenge.",
   "thisDayIsReadOnly": "This day is read-only",
   "thisDeletesYourAccountAndTransfersOrRemovesOwnedTeams": "This deletes your account and transfers or removes owned teams.",
   "thisWillPermanentlyDeleteTheTeamAndAllMemberData": "This will permanently delete the team and all member data.",
@@ -138,5 +143,6 @@
   "yourTeam": "Your team",
   "yourTeams": "Your teams",
   "{{count}}DayOnHard": "{{count}} day on Hard",
-  "{{count}}DaysOnHard": "{{count}} days on Hard"
+  "{{count}}DaysOnHard": "{{count}} days on Hard",
+  "{{name}}FinishedToday": "{{name}} finished today."
 }

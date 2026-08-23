@@ -14,6 +14,8 @@ export const membersTable = pgTable(
     isOwner: boolean("is_owner").default(false).notNull(),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
     lastReminderDate: date("last_reminder_date"),
+    /** Team-complete date this member has already seen the board celebration for. */
+    lastTeamCelebrationDate: date("last_team_celebration_date"),
     mode: text("mode").notNull(),
     /** When true, Hard requires a progress photo only on startDate and endDate. */
     progressPhotoEndsOnly: boolean("progress_photo_ends_only").default(false).notNull(),

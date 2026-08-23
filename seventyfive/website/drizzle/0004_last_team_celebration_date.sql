@@ -1,0 +1,1 @@
+ALTER TABLE "members" ADD COLUMN "last_team_celebration_date" date;

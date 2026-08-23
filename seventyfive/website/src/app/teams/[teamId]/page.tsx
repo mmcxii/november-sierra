@@ -12,10 +12,13 @@ import {
   type ChallengeMode,
   type MemberStatus,
 } from "@/lib/challenge/tasks";
+import { pendingTeamCelebrationDate } from "@/lib/challenge/team-day";
+import { stampTeamCelebrationDate } from "@/lib/challenge/team-day-db";
 import { db } from "@/lib/db/client";
 import { betterAuthUserTable, dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
 type TeamPageProps = {
   params: Promise<{ teamId: string }>;
@@ -143,6 +146,38 @@ const TeamPage = async (props: TeamPageProps) => {
         })
       : null);
 
+  const teamMembers = members.map((row) => {
+    return {
+      id: row.member.id,
+      mode: row.member.mode as ChallengeMode,
+      progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+      reminderEnabled: row.member.reminderEnabled,
+      status: (row.member.id === session.member.id ? memberStatus : row.member.status) as MemberStatus,
+      userId: row.member.userId,
+    };
+  });
+  const teamCompletions = allMemberDays.map((day) => {
+    return {
+      checkedTaskIds: checksByDay.get(day.id) ?? [],
+      date: day.date,
+      memberId: day.memberId,
+    };
+  });
+  const pendingTeamDate = pendingTeamCelebrationDate({
+    challengeDates,
+    completions: teamCompletions,
+    endDate: session.team.endDate,
+    lastTeamCelebrationDate: session.member.lastTeamCelebrationDate,
+    members: teamMembers,
+    startDate: session.team.startDate,
+    todayLocal,
+  });
+  if (pendingTeamDate != null) {
+    after(() => {
+      return stampTeamCelebrationDate(session.member.id, pendingTeamDate);
+    });
+  }
+
   return (
     <AppChrome
       reminderPushEnabled={session.member.reminderEnabled}
@@ -157,6 +192,7 @@ const TeamPage = async (props: TeamPageProps) => {
         memberId={session.member.id}
         memberMode={memberMode}
         memberStatus={memberStatus}
+        pendingTeamCelebrationDate={pendingTeamDate}
         progressElapsedComplete={selfProgress.elapsedComplete}
         progressLastElapsedIsToday={selfProgress.lastElapsedIsToday}
         progressPhotoEndsOnly={session.member.progressPhotoEndsOnly}
