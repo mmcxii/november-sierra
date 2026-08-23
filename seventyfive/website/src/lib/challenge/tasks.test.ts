@@ -17,6 +17,8 @@ import {
   remainingTaskIds,
   resolveDailyReminder,
   startDateBoundsForTimeZone,
+  taskIdsForDay,
+  tasksForDay,
 } from "./tasks";
 
 describe("endDateFromStart", () => {
@@ -374,6 +376,128 @@ describe("remainingTaskIds", () => {
 
     //* Assert
     expect(remaining).toEqual(["diet", "alcohol", "reading"]);
+  });
+
+  it("omits the progress photo on a middle Hard day when the ends-only flag is on", () => {
+    //* Arrange
+    const context = {
+      date: "2026-09-02",
+      endDate: "2026-11-14",
+      progressPhotoEndsOnly: true,
+      startDate: "2026-09-01",
+    };
+
+    //* Act
+    const remaining = remainingTaskIds("hard", ["workout", "outdoorWorkout", "water", "diet", "reading"], context);
+
+    //* Assert
+    expect(remaining).toEqual([]);
+  });
+});
+
+describe("tasksForDay progress photo ends only", () => {
+  const startDate = "2026-09-01";
+  const endDate = "2026-11-14";
+  const hardWithoutPhoto = ["workout", "outdoorWorkout", "water", "diet", "reading"] as const;
+  const hardComplete = [...hardWithoutPhoto, "progressPhoto"] as const;
+
+  it("keeps six Hard tasks every day when the flag is off", () => {
+    //* Arrange
+    const middle = { date: "2026-09-02", endDate, startDate };
+
+    //* Act
+    const startIds = taskIdsForDay("hard", { date: startDate, endDate, startDate });
+    const middleIds = taskIdsForDay("hard", middle);
+    const endIds = taskIdsForDay("hard", { date: endDate, endDate, startDate });
+
+    //* Assert
+    expect(startIds).toHaveLength(6);
+    expect(middleIds).toHaveLength(6);
+    expect(endIds).toHaveLength(6);
+    expect(middleIds).toContain("progressPhoto");
+  });
+
+  it("requires the photo only on start and end when the flag is on", () => {
+    //* Arrange
+    const flagOn = { endDate, progressPhotoEndsOnly: true, startDate };
+
+    //* Act
+    const startTasks = tasksForDay("hard", { ...flagOn, date: startDate });
+    const middleTasks = tasksForDay("hard", { ...flagOn, date: "2026-09-02" });
+    const endTasks = tasksForDay("hard", { ...flagOn, date: endDate });
+
+    //* Assert
+    expect(startTasks).toHaveLength(6);
+    expect(middleTasks).toHaveLength(5);
+    expect(endTasks).toHaveLength(6);
+    expect(middleTasks.map((task) => task.id)).not.toContain("progressPhoto");
+  });
+
+  it("completes a middle Hard day without a photo when the flag is on", () => {
+    //* Arrange
+    const input = {
+      challengeDates: [startDate, "2026-09-02", endDate],
+      completions: [
+        { checkedTaskIds: [...hardComplete], date: startDate, mode: "hard" as const },
+        { checkedTaskIds: [...hardWithoutPhoto], date: "2026-09-02", mode: "hard" as const },
+      ],
+      mode: "hard" as const,
+      progressPhotoEndsOnly: true,
+      todayLocal: "2026-09-03",
+    };
+
+    //* Act
+    const status = recomputeMemberStatus(input);
+    const incomplete = firstIncompletePastDate(input);
+    const completed = countCompletedHardDays({
+      challengeDates: input.challengeDates,
+      completions: input.completions,
+      progressPhotoEndsOnly: true,
+      todayLocal: input.todayLocal,
+    });
+
+    //* Assert
+    expect(status).toBe("active");
+    expect(incomplete).toBeNull();
+    expect(completed).toBe(2);
+  });
+
+  it("fails Hard when a middle day is missing the photo and the flag is off", () => {
+    //* Arrange
+    const input = {
+      challengeDates: [startDate, "2026-09-02", endDate],
+      completions: [{ checkedTaskIds: [...hardComplete], date: startDate, mode: "hard" as const }],
+      mode: "hard" as const,
+      todayLocal: "2026-09-03",
+    };
+
+    //* Act
+    const status = recomputeMemberStatus(input);
+    const incomplete = firstIncompletePastDate(input);
+
+    //* Assert
+    expect(status).toBe("failed");
+    expect(incomplete).toBe("2026-09-02");
+  });
+
+  it("still requires a photo on the start date when the flag is on", () => {
+    //* Arrange
+    const input = {
+      challengeDates: [startDate, "2026-09-02", endDate],
+      completions: [{ checkedTaskIds: [...hardWithoutPhoto], date: startDate, mode: "hard" as const }],
+      mode: "hard" as const,
+      progressPhotoEndsOnly: true,
+      todayLocal: "2026-09-02",
+    };
+
+    //* Act — start day has no photo; firstIncompletePastDate should not fire for today
+    const startIncomplete = firstIncompletePastDate({
+      ...input,
+      todayLocal: "2026-09-03",
+    });
+
+    //* Assert
+    expect(startIncomplete).toBe(startDate);
   });
 });
 

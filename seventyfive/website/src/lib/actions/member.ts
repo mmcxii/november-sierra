@@ -23,6 +23,7 @@ const reminderTimeSchema = z
 
 const updateMemberSchema = z.object({
   mode: z.enum(["hard", "soft"]),
+  progressPhotoEndsOnly: z.boolean(),
   reminderEnabled: z.boolean(),
   reminderTime: reminderTimeSchema,
   teamId: z.string().min(1),
@@ -48,6 +49,9 @@ export async function updateMemberAction(input: z.infer<typeof updateMemberSchem
   const todayLocal = localDateString(new Date(), session.user.timeZone);
   const startPassed = hasStartPassed(session.team.startDate, todayLocal);
   const nextMode = startPassed ? (session.member.mode as ChallengeMode) : parsed.data.mode;
+  const nextProgressPhotoEndsOnly = startPassed
+    ? session.member.progressPhotoEndsOnly
+    : parsed.data.progressPhotoEndsOnly;
 
   await db
     .update(membersTable)
@@ -55,6 +59,7 @@ export async function updateMemberAction(input: z.infer<typeof updateMemberSchem
       // Clear so a failed/no-subscription day can retry after the user re-saves.
       lastReminderDate: parsed.data.reminderEnabled ? null : session.member.lastReminderDate,
       mode: nextMode,
+      progressPhotoEndsOnly: nextProgressPhotoEndsOnly,
       reminderEnabled: parsed.data.reminderEnabled,
       reminderTime: parsed.data.reminderTime,
       updatedAt: new Date(),
@@ -165,6 +170,7 @@ export async function resolveHardFailAction(input: z.infer<typeof resolveHardFai
     endDate: session.team.endDate,
     memberId: session.member.id,
     mode,
+    progressPhotoEndsOnly: session.member.progressPhotoEndsOnly,
     startDate: session.team.startDate,
     status: currentStatus,
     timeZone: session.user.timeZone,
@@ -184,6 +190,7 @@ export async function resolveHardFailAction(input: z.infer<typeof resolveHardFai
     await convertHardMemberToSoft({
       endDate: session.team.endDate,
       memberId: session.member.id,
+      progressPhotoEndsOnly: session.member.progressPhotoEndsOnly,
       startDate: session.team.startDate,
       timeZone: session.user.timeZone,
     });

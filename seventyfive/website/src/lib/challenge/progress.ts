@@ -63,6 +63,7 @@ export type ElapsedProgressInput = {
   completions: readonly Pick<DayCompletionInput, "checkedTaskIds" | "date">[];
   endDate: string;
   mode: ChallengeMode;
+  progressPhotoEndsOnly?: boolean;
   startDate: string;
   todayLocal: string;
 };
@@ -82,7 +83,12 @@ export function elapsedProgressForMember(input: ElapsedProgressInput): ElapsedPr
 
   return {
     elapsedComplete: elapsedDates.map((date) => {
-      return isDayComplete(input.mode, byDate.get(date) ?? []);
+      return isDayComplete(input.mode, byDate.get(date) ?? [], {
+        date,
+        endDate: input.endDate,
+        progressPhotoEndsOnly: input.progressPhotoEndsOnly,
+        startDate: input.startDate,
+      });
     }),
     lastElapsedIsToday: elapsedDates.at(-1) === input.todayLocal,
   };

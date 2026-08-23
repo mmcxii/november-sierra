@@ -108,4 +108,25 @@ describe("resolveCheckCelebration", () => {
     //* Assert
     expect(result).toBe("none");
   });
+
+  it("returns day when finishing a middle Hard day without a photo if the flag is on", () => {
+    //* Arrange
+    const hardWithoutPhoto = ["workout", "outdoorWorkout", "water", "diet", "reading"] as const;
+
+    //* Act
+    const result = resolveCheckCelebration({
+      checkedTaskIdsBefore: hardWithoutPhoto.slice(0, 4),
+      endDate: "2026-11-14",
+      mode: "hard",
+      nextChecked: true,
+      progressPhotoEndsOnly: true,
+      selectedDate: "2026-09-10",
+      startDate: "2026-09-01",
+      taskId: "reading",
+      todayLocal: "2026-09-10",
+    });
+
+    //* Assert
+    expect(result).toBe("day");
+  });
 });

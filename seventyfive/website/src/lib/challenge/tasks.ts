@@ -27,12 +27,66 @@ export const SOFT_TASKS: readonly TaskDefinition[] = [
   { id: "reading", labelKey: "read10Pages" },
 ] as const;
 
+export const PROGRESS_PHOTO_TASK_ID = "progressPhoto";
+
 export function tasksForMode(mode: ChallengeMode): readonly TaskDefinition[] {
   return mode === "hard" ? HARD_TASKS : SOFT_TASKS;
 }
 
 export function taskIdsForMode(mode: ChallengeMode): readonly string[] {
   return tasksForMode(mode).map((task) => task.id);
+}
+
+export type RequiredTasksContext = {
+  date: string;
+  endDate: string;
+  progressPhotoEndsOnly?: boolean;
+  startDate: string;
+};
+
+export function isProgressPhotoRequired(args: {
+  date: string;
+  endDate: string;
+  mode: ChallengeMode;
+  progressPhotoEndsOnly?: boolean;
+  startDate: string;
+}): boolean {
+  if (args.mode !== "hard") {
+    return false;
+  }
+  if (args.progressPhotoEndsOnly !== true) {
+    return true;
+  }
+  return args.date === args.startDate || args.date === args.endDate;
+}
+
+export function tasksForDay(mode: ChallengeMode, context?: RequiredTasksContext): readonly TaskDefinition[] {
+  const tasks = tasksForMode(mode);
+  if (context == null || isProgressPhotoRequired({ mode, ...context })) {
+    return tasks;
+  }
+  return tasks.filter((task) => {
+    return task.id !== PROGRESS_PHOTO_TASK_ID;
+  });
+}
+
+export function taskIdsForDay(mode: ChallengeMode, context?: RequiredTasksContext): readonly string[] {
+  return tasksForDay(mode, context).map((task) => {
+    return task.id;
+  });
+}
+
+function requiredTasksContextForDate(
+  challengeDates: readonly string[],
+  date: string,
+  progressPhotoEndsOnly?: boolean,
+): undefined | RequiredTasksContext {
+  const startDate = challengeDates[0];
+  const endDate = challengeDates[challengeDates.length - 1];
+  if (startDate == null || endDate == null) {
+    return undefined;
+  }
+  return { date, endDate, progressPhotoEndsOnly, startDate };
 }
 
 /** Inclusive 75-day window: start + 74 days. */
@@ -163,18 +217,27 @@ export type RecomputeStatusInput = {
   challengeDates: readonly string[];
   completions: readonly DayCompletionInput[];
   mode: ChallengeMode;
+  progressPhotoEndsOnly?: boolean;
   todayLocal: string;
 };
 
-export function isDayComplete(mode: ChallengeMode, checkedTaskIds: readonly string[]): boolean {
-  const required = taskIdsForMode(mode);
+export function isDayComplete(
+  mode: ChallengeMode,
+  checkedTaskIds: readonly string[],
+  context?: RequiredTasksContext,
+): boolean {
+  const required = taskIdsForDay(mode, context);
   const checked = new Set(checkedTaskIds);
   return required.every((id) => checked.has(id));
 }
 
-export function remainingTaskIds(mode: ChallengeMode, checkedTaskIds: readonly string[]): string[] {
+export function remainingTaskIds(
+  mode: ChallengeMode,
+  checkedTaskIds: readonly string[],
+  context?: RequiredTasksContext,
+): string[] {
   const checked = new Set(checkedTaskIds);
-  return taskIdsForMode(mode).filter((id) => !checked.has(id));
+  return taskIdsForDay(mode, context).filter((id) => !checked.has(id));
 }
 
 /**
@@ -194,7 +257,8 @@ export function recomputeMemberStatus(input: RecomputeStatusInput): MemberStatus
     }
     const completion = byDate.get(date);
     const checked = completion?.checkedTaskIds ?? [];
-    if (!isDayComplete("hard", checked)) {
+    const context = requiredTasksContextForDate(input.challengeDates, date, input.progressPhotoEndsOnly);
+    if (!isDayComplete("hard", checked, context)) {
       return "failed";
     }
   }
@@ -231,7 +295,8 @@ export function countCompletedHardDays(input: Omit<RecomputeStatusInput, "mode">
     }
     const completion = byDate.get(date);
     const checked = completion?.checkedTaskIds ?? [];
-    if (isDayComplete("hard", checked)) {
+    const context = requiredTasksContextForDate(input.challengeDates, date, input.progressPhotoEndsOnly);
+    if (isDayComplete("hard", checked, context)) {
       completed += 1;
     }
   }
@@ -249,7 +314,8 @@ export function firstIncompletePastDate(input: RecomputeStatusInput): null | str
     }
     const completion = byDate.get(date);
     const checked = completion?.checkedTaskIds ?? [];
-    if (!isDayComplete(input.mode, checked)) {
+    const context = requiredTasksContextForDate(input.challengeDates, date, input.progressPhotoEndsOnly);
+    if (!isDayComplete(input.mode, checked, context)) {
       return date;
     }
   }

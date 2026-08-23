@@ -73,9 +73,13 @@ const TeamsPage = async () => {
               return (
                 <TeamListRow
                   checkedTaskIds={checkedByMember.get(row.member.id) ?? []}
+                  date={todayLocal}
+                  endDate={row.team.endDate}
                   key={row.team.id}
                   mode={row.member.mode as ChallengeMode}
                   progressLabel={progressLabel}
+                  progressPhotoEndsOnly={row.member.progressPhotoEndsOnly}
+                  startDate={row.team.startDate}
                   teamId={row.team.id}
                   teamName={row.team.name}
                 />

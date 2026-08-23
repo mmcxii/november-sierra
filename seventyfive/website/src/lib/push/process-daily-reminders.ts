@@ -4,9 +4,10 @@ import {
   localDateString,
   remainingTaskIds,
   resolveDailyReminder,
-  tasksForMode,
+  tasksForDay,
   type ChallengeMode,
   type MemberStatus,
+  type RequiredTasksContext,
 } from "@/lib/challenge/tasks";
 import { db } from "@/lib/db/client";
 import {
@@ -62,9 +63,11 @@ export async function processDailyReminders(args: {
 
   const membersQuery = db
     .select({
+      endDate: teamsTable.endDate,
       id: membersTable.id,
       lastReminderDate: membersTable.lastReminderDate,
       mode: membersTable.mode,
+      progressPhotoEndsOnly: membersTable.progressPhotoEndsOnly,
       reminderEnabled: membersTable.reminderEnabled,
       reminderTime: membersTable.reminderTime,
       startDate: teamsTable.startDate,
@@ -108,6 +111,12 @@ export async function processDailyReminders(args: {
 
     let checkedTaskIds: string[] = [];
     let todayIncomplete = true;
+    const requiredContext: RequiredTasksContext = {
+      date: todayLocal,
+      endDate: member.endDate,
+      progressPhotoEndsOnly: member.progressPhotoEndsOnly,
+      startDate: member.startDate,
+    };
 
     if (daysUntil === 0) {
       const days = await db.select().from(dayCompletionsTable).where(eq(dayCompletionsTable.memberId, member.id));
@@ -122,7 +131,7 @@ export async function processDailyReminders(args: {
               },
             )
           : [];
-      todayIncomplete = !isDayComplete(mode, checkedTaskIds);
+      todayIncomplete = !isDayComplete(mode, checkedTaskIds, requiredContext);
     }
 
     const reminder = resolveDailyReminder({
@@ -141,7 +150,7 @@ export async function processDailyReminders(args: {
     }
 
     dueMembers += 1;
-    const copy = reminderCopy({ checkedTaskIds, mode, reminder, t });
+    const copy = reminderCopy({ checkedTaskIds, mode, reminder, requiredContext, t });
 
     const memberSubs = subscriptions.filter((sub) => {
       return sub.userId === member.userId;
@@ -210,9 +219,10 @@ export function reminderCopy(args: {
   checkedTaskIds: string[];
   mode: ChallengeMode;
   reminder: NonNullable<ReturnType<typeof resolveDailyReminder>>;
+  requiredContext?: RequiredTasksContext;
   t: TFunction;
 }): ReminderCopy {
-  const { checkedTaskIds, mode, reminder, t } = args;
+  const { checkedTaskIds, mode, reminder, requiredContext, t } = args;
 
   if (reminder.type === "countdown") {
     return {
@@ -224,9 +234,9 @@ export function reminderCopy(args: {
     };
   }
 
-  const remaining = remainingTaskIds(mode, checkedTaskIds)
+  const remaining = remainingTaskIds(mode, checkedTaskIds, requiredContext)
     .map((id) => {
-      const task = tasksForMode(mode).find((item) => {
+      const task = tasksForDay(mode, requiredContext).find((item) => {
         return item.id === id;
       });
       return task != null ? t(task.labelKey) : id;

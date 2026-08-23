@@ -20,6 +20,7 @@ export type TeamSettingsFormProps = {
   endDate: string;
   isOwner: boolean;
   mode: ChallengeMode;
+  progressPhotoEndsOnly: boolean;
   reminderEnabled: boolean;
   reminderTime: string;
   startDate: string;
@@ -35,6 +36,7 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
     endDate,
     isOwner,
     mode,
+    progressPhotoEndsOnly,
     reminderEnabled,
     reminderTime,
     startDate,
@@ -51,6 +53,7 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
   const [isPending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<null | TranslationKey>(null);
   const [challengeMode, setChallengeMode] = React.useState<ChallengeMode>(mode);
+  const [photoEndsOnly, setPhotoEndsOnly] = React.useState(progressPhotoEndsOnly);
   const [remindersOn, setRemindersOn] = React.useState(reminderEnabled);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [showIosHomeScreenHint, setShowIosHomeScreenHint] = React.useState(false);
@@ -130,6 +133,7 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
 
       const result = await updateMemberAction({
         mode: challengeMode,
+        progressPhotoEndsOnly: photoEndsOnly,
         reminderEnabled: nextRemindersOn,
         reminderTime: nextReminderTime,
         teamId,
@@ -148,6 +152,10 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
 
   const handleChallengeModeChange = (value: string) => {
     setChallengeMode(value as ChallengeMode);
+  };
+
+  const handlePhotoEndsOnlyChange = (checked: boolean | "indeterminate") => {
+    setPhotoEndsOnly(checked === true);
   };
 
   const handleRemindersChange = (checked: boolean | "indeterminate") => {
@@ -189,6 +197,10 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
   React.useEffect(() => {
     setChallengeMode(mode);
   }, [mode]);
+
+  React.useEffect(() => {
+    setPhotoEndsOnly(progressPhotoEndsOnly);
+  }, [progressPhotoEndsOnly]);
 
   React.useEffect(() => {
     setShowIosHomeScreenHint(isIosDevice() && !isStandaloneDisplayMode());
@@ -259,6 +271,20 @@ export const TeamSettingsForm: React.FC<TeamSettingsFormProps> = (props) => {
               </div>
             </RadioGroup>
             <TaskPreviewList mode={challengeMode} />
+            {challengeMode === "hard" ? (
+              <div className="w-full space-y-1.5">
+                <div className="flex w-full items-center gap-2">
+                  <Checkbox
+                    checked={photoEndsOnly}
+                    disabled={startPassed}
+                    id="progressPhotoEndsOnly"
+                    onCheckedChange={handlePhotoEndsOnlyChange}
+                  />
+                  <Label htmlFor="progressPhotoEndsOnly">{t("progressPhotoOnFirstAndLastDayOnly")}</Label>
+                </div>
+                <p className="text-sf-muted text-xs">{t("middleDaysHideTheProgressPhotoTask")}</p>
+              </div>
+            ) : null}
           </div>
 
           <div className="w-full space-y-1.5">

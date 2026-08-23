@@ -54,6 +54,7 @@ export async function refreshMemberStatus(args: {
   endDate: string;
   memberId: string;
   mode: ChallengeMode;
+  progressPhotoEndsOnly?: boolean;
   startDate: string;
   status?: MemberStatus;
   timeZone: string;
@@ -75,6 +76,7 @@ export async function refreshMemberStatus(args: {
     challengeDates,
     completions: completionInputs,
     mode: args.mode,
+    progressPhotoEndsOnly: args.progressPhotoEndsOnly,
     todayLocal,
   });
 
@@ -92,6 +94,7 @@ export async function refreshMemberStatus(args: {
           challengeDates,
           completions: completionInputs,
           mode: "hard",
+          progressPhotoEndsOnly: args.progressPhotoEndsOnly,
           todayLocal,
         })
       : null;
@@ -107,6 +110,7 @@ export async function refreshMemberStatus(args: {
 export async function convertHardMemberToSoft(args: {
   endDate: string;
   memberId: string;
+  progressPhotoEndsOnly?: boolean;
   startDate: string;
   timeZone: string;
 }): Promise<{ hardCompletedDays: number; status: MemberStatus }> {
@@ -122,6 +126,7 @@ export async function convertHardMemberToSoft(args: {
   const hardCompletedDays = countCompletedHardDays({
     challengeDates,
     completions: completionInputs,
+    progressPhotoEndsOnly: args.progressPhotoEndsOnly,
     todayLocal,
   });
 

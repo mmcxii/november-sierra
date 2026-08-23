@@ -5,7 +5,7 @@ import { refreshMemberStatus } from "@/lib/challenge/status";
 import {
   canEditDay,
   localDateString,
-  taskIdsForMode,
+  taskIdsForDay,
   type ChallengeMode,
   type MemberStatus,
 } from "@/lib/challenge/tasks";
@@ -48,7 +48,13 @@ export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>)
     return { error: "thisDayIsReadOnly" as const };
   }
 
-  if (!taskIdsForMode(mode).includes(parsed.data.taskId)) {
+  const requiredTaskIds = taskIdsForDay(mode, {
+    date: parsed.data.date,
+    endDate: session.team.endDate,
+    progressPhotoEndsOnly: session.member.progressPhotoEndsOnly,
+    startDate: session.team.startDate,
+  });
+  if (!requiredTaskIds.includes(parsed.data.taskId)) {
     return { error: "somethingWentWrong" as const };
   }
 
@@ -90,6 +96,7 @@ export async function setTaskCheckedAction(input: z.infer<typeof setTaskSchema>)
     endDate: session.team.endDate,
     memberId: session.member.id,
     mode,
+    progressPhotoEndsOnly: session.member.progressPhotoEndsOnly,
     startDate: session.team.startDate,
     status: session.member.status as MemberStatus,
     timeZone: session.user.timeZone,

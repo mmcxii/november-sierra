@@ -26,6 +26,7 @@ const TeamSettingsPage = async (props: TeamSettingsPageProps) => {
         endDate={session.team.endDate}
         isOwner={session.member.isOwner}
         mode={session.member.mode as ChallengeMode}
+        progressPhotoEndsOnly={session.member.progressPhotoEndsOnly}
         reminderEnabled={session.member.reminderEnabled}
         reminderTime={session.member.reminderTime}
         startDate={session.team.startDate}
