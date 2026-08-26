@@ -266,22 +266,28 @@ export function recomputeMemberStatus(input: RecomputeStatusInput): MemberStatus
   return "active";
 }
 
-/** Soft stumble: any past challenge day incomplete. */
+/**
+ * Soft Off track: the previous challenge day is incomplete, and today is not complete yet.
+ * Older misses do not keep the label after a completed yesterday.
+ */
 export function hasSoftStumble(input: Omit<RecomputeStatusInput, "mode">): boolean {
-  const byDate = new Map(input.completions.map((completion) => [completion.date, completion]));
-
-  for (const date of input.challengeDates) {
-    if (compareDateOnly(date, input.todayLocal) >= 0) {
-      continue;
-    }
-    const completion = byDate.get(date);
-    const checked = completion?.checkedTaskIds ?? [];
-    if (!isDayComplete("soft", checked)) {
-      return true;
-    }
+  if (!input.challengeDates.includes(input.todayLocal)) {
+    return false;
   }
 
-  return false;
+  const previousDate = addDaysDateOnly(input.todayLocal, -1);
+  if (!input.challengeDates.includes(previousDate)) {
+    return false;
+  }
+
+  const byDate = new Map(input.completions.map((completion) => [completion.date, completion]));
+  const todayChecked = byDate.get(input.todayLocal)?.checkedTaskIds ?? [];
+  if (isDayComplete("soft", todayChecked)) {
+    return false;
+  }
+
+  const previousChecked = byDate.get(previousDate)?.checkedTaskIds ?? [];
+  return !isDayComplete("soft", previousChecked);
 }
 
 /** Count of past challenge days complete under Hard rules (used when converting to Soft). */
