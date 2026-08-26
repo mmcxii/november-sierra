@@ -1,7 +1,7 @@
 "use client";
 
 import { TaskIconStrip } from "@/components/team/task-icon-strip";
-import { isDayComplete, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
+import { type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { cn } from "@/lib/utils";
 import * as React from "react";
@@ -47,14 +47,7 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
   const { t } = useTranslation();
 
   //* Variables
-  const dayComplete = isDayComplete(mode, checkedTaskIds, {
-    date: selectedDate,
-    endDate,
-    progressPhotoEndsOnly,
-    startDate,
-  });
   const statusLabel = rosterStatusLabel({
-    dayComplete,
     mode,
     softStumble,
     status,

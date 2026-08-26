@@ -2,10 +2,9 @@ import { describe, expect, it } from "vitest";
 import { rosterStatusLabel } from "./utils";
 
 describe("rosterStatusLabel", () => {
-  it("keeps Off track while a Soft stumble day is still incomplete", () => {
+  it("shows Off track while a Soft member is currently stumbling", () => {
     //* Act
     const label = rosterStatusLabel({
-      dayComplete: false,
       mode: "soft",
       softStumble: true,
       status: "active",
@@ -15,12 +14,11 @@ describe("rosterStatusLabel", () => {
     expect(label).toBe("offTrack");
   });
 
-  it("removes Off track when the last task for the day is complete", () => {
+  it("hides Off track when the stumble has cleared", () => {
     //* Act
     const label = rosterStatusLabel({
-      dayComplete: true,
       mode: "soft",
-      softStumble: true,
+      softStumble: false,
       status: "active",
     });
 
@@ -31,7 +29,6 @@ describe("rosterStatusLabel", () => {
   it("keeps Failed above Off track", () => {
     //* Act
     const label = rosterStatusLabel({
-      dayComplete: true,
       mode: "soft",
       softStumble: true,
       status: "failed",

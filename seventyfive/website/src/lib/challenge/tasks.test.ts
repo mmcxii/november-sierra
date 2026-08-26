@@ -259,10 +259,12 @@ describe("recomputeMemberStatus", () => {
 });
 
 describe("hasSoftStumble", () => {
-  it("detects incomplete past soft days", () => {
+  const softComplete = ["workout", "diet", "alcohol", "water", "reading"] as const;
+
+  it("is true when yesterday is incomplete and today is not done", () => {
     //* Arrange
     const input = {
-      challengeDates: ["2026-09-01", "2026-09-02"],
+      challengeDates: ["2026-09-01", "2026-09-02", "2026-09-03"],
       completions: [],
       todayLocal: "2026-09-02",
     };
@@ -272,6 +274,51 @@ describe("hasSoftStumble", () => {
 
     //* Assert
     expect(stumble).toBe(true);
+  });
+
+  it("clears when today is complete even if yesterday was missed", () => {
+    //* Arrange
+    const input = {
+      challengeDates: ["2026-09-01", "2026-09-02", "2026-09-03"],
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-02", mode: "soft" as const }],
+      todayLocal: "2026-09-02",
+    };
+
+    //* Act
+    const stumble = hasSoftStumble(input);
+
+    //* Assert
+    expect(stumble).toBe(false);
+  });
+
+  it("does not keep Off track after a completed yesterday when an older day was missed", () => {
+    //* Arrange
+    const input = {
+      challengeDates: ["2026-09-01", "2026-09-02", "2026-09-03"],
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-02", mode: "soft" as const }],
+      todayLocal: "2026-09-03",
+    };
+
+    //* Act
+    const stumble = hasSoftStumble(input);
+
+    //* Assert
+    expect(stumble).toBe(false);
+  });
+
+  it("is false on the first challenge day", () => {
+    //* Arrange
+    const input = {
+      challengeDates: ["2026-09-01", "2026-09-02"],
+      completions: [],
+      todayLocal: "2026-09-01",
+    };
+
+    //* Act
+    const stumble = hasSoftStumble(input);
+
+    //* Assert
+    expect(stumble).toBe(false);
   });
 });
 

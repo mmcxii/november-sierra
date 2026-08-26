@@ -1,17 +1,16 @@
-# SeventyFive — Clear Off track when the day is complete
+# SeventyFive — Off track is yesterday’s miss until today is done
 
 ## Intent
 
-Soft members who missed a past day keep an **Off track** label even after they finish the day they are looking at. Checking off that day’s last required task should remove the label.
+Off track is a live Soft status, not a record of every past miss. Show it only after a failed **previous** challenge day, and drop it as soon as **today** is complete. Completing yesterday also clears it, even if an older day was missed.
 
 ## Behavior
 
-- Off track still means Soft + at least one incomplete **past** challenge day (`hasSoftStumble`).
-- The roster hides Off track when the **selected day’s** required tasks are complete.
-- Completing today’s last checkbox therefore clears the label immediately. Paging to an incomplete past day still shows Off track if a stumble remains.
-- Catching up the last missed past day still clears the flag entirely via `hasSoftStumble`.
-- Hard failed / exited still show Failed. No schema change.
-
-## Architecture
-
-`rosterStatusLabel` in the roster-row folder. `RosterRow` derives `dayComplete` with `isDayComplete` (same required-task context as the icon strip).
+- `hasSoftStumble` is true only when:
+  - today is a challenge day,
+  - yesterday is a challenge day and is incomplete, and
+  - today is not yet complete.
+- Day 1 has no previous challenge day, so there is no Off track.
+- Missed two days ago + completed yesterday → no Off track today, even if today is still open.
+- Completing today’s last required Soft task clears Off track immediately, even if yesterday stays incomplete.
+- The roster label follows that flag. Hard failed / exited still show Failed. No schema change.
