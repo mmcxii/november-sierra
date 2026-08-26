@@ -343,6 +343,13 @@ html[data-sf-booted] #sf-boot-splash,
     0 0 var(--sf-ember-glow) color-mix(in srgb, var(--sf-ember-color, var(--sf-accent)) calc(var(--sf-ember-alpha) * 100%), transparent),
     0 0 calc(var(--sf-ember-glow) * 2.2) color-mix(in srgb, var(--sf-ember-color, var(--sf-accent)) calc(var(--sf-ember-alpha) * 55%), transparent);
   pointer-events: none;
+  transition: left 560ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-progress-ember {
+    transition: none;
+  }
 }
 
 .sf-progress-ember[data-level="1"] {

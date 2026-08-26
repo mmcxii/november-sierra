@@ -37,6 +37,7 @@ import { RefreshCw } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { scrollWindowToTop } from "./utils";
 
 export type RosterMember = {
   checkedTaskIds: readonly string[];
@@ -220,6 +221,10 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
       if ("error" in result) {
         setError(result.error ?? "somethingWentWrong");
         return;
+      }
+      const shouldCelebrate = result.teamCelebration || celebrationKind !== "none";
+      if (shouldCelebrate) {
+        await scrollWindowToTop();
       }
       if (result.teamCelebration) {
         celebrateTeam(selectedDate);

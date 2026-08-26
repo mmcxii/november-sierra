@@ -1,6 +1,12 @@
 "use client";
 
-import { SLICE_CLASS, emberDay, emberLevel, emberProgress } from "@/components/challenge/challenge-progress/utils";
+import {
+  SLICE_CLASS,
+  emberDay,
+  emberLevel,
+  emberProgress,
+  isTodayPending,
+} from "@/components/challenge/challenge-progress/utils";
 import {
   buildChallengeProgressSlices,
   CHALLENGE_DAY_COUNT,
@@ -78,10 +84,15 @@ export const ChallengeProgress: React.FC<ChallengeProgressProps> = (props) => {
   });
 
   const elapsedDayCount = isPreStart ? 0 : Math.min(elapsedComplete.length, CHALLENGE_DAY_COUNT);
+  const emberFailed = memberMode === "hard" && (memberStatus === "failed" || memberStatus === "exited");
+  const todayPending = isTodayPending({
+    elapsedComplete,
+    emberFailed,
+    lastElapsedIsToday,
+  });
   const progress = emberProgress(elapsedDayCount);
   const level = emberLevel(isPreStart ? 0 : progress);
-  const day = emberDay(elapsedDayCount, isPreStart);
-  const emberFailed = memberMode === "hard" && (memberStatus === "failed" || memberStatus === "exited");
+  const day = emberDay(elapsedDayCount, isPreStart, todayPending);
 
   return (
     <div className={cn("w-full min-w-0", className)}>

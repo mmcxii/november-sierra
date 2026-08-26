@@ -21,10 +21,20 @@ export function emberLevel(progress: number): number {
   return Math.min(10, Math.max(0, Math.round(progress * 10)));
 }
 
-/** Leading-edge day index 0–75 for CSS `data-day`. */
-export function emberDay(elapsedDayCount: number, isPreStart: boolean): number {
+/** True when today’s slice is still empty, so the ember should not sit on that mark. */
+export function isTodayPending(args: {
+  elapsedComplete: readonly boolean[];
+  emberFailed: boolean;
+  lastElapsedIsToday: boolean;
+}): boolean {
+  return args.lastElapsedIsToday && args.elapsedComplete.at(-1) !== true && !args.emberFailed;
+}
+
+/** Leading-edge day index 0–75 for CSS `data-day`. Parks on filled days while today is still pending. */
+export function emberDay(elapsedDayCount: number, isPreStart: boolean, todayPending = false): number {
   if (isPreStart) {
     return 0;
   }
-  return Math.min(CHALLENGE_DAY_COUNT, Math.max(0, elapsedDayCount));
+  const filledDayCount = todayPending ? elapsedDayCount - 1 : elapsedDayCount;
+  return Math.min(CHALLENGE_DAY_COUNT, Math.max(0, filledDayCount));
 }
