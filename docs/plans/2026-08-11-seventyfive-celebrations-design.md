@@ -42,7 +42,7 @@ Warm acknowledgment, not gamey: enough signal to mark the habit; dignified and q
 
 ## Progress ember (leading orb)
 
-- Small orb on the **leading edge** of the elapsed progress fill (time frontier), not over empty future track.
+- Small orb on the **leading edge of filled progress**, not over today’s empty pending slice. Until today is complete it stays on yesterday’s mark; completing today advances it.
 - Pre-start: faint ember at the start of the track so the metaphor is visible early.
 - Growth: size, brightness, and soft glow scale with `elapsedDays / 75` — tiny spark → calm glow by day 75. No pulse spam; optional very slow breathe only if it stays subtle.
 - **Color:** `sf-accent` (same as completed roster task icons) for theme consistency. Hard `failed`: cool to `sf-danger` with the failed fill.
