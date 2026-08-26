@@ -1,11 +1,12 @@
 "use client";
 
 import { TaskIconStrip } from "@/components/team/task-icon-strip";
-import { type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
+import { isDayComplete, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
 import type { TranslationKey } from "@/lib/i18n/i18next";
 import { cn } from "@/lib/utils";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { rosterStatusLabel } from "./utils";
 
 export type RosterRowProps = {
   checkedTaskIds: readonly string[];
@@ -46,12 +47,18 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
   const { t } = useTranslation();
 
   //* Variables
-  let statusLabel: null | TranslationKey = null;
-  if (status === "failed" || status === "exited") {
-    statusLabel = "failed";
-  } else if (mode === "soft" && softStumble) {
-    statusLabel = "offTrack";
-  }
+  const dayComplete = isDayComplete(mode, checkedTaskIds, {
+    date: selectedDate,
+    endDate,
+    progressPhotoEndsOnly,
+    startDate,
+  });
+  const statusLabel = rosterStatusLabel({
+    dayComplete,
+    mode,
+    softStumble,
+    status,
+  });
   const modeLabel = mode === "hard" ? t("hard") : t("soft");
   let hardDaysKey: null | TranslationKey = null;
   if (mode === "soft" && hardCompletedDays != null) {
