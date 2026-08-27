@@ -126,7 +126,10 @@ export async function getMembershipContext(teamId: string) {
   if (user == null) {
     return null;
   }
+  return getMembershipContextForUser(user.id, teamId);
+}
 
+export async function getMembershipContextForUser(userId: string, teamId: string) {
   const [row] = await db
     .select({
       member: membersTable,
@@ -136,11 +139,13 @@ export async function getMembershipContext(teamId: string) {
     .from(membersTable)
     .innerJoin(teamsTable, eq(membersTable.teamId, teamsTable.id))
     .innerJoin(betterAuthUserTable, eq(membersTable.userId, betterAuthUserTable.id))
-    .where(and(eq(membersTable.userId, user.id), eq(membersTable.teamId, teamId)))
+    .where(and(eq(membersTable.userId, userId), eq(membersTable.teamId, teamId)))
     .limit(1);
 
   return row ?? null;
 }
+
+export type MembershipContext = NonNullable<Awaited<ReturnType<typeof getMembershipContextForUser>>>;
 
 /**
  * Legacy helper used during migration / transitional call sites.
