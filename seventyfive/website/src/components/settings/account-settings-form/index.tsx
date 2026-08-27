@@ -1,5 +1,6 @@
 "use client";
 
+import { ApiKeysSection, type ApiKeyListItem } from "@/components/settings/api-keys-section";
 import { TimeZoneSelect } from "@/components/timezone-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Container } from "@/components/ui/container";
@@ -19,13 +20,15 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 export type AccountSettingsFormProps = {
+  apiKeys: readonly ApiKeyListItem[];
   displayName: string;
+  mcpUrl: string;
   timeZone: string;
   username: string;
 };
 
 export const AccountSettingsForm: React.FC<AccountSettingsFormProps> = (props) => {
-  const { displayName, timeZone, username } = props;
+  const { apiKeys, displayName, mcpUrl, timeZone, username } = props;
 
   //* State
   const { t } = useTranslation();
@@ -221,6 +224,8 @@ export const AccountSettingsForm: React.FC<AccountSettingsFormProps> = (props) =
           </div>
         ) : null}
       </form>
+
+      <ApiKeysSection keys={apiKeys} mcpUrl={mcpUrl} />
 
       {error != null ? <p className="text-sf-danger mt-4 text-sm">{t(error)}</p> : null}
 
