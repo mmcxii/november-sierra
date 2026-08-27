@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@neondatabase/serverless": "^1.1.0",
     "@vercel/analytics": "2.0.1",
