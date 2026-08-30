@@ -48,6 +48,7 @@ export type RosterMember = {
   progressPhotoEndsOnly: boolean;
   softStumble: boolean;
   status: MemberStatus;
+  streak: number;
 };
 
 export type TeamBoardProps = {
@@ -402,6 +403,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
                 softStumble={member.softStumble}
                 startDate={startDate}
                 status={member.status}
+                streak={member.streak}
               />
             );
           })}

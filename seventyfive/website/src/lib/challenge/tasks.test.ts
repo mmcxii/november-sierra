@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canEditDay,
   countCompletedHardDays,
+  currentStreak,
   daysUntilStart,
   endDateFromStart,
   firstIncompletePastDate,
@@ -372,6 +373,142 @@ describe("canEditDay", () => {
 
     //* Assert
     expect(editable).toBe(false);
+  });
+});
+
+describe("currentStreak", () => {
+  const softComplete = ["workout", "diet", "alcohol", "water", "reading"] as const;
+  const hardComplete = ["workout", "outdoorWorkout", "water", "diet", "reading", "progressPhoto"] as const;
+  const challengeDates = ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04"];
+
+  it("is 0 before the start date", () => {
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [],
+      mode: "soft",
+      todayLocal: "2026-08-31",
+    });
+
+    //* Assert
+    expect(streak).toBe(0);
+  });
+
+  it("is 0 on day 1 while today is still open", () => {
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [],
+      mode: "soft",
+      todayLocal: "2026-09-01",
+    });
+
+    //* Assert
+    expect(streak).toBe(0);
+  });
+
+  it("counts today when every required task is checked", () => {
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-01", mode: "soft" }],
+      mode: "soft",
+      todayLocal: "2026-09-01",
+    });
+
+    //* Assert
+    expect(streak).toBe(1);
+  });
+
+  it("skips an incomplete today and counts yesterday", () => {
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-01", mode: "soft" }],
+      mode: "soft",
+      todayLocal: "2026-09-02",
+    });
+
+    //* Assert
+    expect(streak).toBe(1);
+  });
+
+  it("includes today and yesterday when both are complete", () => {
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [
+        { checkedTaskIds: [...softComplete], date: "2026-09-01", mode: "soft" },
+        { checkedTaskIds: [...softComplete], date: "2026-09-02", mode: "soft" },
+      ],
+      mode: "soft",
+      todayLocal: "2026-09-02",
+    });
+
+    //* Assert
+    expect(streak).toBe(2);
+  });
+
+  it("starts a new streak when today is complete after a miss", () => {
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-02", mode: "soft" }],
+      mode: "soft",
+      todayLocal: "2026-09-02",
+    });
+
+    //* Assert
+    expect(streak).toBe(1);
+  });
+
+  it("stops at the first incomplete past day", () => {
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [
+        { checkedTaskIds: [...softComplete], date: "2026-09-01", mode: "soft" },
+        { checkedTaskIds: [...softComplete], date: "2026-09-03", mode: "soft" },
+      ],
+      mode: "soft",
+      todayLocal: "2026-09-04",
+    });
+
+    //* Assert
+    expect(streak).toBe(1);
+  });
+
+  it("is 0 when yesterday is incomplete and today is still open", () => {
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [],
+      mode: "soft",
+      todayLocal: "2026-09-02",
+    });
+
+    //* Assert
+    expect(streak).toBe(0);
+  });
+
+  it("uses Hard required tasks including the ends-only photo rule", () => {
+    //* Arrange
+    const middleHardWithoutPhoto = ["workout", "outdoorWorkout", "water", "diet", "reading"];
+
+    //* Act
+    const streak = currentStreak({
+      challengeDates,
+      completions: [
+        { checkedTaskIds: [...hardComplete], date: "2026-09-01", mode: "hard" },
+        { checkedTaskIds: middleHardWithoutPhoto, date: "2026-09-02", mode: "hard" },
+      ],
+      mode: "hard",
+      progressPhotoEndsOnly: true,
+      todayLocal: "2026-09-03",
+    });
+
+    //* Assert
+    expect(streak).toBe(2);
   });
 });
 

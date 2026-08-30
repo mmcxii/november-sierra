@@ -310,6 +310,37 @@ export function countCompletedHardDays(input: Omit<RecomputeStatusInput, "mode">
   return completed;
 }
 
+/** Consecutive complete challenge days ending at today (if done) or yesterday. */
+export function currentStreak(input: RecomputeStatusInput): number {
+  const byDate = new Map(input.completions.map((completion) => [completion.date, completion]));
+  const dates = input.challengeDates.filter((date) => compareDateOnly(date, input.todayLocal) <= 0);
+  const newest = dates[dates.length - 1];
+  if (newest == null) {
+    return 0;
+  }
+
+  const todayOpen =
+    newest === input.todayLocal &&
+    !isDayComplete(
+      input.mode,
+      byDate.get(newest)?.checkedTaskIds ?? [],
+      requiredTasksContextForDate(input.challengeDates, newest, input.progressPhotoEndsOnly),
+    );
+  const walkFrom = todayOpen ? dates.slice(0, -1) : dates;
+
+  let streak = 0;
+  for (const date of walkFrom.toReversed()) {
+    const checked = byDate.get(date)?.checkedTaskIds ?? [];
+    const context = requiredTasksContextForDate(input.challengeDates, date, input.progressPhotoEndsOnly);
+    if (!isDayComplete(input.mode, checked, context)) {
+      break;
+    }
+    streak += 1;
+  }
+
+  return streak;
+}
+
 /** First past challenge day that is incomplete for the member's current mode. */
 export function firstIncompletePastDate(input: RecomputeStatusInput): null | string {
   const byDate = new Map(input.completions.map((completion) => [completion.date, completion]));
