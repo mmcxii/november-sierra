@@ -2,7 +2,7 @@
 
 ## Intent
 
-A teammate who has not finished a challenge day in a long time should disappear from **Your team** and stop blocking “the team finished.” They stay on the team. Completing one full day brings them back. No new database column.
+A teammate who has not checked any task in a long time should disappear from **Your team** and stop blocking “the team finished.” They stay on the team. Finishing **today** in full brings them back. No new database column.
 
 ## Dormant
 
@@ -10,10 +10,11 @@ A teammate who has not finished a challenge day in a long time should disappear 
 
 - Walk challenge days **before** `D`.
 - If there are fewer than **5** past challenge days, not dormant (pre-start and the first four days).
-- Find the latest complete day on or before `D` (required tasks for that member’s mode / photo rule).
-- Dormant when that date is missing, or it is older than the 5th most recent past challenge day.
+- A day is inactive only when it has **no** task checks. A partial day is activity and breaks the empty streak.
+- Dormant when the last 5 past challenge days are all empty **and** `D` is not fully complete.
+- A partial today does not restore them. Only every required task for the current day does.
 
-Examples (last complete Sept 1): still listed on Sept 6; hidden on Sept 7. Finishing Sept 7’s checklist — or any complete day on or after Sept 2 — shows them again. Partial checks do not.
+Examples: last check Sept 1, no checks Sept 2–6 → hidden on Sept 7. A water check on Sept 4 keeps them listed. A water check on Sept 7 does not; finishing Sept 7’s checklist does.
 
 ## Roster
 

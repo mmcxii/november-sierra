@@ -256,11 +256,11 @@ describe("isDormant", () => {
     expect(dormant).toBe(false);
   });
 
-  it("is false when the last complete day is the fifth most recent past day", () => {
+  it("is false when the fifth most recent past day has a check", () => {
     //* Act
     const dormant = isDormant({
       challengeDates,
-      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-01" }],
+      completions: [{ checkedTaskIds: ["water"], date: "2026-09-01" }],
       mode: "soft",
       todayLocal: "2026-09-06",
     });
@@ -269,7 +269,20 @@ describe("isDormant", () => {
     expect(dormant).toBe(false);
   });
 
-  it("is true when five past challenge days have no complete day in the window", () => {
+  it("is false when a past day in the window has any check", () => {
+    //* Act
+    const dormant = isDormant({
+      challengeDates,
+      completions: [{ checkedTaskIds: ["water"], date: "2026-09-04" }],
+      mode: "soft",
+      todayLocal: "2026-09-07",
+    });
+
+    //* Assert
+    expect(dormant).toBe(false);
+  });
+
+  it("is true when the last five past days have no checks", () => {
     //* Act
     const dormant = isDormant({
       challengeDates,
@@ -282,7 +295,23 @@ describe("isDormant", () => {
     expect(dormant).toBe(true);
   });
 
-  it("clears when today is complete", () => {
+  it("stays true when today is only partially checked", () => {
+    //* Act
+    const dormant = isDormant({
+      challengeDates,
+      completions: [
+        { checkedTaskIds: [...softComplete], date: "2026-09-01" },
+        { checkedTaskIds: ["water"], date: "2026-09-07" },
+      ],
+      mode: "soft",
+      todayLocal: "2026-09-07",
+    });
+
+    //* Assert
+    expect(dormant).toBe(true);
+  });
+
+  it("clears only when today is fully complete", () => {
     //* Act
     const dormant = isDormant({
       challengeDates,
@@ -298,7 +327,7 @@ describe("isDormant", () => {
     expect(dormant).toBe(false);
   });
 
-  it("is true when they never finished a day and five past days have elapsed", () => {
+  it("is true when they never checked a task and five past days have elapsed", () => {
     //* Act
     const dormant = isDormant({
       challengeDates,
