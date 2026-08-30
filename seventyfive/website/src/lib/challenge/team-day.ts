@@ -9,7 +9,7 @@ import {
 
 export type TeamDayEvent = "memberFinished" | "none" | "teamComplete";
 
-/** Consecutive incomplete past challenge days before a member is hidden from the roster. */
+/** Consecutive past challenge days with no checks before a member is hidden from the roster. */
 export const DORMANT_INCOMPLETE_PAST_DAYS = 5;
 
 export type TeamDayMember = {
@@ -51,7 +51,10 @@ function requiredContextForDate(
   return { date, endDate, progressPhotoEndsOnly, startDate };
 }
 
-/** True when the member has no complete day in the last 5 past challenge days as of todayLocal. */
+/**
+ * True when the last 5 past challenge days have no checks, and today is not fully complete.
+ * A partial past day is activity. A partial today does not restore them.
+ */
 export function isDormant(input: {
   challengeDates: readonly string[];
   completions: readonly Pick<DayCompletionInput, "checkedTaskIds" | "date">[];
@@ -64,25 +67,20 @@ export function isDormant(input: {
     return false;
   }
 
-  const threshold = pastDates[pastDates.length - DORMANT_INCOMPLETE_PAST_DAYS];
-  if (threshold == null) {
-    return false;
-  }
-
   const byDate = new Map(input.completions.map((completion) => [completion.date, completion.checkedTaskIds]));
-  let lastComplete: null | string = null;
-  for (const date of input.challengeDates) {
-    if (compareDateOnly(date, input.todayLocal) > 0) {
-      continue;
-    }
-    const checked = byDate.get(date) ?? [];
-    const context = requiredContextForDate(input.challengeDates, date, input.progressPhotoEndsOnly);
-    if (isDayComplete(input.mode, checked, context)) {
-      lastComplete = date;
+  if (input.challengeDates.includes(input.todayLocal)) {
+    const todayChecked = byDate.get(input.todayLocal) ?? [];
+    const todayContext = requiredContextForDate(input.challengeDates, input.todayLocal, input.progressPhotoEndsOnly);
+    if (isDayComplete(input.mode, todayChecked, todayContext)) {
+      return false;
     }
   }
 
-  return lastComplete == null || compareDateOnly(lastComplete, threshold) < 0;
+  const window = pastDates.slice(-DORMANT_INCOMPLETE_PAST_DAYS);
+  return window.every((date) => {
+    const checked = byDate.get(date) ?? [];
+    return checked.length === 0;
+  });
 }
 
 export function isMemberCompleteForDate(args: {
