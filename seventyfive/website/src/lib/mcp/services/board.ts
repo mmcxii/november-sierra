@@ -13,6 +13,7 @@ import {
   type ChallengeMode,
   type MemberStatus,
 } from "@/lib/challenge/tasks";
+import { isDormant } from "@/lib/challenge/team-day";
 import { db } from "@/lib/db/client";
 import { betterAuthUserTable, dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/schema";
 import { english } from "@/lib/mcp/english";
@@ -168,9 +169,10 @@ export async function getBoard(
     });
   const daysUntil = daysUntilStart(session.team.startDate, todayLocal);
 
-  const roster: BoardRosterMember[] = members.map((row) => {
+  const roster: BoardRosterMember[] = members.flatMap((row) => {
     const mode = row.member.mode as ChallengeMode;
-    const status = (row.member.id === session.member.id ? memberStatus : row.member.status) as MemberStatus;
+    const isSelf = row.member.id === session.member.id;
+    const status = (isSelf ? memberStatus : row.member.status) as MemberStatus;
     const selectedDay = allMemberDays.find((day) => day.memberId === row.member.id && day.date === selectedDate);
     const checkedTaskIds = selectedDay != null ? (checksByDay.get(selectedDay.id) ?? []) : [];
     const context = {
@@ -184,6 +186,16 @@ export async function getBoard(
       date: day.date,
       mode,
     }));
+    const dormant = isDormant({
+      challengeDates,
+      completions,
+      mode,
+      progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+      todayLocal,
+    });
+    if (dormant && !isSelf) {
+      return [];
+    }
     const memberOffTrack =
       mode === "soft" &&
       hasSoftStumble({
@@ -196,15 +208,17 @@ export async function getBoard(
       return definition != null ? english(definition.labelKey) : taskId;
     });
 
-    return {
-      complete: isDayComplete(mode, checkedTaskIds, context),
-      displayName: row.user?.name ?? row.member.displayName,
-      isSelf: row.member.id === session.member.id,
-      mode,
-      offTrack: memberOffTrack,
-      remaining: remainingLabels,
-      status,
-    };
+    return [
+      {
+        complete: isDayComplete(mode, checkedTaskIds, context),
+        displayName: row.user?.name ?? row.member.displayName,
+        isSelf,
+        mode,
+        offTrack: memberOffTrack,
+        remaining: remainingLabels,
+        status,
+      },
+    ];
   });
 
   return serviceSuccess({

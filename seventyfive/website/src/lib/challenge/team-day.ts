@@ -1,10 +1,20 @@
 import { challengeDayNumber } from "@/lib/challenge/celebrations";
-import { isDayComplete, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
+import {
+  compareDateOnly,
+  isDayComplete,
+  type ChallengeMode,
+  type DayCompletionInput,
+  type MemberStatus,
+} from "@/lib/challenge/tasks";
 
 export type TeamDayEvent = "memberFinished" | "none" | "teamComplete";
 
+/** Consecutive incomplete past challenge days before a member is hidden from the roster. */
+export const DORMANT_INCOMPLETE_PAST_DAYS = 5;
+
 export type TeamDayMember = {
   checkedTaskIds: readonly string[];
+  dormant: boolean;
   id: string;
   mode: ChallengeMode;
   progressPhotoEndsOnly?: boolean;
@@ -13,14 +23,66 @@ export type TeamDayMember = {
   userId: null | string;
 };
 
-export function countsTowardTeamDay(status: MemberStatus): boolean {
-  return status !== "exited";
+export type CountedTeamMember = {
+  dormant?: boolean;
+  status: MemberStatus;
+};
+
+export function countsTowardTeamDay(member: CountedTeamMember): boolean {
+  return member.status !== "exited" && member.dormant !== true;
 }
 
-export function countedTeamMembers<T extends { status: MemberStatus }>(members: readonly T[]): T[] {
+export function countedTeamMembers<T extends CountedTeamMember>(members: readonly T[]): T[] {
   return members.filter((member) => {
-    return countsTowardTeamDay(member.status);
+    return countsTowardTeamDay(member);
   });
+}
+
+function requiredContextForDate(
+  challengeDates: readonly string[],
+  date: string,
+  progressPhotoEndsOnly?: boolean,
+): undefined | { date: string; endDate: string; progressPhotoEndsOnly?: boolean; startDate: string } {
+  const startDate = challengeDates[0];
+  const endDate = challengeDates[challengeDates.length - 1];
+  if (startDate == null || endDate == null) {
+    return undefined;
+  }
+  return { date, endDate, progressPhotoEndsOnly, startDate };
+}
+
+/** True when the member has no complete day in the last 5 past challenge days as of todayLocal. */
+export function isDormant(input: {
+  challengeDates: readonly string[];
+  completions: readonly Pick<DayCompletionInput, "checkedTaskIds" | "date">[];
+  mode: ChallengeMode;
+  progressPhotoEndsOnly?: boolean;
+  todayLocal: string;
+}): boolean {
+  const pastDates = input.challengeDates.filter((date) => compareDateOnly(date, input.todayLocal) < 0);
+  if (pastDates.length < DORMANT_INCOMPLETE_PAST_DAYS) {
+    return false;
+  }
+
+  const threshold = pastDates[pastDates.length - DORMANT_INCOMPLETE_PAST_DAYS];
+  if (threshold == null) {
+    return false;
+  }
+
+  const byDate = new Map(input.completions.map((completion) => [completion.date, completion.checkedTaskIds]));
+  let lastComplete: null | string = null;
+  for (const date of input.challengeDates) {
+    if (compareDateOnly(date, input.todayLocal) > 0) {
+      continue;
+    }
+    const checked = byDate.get(date) ?? [];
+    const context = requiredContextForDate(input.challengeDates, date, input.progressPhotoEndsOnly);
+    if (isDayComplete(input.mode, checked, context)) {
+      lastComplete = date;
+    }
+  }
+
+  return lastComplete == null || compareDateOnly(lastComplete, threshold) < 0;
 }
 
 export function isMemberCompleteForDate(args: {
@@ -68,7 +130,14 @@ export function resolveTeamDayEvent(args: {
     });
   });
 
-  return allComplete ? "teamComplete" : "memberFinished";
+  if (!allComplete) {
+    return "memberFinished";
+  }
+
+  const others = counted.filter((member) => {
+    return member.id !== args.actorId;
+  });
+  return others.length >= 2 ? "none" : "teamComplete";
 }
 
 export function teamDayPushRecipients(args: { actorId: string; members: readonly TeamDayMember[] }): TeamDayMember[] {
@@ -106,21 +175,32 @@ export type MemberDayChecks = {
 };
 
 export function membersForDate(
-  members: readonly Omit<TeamDayMember, "checkedTaskIds">[],
+  members: readonly Omit<TeamDayMember, "checkedTaskIds" | "dormant">[],
   completions: readonly MemberDayChecks[],
   date: string,
+  challengeDates: readonly string[],
 ): TeamDayMember[] {
   const checksByMember = new Map<string, readonly string[]>();
+  const completionsByMember = new Map<string, MemberDayChecks[]>();
   for (const row of completions) {
-    if (row.date !== date) {
-      continue;
+    const list = completionsByMember.get(row.memberId) ?? [];
+    list.push(row);
+    completionsByMember.set(row.memberId, list);
+    if (row.date === date) {
+      checksByMember.set(row.memberId, row.checkedTaskIds);
     }
-    checksByMember.set(row.memberId, row.checkedTaskIds);
   }
   return members.map((member) => {
     return {
       ...member,
       checkedTaskIds: checksByMember.get(member.id) ?? [],
+      dormant: isDormant({
+        challengeDates,
+        completions: completionsByMember.get(member.id) ?? [],
+        mode: member.mode,
+        progressPhotoEndsOnly: member.progressPhotoEndsOnly,
+        todayLocal: date,
+      }),
     };
   });
 }
@@ -131,7 +211,7 @@ export function pendingTeamCelebrationDate(args: {
   completions: readonly MemberDayChecks[];
   endDate: string;
   lastTeamCelebrationDate: null | string;
-  members: readonly Omit<TeamDayMember, "checkedTaskIds">[];
+  members: readonly Omit<TeamDayMember, "checkedTaskIds" | "dormant">[];
   startDate: string;
   todayLocal: string;
 }): null | string {
@@ -149,7 +229,7 @@ export function pendingTeamCelebrationDate(args: {
       !isDateTeamComplete({
         date,
         endDate: args.endDate,
-        members: membersForDate(args.members, args.completions, date),
+        members: membersForDate(args.members, args.completions, date, args.challengeDates),
         startDate: args.startDate,
       })
     ) {
