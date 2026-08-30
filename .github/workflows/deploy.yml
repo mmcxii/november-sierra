@@ -17,7 +17,7 @@ jobs:
       anchr-website: ${{ steps.filter.outputs.anchr-website }}
       ns-website: ${{ steps.filter.outputs.ns-website }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -46,7 +46,7 @@ jobs:
     if: needs.ci-required.outputs.anchr-website == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -106,7 +106,7 @@ jobs:
     needs: deploy-stage-anchr-website
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -180,7 +180,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -240,7 +240,7 @@ jobs:
     needs: deploy-prod-anchr-website
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -329,7 +329,7 @@ jobs:
     if: needs.ci-required.outputs.ns-website == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -383,7 +383,7 @@ jobs:
     needs: deploy-prod-ns-website
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
