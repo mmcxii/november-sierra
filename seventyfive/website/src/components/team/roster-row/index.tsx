@@ -24,6 +24,7 @@ export type RosterRowProps = {
   softStumble: boolean;
   startDate: string;
   status: MemberStatus;
+  streak: number;
 };
 
 export const RosterRow: React.FC<RosterRowProps> = (props) => {
@@ -41,6 +42,7 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
     softStumble,
     startDate,
     status,
+    streak,
   } = props;
 
   //* State
@@ -53,6 +55,7 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
     status,
   });
   const modeLabel = mode === "hard" ? t("hard") : t("soft");
+  const streakLabel = streak > 0 ? t("{{count}}DayStreak", { count: streak }) : null;
   let hardDaysKey: null | TranslationKey = null;
   if (mode === "soft" && hardCompletedDays != null) {
     hardDaysKey = hardCompletedDays === 1 ? "{{count}}DayOnHard" : "{{count}}DaysOnHard";
@@ -64,6 +67,12 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
         <p className="font-medium">
           {displayName}
           {isSelf ? <span aria-hidden="true">{`\u00b7`}</span> : null}
+          {streakLabel != null ? (
+            <span className="text-sf-accent ml-1.5 tabular-nums" title={streakLabel}>
+              <span className="sr-only">{streakLabel}</span>
+              <span aria-hidden="true">{streak}</span>
+            </span>
+          ) : null}
         </p>
         <p className="text-sf-muted text-xs">
           {modeLabel}

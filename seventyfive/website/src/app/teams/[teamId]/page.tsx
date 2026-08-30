@@ -5,6 +5,7 @@ import { elapsedProgressForMember } from "@/lib/challenge/progress";
 import { quoteForTeamDay } from "@/lib/challenge/quotes";
 import { refreshMemberStatus } from "@/lib/challenge/status";
 import {
+  currentStreak,
   firstIncompletePastDate,
   hasSoftStumble,
   listChallengeDates,
@@ -98,6 +99,13 @@ const TeamPage = async (props: TeamPageProps) => {
         completions,
         todayLocal,
       });
+    const streak = currentStreak({
+      challengeDates,
+      completions,
+      mode,
+      progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+      todayLocal,
+    });
 
     return {
       checkedTaskIds: checkedTaskIds.filter((id) =>
@@ -115,6 +123,7 @@ const TeamPage = async (props: TeamPageProps) => {
       progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
       softStumble,
       status: (row.member.id === session.member.id ? memberStatus : row.member.status) as MemberStatus,
+      streak,
     };
   });
 
