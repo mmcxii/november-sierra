@@ -1,11 +1,16 @@
-import { type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
-import { type TeamDayMember } from "@/lib/challenge/team-day";
+import { listChallengeDates, type ChallengeMode, type MemberStatus } from "@/lib/challenge/tasks";
+import { isDormant, type TeamDayMember } from "@/lib/challenge/team-day";
 import { db } from "@/lib/db/client";
 import { dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
 
-export async function loadTeamDayMembers(teamId: string, date: string): Promise<TeamDayMember[]> {
-  const members = await db.select().from(membersTable).where(eq(membersTable.teamId, teamId));
+export async function loadTeamDayMembers(args: {
+  date: string;
+  endDate: string;
+  startDate: string;
+  teamId: string;
+}): Promise<TeamDayMember[]> {
+  const members = await db.select().from(membersTable).where(eq(membersTable.teamId, args.teamId));
   if (members.length === 0) {
     return [];
   }
@@ -20,11 +25,8 @@ export async function loadTeamDayMembers(teamId: string, date: string): Promise<
       ),
     );
 
-  const dateDays = days.filter((day) => {
-    return day.date === date;
-  });
   const checks =
-    dateDays.length === 0
+    days.length === 0
       ? []
       : await db
           .select()
@@ -32,7 +34,7 @@ export async function loadTeamDayMembers(teamId: string, date: string): Promise<
           .where(
             inArray(
               taskChecksTable.dayCompletionId,
-              dateDays.map((day) => day.id),
+              days.map((day) => day.id),
             ),
           );
 
@@ -43,12 +45,36 @@ export async function loadTeamDayMembers(teamId: string, date: string): Promise<
     checksByDay.set(check.dayCompletionId, list);
   }
 
-  const dayByMember = new Map(dateDays.map((day) => [day.memberId, day]));
+  const daysByMember = new Map<string, typeof days>();
+  for (const day of days) {
+    const list = daysByMember.get(day.memberId) ?? [];
+    list.push(day);
+    daysByMember.set(day.memberId, list);
+  }
+
+  const challengeDates = listChallengeDates(args.startDate, args.endDate);
 
   return members.map((row) => {
-    const day = dayByMember.get(row.id);
+    const memberDays = daysByMember.get(row.id) ?? [];
+    const completions = memberDays.map((day) => {
+      return {
+        checkedTaskIds: checksByDay.get(day.id) ?? [],
+        date: day.date,
+      };
+    });
+    const dateDay = memberDays.find((day) => {
+      return day.date === args.date;
+    });
+
     return {
-      checkedTaskIds: day != null ? (checksByDay.get(day.id) ?? []) : [],
+      checkedTaskIds: dateDay != null ? (checksByDay.get(dateDay.id) ?? []) : [],
+      dormant: isDormant({
+        challengeDates,
+        completions,
+        mode: row.mode as ChallengeMode,
+        progressPhotoEndsOnly: row.progressPhotoEndsOnly,
+        todayLocal: args.date,
+      }),
       id: row.id,
       mode: row.mode as ChallengeMode,
       progressPhotoEndsOnly: row.progressPhotoEndsOnly,

@@ -14,7 +14,7 @@ import {
   type ChallengeMode,
   type MemberStatus,
 } from "@/lib/challenge/tasks";
-import { pendingTeamCelebrationDate } from "@/lib/challenge/team-day";
+import { isDormant, pendingTeamCelebrationDate } from "@/lib/challenge/team-day";
 import { stampTeamCelebrationDate } from "@/lib/challenge/team-day-db";
 import { db } from "@/lib/db/client";
 import { betterAuthUserTable, dayCompletionsTable, membersTable, taskChecksTable } from "@/lib/db/schema";
@@ -81,7 +81,7 @@ const TeamPage = async (props: TeamPageProps) => {
     daysByMember.set(day.memberId, list);
   }
 
-  const roster = members.map((row) => {
+  const roster = members.flatMap((row) => {
     const mode = row.member.mode as ChallengeMode;
     const selectedDay = relevantDays.find((day) => day.memberId === row.member.id);
     const checkedTaskIds = selectedDay != null ? (checksByDay.get(selectedDay.id) ?? []) : [];
@@ -91,6 +91,18 @@ const TeamPage = async (props: TeamPageProps) => {
       date: day.date,
       mode,
     }));
+
+    const isSelf = row.member.id === session.member.id;
+    const dormant = isDormant({
+      challengeDates,
+      completions,
+      mode,
+      progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+      todayLocal,
+    });
+    if (dormant && !isSelf) {
+      return [];
+    }
 
     const softStumble =
       mode === "soft" &&
@@ -107,24 +119,26 @@ const TeamPage = async (props: TeamPageProps) => {
       todayLocal,
     });
 
-    return {
-      checkedTaskIds: checkedTaskIds.filter((id) =>
-        taskIdsForDay(mode, {
-          date: selectedDate,
-          endDate: session.team.endDate,
-          progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
-          startDate: session.team.startDate,
-        }).includes(id),
-      ),
-      displayName: row.user?.name ?? row.member.displayName,
-      hardCompletedDays: row.member.hardCompletedDays,
-      id: row.member.id,
-      mode,
-      progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
-      softStumble,
-      status: (row.member.id === session.member.id ? memberStatus : row.member.status) as MemberStatus,
-      streak,
-    };
+    return [
+      {
+        checkedTaskIds: checkedTaskIds.filter((id) =>
+          taskIdsForDay(mode, {
+            date: selectedDate,
+            endDate: session.team.endDate,
+            progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+            startDate: session.team.startDate,
+          }).includes(id),
+        ),
+        displayName: row.user?.name ?? row.member.displayName,
+        hardCompletedDays: row.member.hardCompletedDays,
+        id: row.member.id,
+        mode,
+        progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+        softStumble,
+        status: (isSelf ? memberStatus : row.member.status) as MemberStatus,
+        streak,
+      },
+    ];
   });
 
   const selfDay = relevantDays.find((day) => day.memberId === session.member.id);

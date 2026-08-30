@@ -130,7 +130,14 @@ export async function setTaskCheckedForMembership(
 
   let teamCelebration = false;
   const shouldNotify = input.checked && input.date === todayLocal;
-  const membersPromise = shouldNotify ? loadTeamDayMembers(session.team.id, input.date) : null;
+  const membersPromise = shouldNotify
+    ? loadTeamDayMembers({
+        date: input.date,
+        endDate: session.team.endDate,
+        startDate: session.team.startDate,
+        teamId: session.team.id,
+      })
+    : null;
   if (membersPromise != null) {
     const members = await membersPromise;
     const event = resolveTeamDayEvent({

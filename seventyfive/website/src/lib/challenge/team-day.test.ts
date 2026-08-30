@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { pendingTeamCelebrationDate, resolveTeamDayEvent, teamDayPushRecipients, type TeamDayMember } from "./team-day";
+import {
+  isDormant,
+  pendingTeamCelebrationDate,
+  resolveTeamDayEvent,
+  teamDayPushRecipients,
+  type TeamDayMember,
+} from "./team-day";
 
 const startDate = "2026-09-01";
 const endDate = "2026-11-14";
@@ -9,6 +15,7 @@ const softComplete = ["workout", "diet", "alcohol", "water", "reading"] as const
 function member(overrides: Partial<TeamDayMember> & Pick<TeamDayMember, "id">): TeamDayMember {
   return {
     checkedTaskIds: [],
+    dormant: false,
     mode: "soft",
     reminderEnabled: true,
     status: "active",
@@ -155,6 +162,154 @@ describe("resolveTeamDayEvent", () => {
     expect(blocked).toBe("memberFinished");
     expect(converted).toBe("teamComplete");
   });
+
+  it("ignores a dormant teammate who has not finished the day", () => {
+    //* Arrange
+    const members = [
+      member({ checkedTaskIds: softComplete, id: "a" }),
+      member({ checkedTaskIds: softComplete, id: "b" }),
+      member({ checkedTaskIds: [], dormant: true, id: "quiet" }),
+    ];
+
+    //* Act
+    const event = resolveTeamDayEvent({
+      actorId: "a",
+      actorIsNowComplete: true,
+      actorWasAlreadyComplete: false,
+      date,
+      endDate,
+      members,
+      startDate,
+    });
+
+    //* Assert
+    expect(event).toBe("teamComplete");
+  });
+
+  it("does not fire a second teamComplete when a returning member finishes after the others", () => {
+    //* Arrange
+    const members = [
+      member({ checkedTaskIds: softComplete, id: "a" }),
+      member({ checkedTaskIds: softComplete, id: "b" }),
+      member({ checkedTaskIds: softComplete, dormant: false, id: "quiet" }),
+    ];
+
+    //* Act
+    const event = resolveTeamDayEvent({
+      actorId: "quiet",
+      actorIsNowComplete: true,
+      actorWasAlreadyComplete: false,
+      date,
+      endDate,
+      members,
+      startDate,
+    });
+
+    //* Assert
+    expect(event).toBe("none");
+  });
+
+  it("fires teamComplete when a two-person team first has two counted finishers", () => {
+    //* Arrange
+    const members = [
+      member({ checkedTaskIds: softComplete, id: "a" }),
+      member({ checkedTaskIds: softComplete, id: "quiet" }),
+    ];
+
+    //* Act
+    const event = resolveTeamDayEvent({
+      actorId: "quiet",
+      actorIsNowComplete: true,
+      actorWasAlreadyComplete: false,
+      date,
+      endDate,
+      members,
+      startDate,
+    });
+
+    //* Assert
+    expect(event).toBe("teamComplete");
+  });
+});
+
+describe("isDormant", () => {
+  const challengeDates = [
+    "2026-09-01",
+    "2026-09-02",
+    "2026-09-03",
+    "2026-09-04",
+    "2026-09-05",
+    "2026-09-06",
+    "2026-09-07",
+  ];
+
+  it("is false before five past challenge days exist", () => {
+    //* Act
+    const dormant = isDormant({
+      challengeDates,
+      completions: [],
+      mode: "soft",
+      todayLocal: "2026-09-05",
+    });
+
+    //* Assert
+    expect(dormant).toBe(false);
+  });
+
+  it("is false when the last complete day is the fifth most recent past day", () => {
+    //* Act
+    const dormant = isDormant({
+      challengeDates,
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-01" }],
+      mode: "soft",
+      todayLocal: "2026-09-06",
+    });
+
+    //* Assert
+    expect(dormant).toBe(false);
+  });
+
+  it("is true when five past challenge days have no complete day in the window", () => {
+    //* Act
+    const dormant = isDormant({
+      challengeDates,
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-01" }],
+      mode: "soft",
+      todayLocal: "2026-09-07",
+    });
+
+    //* Assert
+    expect(dormant).toBe(true);
+  });
+
+  it("clears when today is complete", () => {
+    //* Act
+    const dormant = isDormant({
+      challengeDates,
+      completions: [
+        { checkedTaskIds: [...softComplete], date: "2026-09-01" },
+        { checkedTaskIds: [...softComplete], date: "2026-09-07" },
+      ],
+      mode: "soft",
+      todayLocal: "2026-09-07",
+    });
+
+    //* Assert
+    expect(dormant).toBe(false);
+  });
+
+  it("is true when they never finished a day and five past days have elapsed", () => {
+    //* Act
+    const dormant = isDormant({
+      challengeDates,
+      completions: [],
+      mode: "soft",
+      todayLocal: "2026-09-07",
+    });
+
+    //* Assert
+    expect(dormant).toBe(true);
+  });
 });
 
 describe("teamDayPushRecipients", () => {
@@ -165,6 +320,7 @@ describe("teamDayPushRecipients", () => {
       member({ id: "b", reminderEnabled: true }),
       member({ id: "c", reminderEnabled: false }),
       member({ id: "d", reminderEnabled: true, status: "exited" }),
+      member({ dormant: true, id: "e", reminderEnabled: true }),
     ];
 
     //* Act
@@ -264,5 +420,50 @@ describe("pendingTeamCelebrationDate", () => {
     //* Assert
     expect(pending).toBeNull();
     expect(future).toBe("2026-09-01");
+  });
+
+  it("treats a long-inactive teammate as uncounted for later dates", () => {
+    //* Arrange
+    const longDates = [
+      "2026-09-01",
+      "2026-09-02",
+      "2026-09-03",
+      "2026-09-04",
+      "2026-09-05",
+      "2026-09-06",
+      "2026-09-07",
+    ];
+    const members = [member({ id: "a" }), member({ id: "b" }), member({ id: "quiet" })];
+    const completions = [
+      { checkedTaskIds: [...softComplete], date: "2026-09-07", memberId: "a" },
+      { checkedTaskIds: [...softComplete], date: "2026-09-07", memberId: "b" },
+    ];
+
+    //* Act
+    const pending = pendingTeamCelebrationDate({
+      challengeDates: longDates,
+      completions,
+      endDate,
+      lastTeamCelebrationDate: null,
+      members,
+      startDate,
+      todayLocal: "2026-09-07",
+    });
+    const dayOneBlocked = pendingTeamCelebrationDate({
+      challengeDates: longDates,
+      completions: [
+        { checkedTaskIds: [...softComplete], date: "2026-09-01", memberId: "a" },
+        { checkedTaskIds: [...softComplete], date: "2026-09-01", memberId: "b" },
+      ],
+      endDate,
+      lastTeamCelebrationDate: null,
+      members,
+      startDate,
+      todayLocal: "2026-09-01",
+    });
+
+    //* Assert
+    expect(pending).toBe("2026-09-07");
+    expect(dayOneBlocked).toBeNull();
   });
 });
