@@ -44,6 +44,7 @@ export type RosterMember = {
   displayName: string;
   hardCompletedDays: null | number;
   id: string;
+  inactive: boolean;
   mode: ChallengeMode;
   progressPhotoEndsOnly: boolean;
   softStumble: boolean;
@@ -106,6 +107,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
   const [rosterPulseNonce, setRosterPulseNonce] = React.useState(0);
   const [celebration, setCelebration] = React.useState<null | Exclude<CheckCelebration, "none">>(null);
   const [celebrationNonce, setCelebrationNonce] = React.useState(0);
+  const [showInactive, setShowInactive] = React.useState(false);
 
   //* Refs
   const pendingTeamPlayedRef = React.useRef<null | string>(null);
@@ -133,6 +135,17 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     typeof window !== "undefined"
       ? `${window.location.origin}/join?code=${encodeURIComponent(inviteCode)}`
       : `/join?code=${encodeURIComponent(inviteCode)}`;
+  const activeRoster: RosterMember[] = [];
+  const inactiveRoster: RosterMember[] = [];
+  for (const member of roster) {
+    if (member.inactive) {
+      inactiveRoster.push(member);
+    } else {
+      activeRoster.push(member);
+    }
+  }
+  const inactiveCount = inactiveRoster.length;
+  const inactiveLabel = inactiveCount > 0 ? t("{{count}}Inactive", { count: inactiveCount }) : null;
 
   //* Handlers
   const playCelebration = React.useCallback((kind: Exclude<CheckCelebration, "none">) => {
@@ -256,6 +269,12 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
     });
   };
 
+  const onToggleInactive = () => {
+    setShowInactive((open) => {
+      return !open;
+    });
+  };
+
   const onLeave = () => {
     startTransition(async () => {
       await leaveTeamAction(teamId);
@@ -374,7 +393,19 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
 
       <section className="mt-8">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("yourTeam")}</h2>
+          <div className="flex min-w-0 items-baseline gap-2">
+            <h2 className="text-sf-muted text-xs font-medium tracking-[0.14em] uppercase">{t("yourTeam")}</h2>
+            {inactiveLabel != null ? (
+              <button
+                aria-expanded={showInactive}
+                className="text-sf-muted hover:text-sf-text text-xs font-medium tabular-nums"
+                onClick={onToggleInactive}
+                type="button"
+              >
+                {inactiveLabel}
+              </button>
+            ) : null}
+          </div>
           <button
             aria-label={t("refreshTeam")}
             className="text-sf-muted hover:text-sf-text rounded-[var(--sf-radius)] p-1 disabled:opacity-60"
@@ -386,7 +417,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
           </button>
         </div>
         <ul className="divide-sf-border mt-3 divide-y">
-          {roster.map((member) => {
+          {activeRoster.map((member) => {
             return (
               <RosterRow
                 checkedTaskIds={member.checkedTaskIds}
@@ -407,6 +438,28 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
               />
             );
           })}
+          {showInactive
+            ? inactiveRoster.map((member) => {
+                return (
+                  <RosterRow
+                    checkedTaskIds={member.checkedTaskIds}
+                    displayName={member.displayName}
+                    endDate={endDate}
+                    hardCompletedDays={member.hardCompletedDays}
+                    inactive
+                    isSelf={false}
+                    key={member.id}
+                    mode={member.mode}
+                    progressPhotoEndsOnly={member.progressPhotoEndsOnly}
+                    selectedDate={selectedDate}
+                    softStumble={member.softStumble}
+                    startDate={startDate}
+                    status={member.status}
+                    streak={member.streak}
+                  />
+                );
+              })
+            : null}
         </ul>
       </section>
 

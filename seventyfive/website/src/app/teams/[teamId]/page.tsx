@@ -81,7 +81,7 @@ const TeamPage = async (props: TeamPageProps) => {
     daysByMember.set(day.memberId, list);
   }
 
-  const roster = members.flatMap((row) => {
+  const roster = members.map((row) => {
     const mode = row.member.mode as ChallengeMode;
     const selectedDay = relevantDays.find((day) => day.memberId === row.member.id);
     const checkedTaskIds = selectedDay != null ? (checksByDay.get(selectedDay.id) ?? []) : [];
@@ -100,9 +100,6 @@ const TeamPage = async (props: TeamPageProps) => {
       progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
       todayLocal,
     });
-    if (dormant && !isSelf) {
-      return [];
-    }
 
     const softStumble =
       mode === "soft" &&
@@ -119,26 +116,25 @@ const TeamPage = async (props: TeamPageProps) => {
       todayLocal,
     });
 
-    return [
-      {
-        checkedTaskIds: checkedTaskIds.filter((id) =>
-          taskIdsForDay(mode, {
-            date: selectedDate,
-            endDate: session.team.endDate,
-            progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
-            startDate: session.team.startDate,
-          }).includes(id),
-        ),
-        displayName: row.user?.name ?? row.member.displayName,
-        hardCompletedDays: row.member.hardCompletedDays,
-        id: row.member.id,
-        mode,
-        progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
-        softStumble,
-        status: (isSelf ? memberStatus : row.member.status) as MemberStatus,
-        streak,
-      },
-    ];
+    return {
+      checkedTaskIds: checkedTaskIds.filter((id) =>
+        taskIdsForDay(mode, {
+          date: selectedDate,
+          endDate: session.team.endDate,
+          progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+          startDate: session.team.startDate,
+        }).includes(id),
+      ),
+      displayName: row.user?.name ?? row.member.displayName,
+      hardCompletedDays: row.member.hardCompletedDays,
+      id: row.member.id,
+      inactive: dormant && !isSelf,
+      mode,
+      progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
+      softStumble,
+      status: (isSelf ? memberStatus : row.member.status) as MemberStatus,
+      streak,
+    };
   });
 
   const selfDay = relevantDays.find((day) => day.memberId === session.member.id);
