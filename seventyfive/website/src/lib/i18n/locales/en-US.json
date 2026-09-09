@@ -160,5 +160,6 @@
   "{{count}}DayOnHard": "{{count}} day on Hard",
   "{{count}}DayStreak": "{{count}}-day streak",
   "{{count}}DaysOnHard": "{{count}} days on Hard",
+  "{{count}}Inactive": "{{count}} inactive",
   "{{name}}FinishedToday": "{{name}} finished today."
 }

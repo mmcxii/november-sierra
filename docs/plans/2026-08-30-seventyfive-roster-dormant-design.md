@@ -18,9 +18,9 @@ Examples: last check Sept 1, no checks Sept 2–6 → hidden on Sept 7. A water 
 
 ## Roster
 
-Hide dormant people from Your team. The viewer always sees themselves. No ghost row or “paused” copy.
+Hide dormant people from the default Your team list. The viewer always sees themselves. A trailing **N inactive** control can reveal them under the active rows (see `2026-09-09-seventyfive-inactive-roster-toggle-design.md`).
 
-REST/MCP `get_board` roster uses the same filter.
+REST/MCP `get_board` roster still omits dormant teammates (except self).
 
 ## Team-done
 

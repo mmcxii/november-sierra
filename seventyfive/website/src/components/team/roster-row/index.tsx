@@ -13,6 +13,7 @@ export type RosterRowProps = {
   displayName: string;
   endDate: string;
   hardCompletedDays?: null | number;
+  inactive?: boolean;
   isSelf: boolean;
   mode: ChallengeMode;
   progressPhotoEndsOnly?: boolean;
@@ -33,6 +34,7 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
     displayName,
     endDate,
     hardCompletedDays = null,
+    inactive = false,
     isSelf,
     mode,
     progressPhotoEndsOnly = false,
@@ -62,7 +64,7 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
   }
 
   return (
-    <li className="flex items-center justify-between gap-3 py-3 text-sm">
+    <li className={cn("flex items-center justify-between gap-3 py-3 text-sm", { "opacity-60": inactive })}>
       <div className="min-w-0">
         <p className="font-medium">
           {displayName}
