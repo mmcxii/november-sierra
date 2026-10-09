@@ -13,4 +13,4 @@ Off track is a live Soft status, not a record of every past miss. Show it only a
 - Day 1 has no previous challenge day, so there is no Off track.
 - Missed two days ago + completed yesterday → no Off track today, even if today is still open.
 - Completing today’s last required Soft task clears Off track immediately, even if yesterday stays incomplete.
-- The roster label follows that flag. Hard failed / exited still show Failed. No schema change.
+- The roster label follows that flag and appends consecutive incomplete past days: `Off track (N)`. Hard failed / exited still show Failed. No schema change.

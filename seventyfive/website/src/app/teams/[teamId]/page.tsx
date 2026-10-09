@@ -10,6 +10,7 @@ import {
   hasSoftStumble,
   listChallengeDates,
   localDateString,
+  softOffTrackDays,
   taskIdsForDay,
   type ChallengeMode,
   type MemberStatus,
@@ -108,6 +109,13 @@ const TeamPage = async (props: TeamPageProps) => {
         completions,
         todayLocal,
       });
+    const offTrackDays = softStumble
+      ? softOffTrackDays({
+          challengeDates,
+          completions,
+          todayLocal,
+        })
+      : 0;
     const streak = currentStreak({
       challengeDates,
       completions,
@@ -130,6 +138,7 @@ const TeamPage = async (props: TeamPageProps) => {
       id: row.member.id,
       inactive: dormant && !isSelf,
       mode,
+      offTrackDays,
       progressPhotoEndsOnly: row.member.progressPhotoEndsOnly,
       softStumble,
       status: (isSelf ? memberStatus : row.member.status) as MemberStatus,

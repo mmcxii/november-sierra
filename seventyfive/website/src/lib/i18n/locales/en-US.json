@@ -90,6 +90,7 @@
   "notificationsWereBlockedEnableThemInYourBrowserToReceiveReminders": "Notifications were blocked. Enable them in your browser to receive reminders.",
   "nutritiousMeals": "Nutritious meals",
   "offTrack": "Off track",
+  "offTrack{{count}}": "Off track ({{count}})",
   "onIphoneAddThisAppToYourHomeScreenToReceiveReminders": "On iPhone, add this app to your Home Screen to receive reminders.",
   "outdoorWorkout45Min": "Outdoor workout (45 min)",
   "password": "Password",

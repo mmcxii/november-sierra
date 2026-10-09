@@ -46,6 +46,7 @@ export type RosterMember = {
   id: string;
   inactive: boolean;
   mode: ChallengeMode;
+  offTrackDays: number;
   progressPhotoEndsOnly: boolean;
   softStumble: boolean;
   status: MemberStatus;
@@ -427,6 +428,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
                 isSelf={member.id === memberId}
                 key={member.id}
                 mode={member.mode}
+                offTrackDays={member.offTrackDays}
                 progressPhotoEndsOnly={member.progressPhotoEndsOnly}
                 pulse={rosterPulseIntervalMs != null}
                 pulseNonce={rosterPulseNonce}
@@ -450,6 +452,7 @@ export const TeamBoard: React.FC<TeamBoardProps> = (props) => {
                     isSelf={false}
                     key={member.id}
                     mode={member.mode}
+                    offTrackDays={member.offTrackDays}
                     progressPhotoEndsOnly={member.progressPhotoEndsOnly}
                     selectedDate={selectedDate}
                     softStumble={member.softStumble}

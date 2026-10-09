@@ -16,6 +16,7 @@ export type RosterRowProps = {
   inactive?: boolean;
   isSelf: boolean;
   mode: ChallengeMode;
+  offTrackDays?: number;
   progressPhotoEndsOnly?: boolean;
   /** When true, icons run a quick unchecked↔checked fade on each pulseNonce. */
   pulse?: boolean;
@@ -37,6 +38,7 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
     inactive = false,
     isSelf,
     mode,
+    offTrackDays = 0,
     progressPhotoEndsOnly = false,
     pulse = false,
     pulseNonce = 0,
@@ -56,6 +58,8 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
     softStumble,
     status,
   });
+  const statusText =
+    statusLabel === "offTrack" && offTrackDays > 0 ? t("offTrack{{count}}", { count: offTrackDays }) : null;
   const modeLabel = mode === "hard" ? t("hard") : t("soft");
   const streakLabel = streak > 0 ? t("{{count}}DayStreak", { count: streak }) : null;
   let hardDaysKey: null | TranslationKey = null;
@@ -99,13 +103,13 @@ export const RosterRow: React.FC<RosterRowProps> = (props) => {
         />
         {statusLabel != null ? (
           <span
-            className={cn("text-xs", {
+            className={cn("text-xs tabular-nums", {
               "text-sf-danger": status === "failed" || status === "exited",
               "text-sf-muted": status !== "failed" && status !== "exited" && !softStumble,
               "text-sf-warn": status !== "failed" && status !== "exited" && softStumble,
             })}
           >
-            {t(statusLabel)}
+            {statusText ?? t(statusLabel)}
           </span>
         ) : null}
       </div>

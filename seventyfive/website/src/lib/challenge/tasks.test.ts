@@ -17,6 +17,7 @@ import {
   recomputeMemberStatus,
   remainingTaskIds,
   resolveDailyReminder,
+  softOffTrackDays,
   startDateBoundsForTimeZone,
   taskIdsForDay,
   tasksForDay,
@@ -320,6 +321,59 @@ describe("hasSoftStumble", () => {
 
     //* Assert
     expect(stumble).toBe(false);
+  });
+});
+
+describe("softOffTrackDays", () => {
+  const softComplete = ["workout", "diet", "alcohol", "water", "reading"] as const;
+  const challengeDates = ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04"];
+
+  it("is 0 when Off track is not showing", () => {
+    //* Act
+    const days = softOffTrackDays({
+      challengeDates,
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-03", mode: "soft" }],
+      todayLocal: "2026-09-04",
+    });
+
+    //* Assert
+    expect(days).toBe(0);
+  });
+
+  it("is 1 when only yesterday is incomplete", () => {
+    //* Act
+    const days = softOffTrackDays({
+      challengeDates,
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-01", mode: "soft" }],
+      todayLocal: "2026-09-03",
+    });
+
+    //* Assert
+    expect(days).toBe(1);
+  });
+
+  it("counts consecutive incomplete past days", () => {
+    //* Act
+    const days = softOffTrackDays({
+      challengeDates,
+      completions: [],
+      todayLocal: "2026-09-04",
+    });
+
+    //* Assert
+    expect(days).toBe(3);
+  });
+
+  it("stops at a completed past day", () => {
+    //* Act
+    const days = softOffTrackDays({
+      challengeDates,
+      completions: [{ checkedTaskIds: [...softComplete], date: "2026-09-01", mode: "soft" }],
+      todayLocal: "2026-09-04",
+    });
+
+    //* Assert
+    expect(days).toBe(2);
   });
 });
 

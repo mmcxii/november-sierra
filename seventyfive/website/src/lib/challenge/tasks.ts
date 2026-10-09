@@ -290,6 +290,27 @@ export function hasSoftStumble(input: Omit<RecomputeStatusInput, "mode">): boole
   return !isDayComplete("soft", previousChecked);
 }
 
+/** Consecutive incomplete past Soft days while Off track is showing. 0 if not off track. */
+export function softOffTrackDays(input: Omit<RecomputeStatusInput, "mode">): number {
+  if (!hasSoftStumble(input)) {
+    return 0;
+  }
+
+  const byDate = new Map(input.completions.map((completion) => [completion.date, completion]));
+  let days = 0;
+  for (const date of input.challengeDates.toReversed()) {
+    if (compareDateOnly(date, input.todayLocal) >= 0) {
+      continue;
+    }
+    const checked = byDate.get(date)?.checkedTaskIds ?? [];
+    if (isDayComplete("soft", checked)) {
+      break;
+    }
+    days += 1;
+  }
+  return days;
+}
+
 /** Count of past challenge days complete under Hard rules (used when converting to Soft). */
 export function countCompletedHardDays(input: Omit<RecomputeStatusInput, "mode">): number {
   const byDate = new Map(input.completions.map((completion) => [completion.date, completion]));
