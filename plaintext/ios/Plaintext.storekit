@@ -1,0 +1,29 @@
+{
+  "identifier" : "6A1F2C3B",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : true,
+      "internalID" : "6A1F2C3C",
+      "localizations" : [
+        {
+          "description" : "Unlimited apps and pages, every header, and all customization. Yours forever.",
+          "displayName" : "Plaintext Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.novembersierra.plaintext.pro",
+      "referenceName" : "Plaintext Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

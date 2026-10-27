@@ -37,6 +37,12 @@ ANC-95: feat(agents): add initial skills and initialize AGENTS.md
 - After modifying any schema file in `src/lib/db/schema/`, run `pnpm drizzle-kit generate` to create a new migration file, and commit it alongside the schema change.
 - `db:push` is acceptable **only** for local development. Do not use it in CI or against deployed databases.
 
+## Swift
+
+- Swift code follows the `swift-code-review` skill. `swift format` (config in `.swift-format`) and the SwiftSyntax checker in `shared/swift-style` enforce it in the pre-commit hook and the `Swift Style` CI workflow.
+- Run `swift run --package-path shared/swift-style swift-style --fix <paths>` to reorder view members and add section headers.
+- New Swift style rules go in `shared/swift-style/Sources/SwiftStyleRules/Rules`, with tests, the same way custom ESLint rules live in `shared/eslint-config`.
+
 ## Corrections
 
-**Always be looking for ways to automate corrections via ESLint rules. Whenver you are corrected, changes to code style are requested, etc, consider how you could enforce that preference with an automated code quality tool. The goal is to prevent solving the same issue twice.**
+**Always be looking for ways to automate corrections via ESLint rules (or `shared/swift-style` rules for Swift). Whenver you are corrected, changes to code style are requested, etc, consider how you could enforce that preference with an automated code quality tool. The goal is to prevent solving the same issue twice.**

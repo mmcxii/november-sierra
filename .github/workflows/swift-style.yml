@@ -1,0 +1,36 @@
+name: Swift Style
+
+on:
+  pull_request:
+    paths:
+      - "**/*.swift"
+      - ".swift-format"
+      - "shared/swift-style/**"
+      - "scripts/swift-lint-staged.sh"
+      - ".github/workflows/swift-style.yml"
+
+concurrency:
+  group: swift-style-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Swift format and style
+    runs-on: ubuntu-latest
+    container: swift:6.4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/cache@v4
+        with:
+          path: shared/swift-style/.build
+          key: swift-style-${{ runner.os }}-${{ hashFiles('shared/swift-style/Package.resolved') }}
+      - name: Test style rules
+        working-directory: shared/swift-style
+        run: swift test
+      - name: Build style checker
+        working-directory: shared/swift-style
+        run: swift build --product swift-style
+      - name: swift format
+        run: swift format lint --strict --recursive --parallel plaintext/ios shared/swift-style
+      - name: swift-style
+        run: shared/swift-style/.build/debug/swift-style plaintext/ios shared/swift-style

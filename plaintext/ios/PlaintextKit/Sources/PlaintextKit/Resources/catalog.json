@@ -1,0 +1,733 @@
+{
+  "apps": [
+    {
+      "aliases": [],
+      "category": "Utilities",
+      "id": "1password",
+      "launch": "direct",
+      "name": "1Password",
+      "url": "onepassword://"
+    },
+    {
+      "aliases": [],
+      "category": "Travel",
+      "id": "airbnb",
+      "launch": "direct",
+      "name": "Airbnb",
+      "url": "airbnb://"
+    },
+    {
+      "aliases": [],
+      "category": "Shopping",
+      "id": "amazon",
+      "launch": "direct",
+      "name": "Amazon",
+      "url": "com.amazon.mobile.shopping://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "app-store",
+      "launch": "direct",
+      "name": "App Store",
+      "url": "itms-apps://"
+    },
+    {
+      "aliases": [],
+      "category": "Books",
+      "id": "audible",
+      "launch": "direct",
+      "name": "Audible",
+      "url": "audible://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "books",
+      "launch": "direct",
+      "name": "Books",
+      "url": "ibooks://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "calculator",
+      "launch": "assistant",
+      "name": "Calculator",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "calendar",
+      "launch": "direct",
+      "name": "Calendar",
+      "url": "calshow://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "camera",
+      "launch": "assistant",
+      "name": "Camera",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Finance",
+      "id": "cash-app",
+      "launch": "direct",
+      "name": "Cash App",
+      "url": "squarecash://"
+    },
+    {
+      "aliases": ["google chrome"],
+      "category": "Browsers",
+      "id": "chrome",
+      "launch": "direct",
+      "name": "Chrome",
+      "url": "googlechrome://"
+    },
+    {
+      "aliases": ["alarm", "timer"],
+      "category": "Apple",
+      "id": "clock",
+      "launch": "assistant",
+      "name": "Clock",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "compass",
+      "launch": "assistant",
+      "name": "Compass",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "contacts",
+      "launch": "assistant",
+      "name": "Contacts",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Messaging",
+      "id": "discord",
+      "launch": "direct",
+      "name": "Discord",
+      "url": "discord://"
+    },
+    {
+      "aliases": [],
+      "category": "Food",
+      "id": "doordash",
+      "launch": "direct",
+      "name": "DoorDash",
+      "url": "doordash://"
+    },
+    {
+      "aliases": [],
+      "category": "Education",
+      "id": "duolingo",
+      "launch": "direct",
+      "name": "Duolingo",
+      "url": "duolingo://"
+    },
+    {
+      "aliases": [],
+      "category": "Social",
+      "id": "facebook",
+      "launch": "direct",
+      "name": "Facebook",
+      "url": "fb://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "facetime",
+      "launch": "assistant",
+      "name": "FaceTime",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "files",
+      "launch": "direct",
+      "name": "Files",
+      "url": "shareddocuments://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "find-my",
+      "launch": "direct",
+      "name": "Find My",
+      "url": "findmy://"
+    },
+    {
+      "aliases": [],
+      "category": "Browsers",
+      "id": "firefox",
+      "launch": "direct",
+      "name": "Firefox",
+      "url": "firefox://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "fitness",
+      "launch": "assistant",
+      "name": "Fitness",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "freeform",
+      "launch": "assistant",
+      "name": "Freeform",
+      "url": null
+    },
+    {
+      "aliases": ["google mail"],
+      "category": "Productivity",
+      "id": "gmail",
+      "launch": "direct",
+      "name": "Gmail",
+      "url": "googlegmail://"
+    },
+    {
+      "aliases": ["google search"],
+      "category": "Browsers",
+      "id": "google",
+      "launch": "direct",
+      "name": "Google",
+      "url": "google://"
+    },
+    {
+      "aliases": [],
+      "category": "Productivity",
+      "id": "google-calendar",
+      "launch": "direct",
+      "name": "Google Calendar",
+      "url": "googlecalendar://"
+    },
+    {
+      "aliases": [],
+      "category": "Productivity",
+      "id": "google-drive",
+      "launch": "direct",
+      "name": "Google Drive",
+      "url": "googledrive://"
+    },
+    {
+      "aliases": [],
+      "category": "Travel",
+      "id": "google-maps",
+      "launch": "direct",
+      "name": "Google Maps",
+      "url": "comgooglemaps://"
+    },
+    {
+      "aliases": [],
+      "category": "Photo",
+      "id": "google-photos",
+      "launch": "direct",
+      "name": "Google Photos",
+      "url": "googlephotos://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "health",
+      "launch": "direct",
+      "name": "Health",
+      "url": "x-apple-health://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "home",
+      "launch": "assistant",
+      "name": "Home",
+      "url": null
+    },
+    {
+      "aliases": ["ig"],
+      "category": "Social",
+      "id": "instagram",
+      "launch": "direct",
+      "name": "Instagram",
+      "url": "instagram://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "journal",
+      "launch": "assistant",
+      "name": "Journal",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Books",
+      "id": "kindle",
+      "launch": "direct",
+      "name": "Kindle",
+      "url": "kindle://"
+    },
+    {
+      "aliases": [],
+      "category": "Social",
+      "id": "linkedin",
+      "launch": "direct",
+      "name": "LinkedIn",
+      "url": "linkedin://"
+    },
+    {
+      "aliases": [],
+      "category": "Travel",
+      "id": "lyft",
+      "launch": "direct",
+      "name": "Lyft",
+      "url": "lyft://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "magnifier",
+      "launch": "assistant",
+      "name": "Magnifier",
+      "url": null
+    },
+    {
+      "aliases": ["email"],
+      "category": "Apple",
+      "id": "mail",
+      "launch": "direct",
+      "name": "Mail",
+      "url": "message://"
+    },
+    {
+      "aliases": ["apple maps"],
+      "category": "Apple",
+      "id": "maps",
+      "launch": "direct",
+      "name": "Maps",
+      "url": "maps://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "measure",
+      "launch": "assistant",
+      "name": "Measure",
+      "url": null
+    },
+    {
+      "aliases": ["imessage", "sms", "texts"],
+      "category": "Apple",
+      "id": "messages",
+      "launch": "direct",
+      "name": "Messages",
+      "url": "messages://"
+    },
+    {
+      "aliases": ["facebook messenger"],
+      "category": "Messaging",
+      "id": "messenger",
+      "launch": "direct",
+      "name": "Messenger",
+      "url": "fb-messenger://"
+    },
+    {
+      "aliases": ["teams"],
+      "category": "Productivity",
+      "id": "microsoft-teams",
+      "launch": "direct",
+      "name": "Microsoft Teams",
+      "url": "msteams://"
+    },
+    {
+      "aliases": ["apple music"],
+      "category": "Apple",
+      "id": "music",
+      "launch": "direct",
+      "name": "Music",
+      "url": "music://"
+    },
+    {
+      "aliases": [],
+      "category": "Video",
+      "id": "netflix",
+      "launch": "direct",
+      "name": "Netflix",
+      "url": "nflx://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "news",
+      "launch": "direct",
+      "name": "News",
+      "url": "applenews://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "notes",
+      "launch": "direct",
+      "name": "Notes",
+      "url": "mobilenotes://"
+    },
+    {
+      "aliases": [],
+      "category": "Productivity",
+      "id": "notion",
+      "launch": "direct",
+      "name": "Notion",
+      "url": "notion://"
+    },
+    {
+      "aliases": [],
+      "category": "Productivity",
+      "id": "obsidian",
+      "launch": "direct",
+      "name": "Obsidian",
+      "url": "obsidian://"
+    },
+    {
+      "aliases": ["microsoft outlook"],
+      "category": "Productivity",
+      "id": "outlook",
+      "launch": "direct",
+      "name": "Outlook",
+      "url": "ms-outlook://"
+    },
+    {
+      "aliases": [],
+      "category": "Podcasts",
+      "id": "overcast",
+      "launch": "direct",
+      "name": "Overcast",
+      "url": "overcast://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "passwords",
+      "launch": "assistant",
+      "name": "Passwords",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Finance",
+      "id": "paypal",
+      "launch": "direct",
+      "name": "PayPal",
+      "url": "paypal://"
+    },
+    {
+      "aliases": ["call", "dialer"],
+      "category": "Apple",
+      "id": "phone",
+      "launch": "phoneShortcut",
+      "name": "Phone",
+      "url": null
+    },
+    {
+      "aliases": ["gallery", "pictures"],
+      "category": "Apple",
+      "id": "photos",
+      "launch": "direct",
+      "name": "Photos",
+      "url": "photos-redirect://"
+    },
+    {
+      "aliases": [],
+      "category": "Social",
+      "id": "pinterest",
+      "launch": "direct",
+      "name": "Pinterest",
+      "url": "pinterest://"
+    },
+    {
+      "aliases": [],
+      "category": "Podcasts",
+      "id": "pocket-casts",
+      "launch": "direct",
+      "name": "Pocket Casts",
+      "url": "pktc://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "podcasts",
+      "launch": "direct",
+      "name": "Podcasts",
+      "url": "podcasts://"
+    },
+    {
+      "aliases": [],
+      "category": "Social",
+      "id": "reddit",
+      "launch": "direct",
+      "name": "Reddit",
+      "url": "reddit://"
+    },
+    {
+      "aliases": ["todo", "tasks"],
+      "category": "Apple",
+      "id": "reminders",
+      "launch": "direct",
+      "name": "Reminders",
+      "url": "x-apple-reminderkit://"
+    },
+    {
+      "aliases": ["browser", "web"],
+      "category": "Apple",
+      "id": "safari",
+      "launch": "assistant",
+      "name": "Safari",
+      "url": null
+    },
+    {
+      "aliases": ["preferences"],
+      "category": "Apple",
+      "id": "settings",
+      "launch": "assistant",
+      "name": "Settings",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Music",
+      "id": "shazam",
+      "launch": "direct",
+      "name": "Shazam",
+      "url": "shazam://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "shortcuts",
+      "launch": "direct",
+      "name": "Shortcuts",
+      "url": "shortcuts://"
+    },
+    {
+      "aliases": [],
+      "category": "Messaging",
+      "id": "signal",
+      "launch": "direct",
+      "name": "Signal",
+      "url": "sgnl://"
+    },
+    {
+      "aliases": [],
+      "category": "Productivity",
+      "id": "slack",
+      "launch": "direct",
+      "name": "Slack",
+      "url": "slack://"
+    },
+    {
+      "aliases": [],
+      "category": "Social",
+      "id": "snapchat",
+      "launch": "direct",
+      "name": "Snapchat",
+      "url": "snapchat://"
+    },
+    {
+      "aliases": [],
+      "category": "Music",
+      "id": "spotify",
+      "launch": "direct",
+      "name": "Spotify",
+      "url": "spotify://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "stocks",
+      "launch": "direct",
+      "name": "Stocks",
+      "url": "stocks://"
+    },
+    {
+      "aliases": [],
+      "category": "Health",
+      "id": "strava",
+      "launch": "direct",
+      "name": "Strava",
+      "url": "strava://"
+    },
+    {
+      "aliases": [],
+      "category": "Messaging",
+      "id": "telegram",
+      "launch": "direct",
+      "name": "Telegram",
+      "url": "tg://"
+    },
+    {
+      "aliases": [],
+      "category": "Productivity",
+      "id": "things",
+      "launch": "direct",
+      "name": "Things",
+      "url": "things:///"
+    },
+    {
+      "aliases": [],
+      "category": "Social",
+      "id": "threads",
+      "launch": "direct",
+      "name": "Threads",
+      "url": "barcelona://"
+    },
+    {
+      "aliases": [],
+      "category": "Social",
+      "id": "tiktok",
+      "launch": "direct",
+      "name": "TikTok",
+      "url": "snssdk1233://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "tips",
+      "launch": "assistant",
+      "name": "Tips",
+      "url": null
+    },
+    {
+      "aliases": [],
+      "category": "Productivity",
+      "id": "todoist",
+      "launch": "direct",
+      "name": "Todoist",
+      "url": "todoist://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "translate",
+      "launch": "assistant",
+      "name": "Translate",
+      "url": null
+    },
+    {
+      "aliases": ["apple tv"],
+      "category": "Apple",
+      "id": "tv",
+      "launch": "direct",
+      "name": "TV",
+      "url": "videos://"
+    },
+    {
+      "aliases": [],
+      "category": "Video",
+      "id": "twitch",
+      "launch": "direct",
+      "name": "Twitch",
+      "url": "twitch://"
+    },
+    {
+      "aliases": [],
+      "category": "Travel",
+      "id": "uber",
+      "launch": "direct",
+      "name": "Uber",
+      "url": "uber://"
+    },
+    {
+      "aliases": [],
+      "category": "Food",
+      "id": "uber-eats",
+      "launch": "direct",
+      "name": "Uber Eats",
+      "url": "ubereats://"
+    },
+    {
+      "aliases": [],
+      "category": "Finance",
+      "id": "venmo",
+      "launch": "direct",
+      "name": "Venmo",
+      "url": "venmo://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "voice-memos",
+      "launch": "assistant",
+      "name": "Voice Memos",
+      "url": null
+    },
+    {
+      "aliases": ["apple pay"],
+      "category": "Apple",
+      "id": "wallet",
+      "launch": "direct",
+      "name": "Wallet",
+      "url": "shoebox://"
+    },
+    {
+      "aliases": [],
+      "category": "Travel",
+      "id": "waze",
+      "launch": "direct",
+      "name": "Waze",
+      "url": "waze://"
+    },
+    {
+      "aliases": [],
+      "category": "Apple",
+      "id": "weather",
+      "launch": "direct",
+      "name": "Weather",
+      "url": "weather://"
+    },
+    {
+      "aliases": [],
+      "category": "Messaging",
+      "id": "whatsapp",
+      "launch": "direct",
+      "name": "WhatsApp",
+      "url": "whatsapp://"
+    },
+    {
+      "aliases": ["twitter"],
+      "category": "Social",
+      "id": "x",
+      "launch": "direct",
+      "name": "X",
+      "url": "twitter://"
+    },
+    {
+      "aliases": [],
+      "category": "Video",
+      "id": "youtube",
+      "launch": "direct",
+      "name": "YouTube",
+      "url": "youtube://"
+    },
+    {
+      "aliases": [],
+      "category": "Productivity",
+      "id": "zoom",
+      "launch": "direct",
+      "name": "Zoom",
+      "url": "zoomus://"
+    }
+  ],
+  "version": 1
+}

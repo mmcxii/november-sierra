@@ -14,6 +14,10 @@ All packages under `shared/` and `november-sierra/` are licensed under the
 [MIT License](https://opensource.org/licenses/MIT).
 See the `LICENSE` file in each package for the full text.
 
+## All rights reserved
+
+Everything under `plaintext/` is proprietary. See `plaintext/LICENSE`.
+
 ---
 
 Each workspace package contains its own `LICENSE` file. When in doubt, check the

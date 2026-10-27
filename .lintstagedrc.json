@@ -1,6 +1,7 @@
 {
   "*.json": ["sortier --write", "prettier --write"],
   "*.md": ["prettier --write"],
+  "*.swift": ["scripts/swift-lint-staged.sh"],
   "*.{ts,tsx,js,cjs,mjs}": ["sortier --write", "prettier --write"],
   "anchr/website/**/*.{ts,tsx,js,cjs,mjs}": [
     "bash -c 'cd anchr/website && ../../node_modules/.bin/eslint --fix \"$@\"' --"
