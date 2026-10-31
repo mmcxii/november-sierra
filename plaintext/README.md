@@ -41,7 +41,24 @@ Core logic tests run anywhere Swift does:
 cd plaintext/ios/PlaintextKit && swift test
 ```
 
-CI (`.github/workflows/plaintext-ios.yml`) runs those tests on Linux and builds the app and widgets on macOS for every PR that touches `plaintext/`.
+CI (`.github/workflows/plaintext-ios.yml`) runs those tests on Linux and builds the app and widgets on macOS for every PR that touches `plaintext/`. That build is unsigned and simulator-only.
+
+### Device build from CI
+
+Xcode 27 is Apple silicon only. This Intel Mac cannot produce the iOS 27 full-page widget, so device IPAs are built on GitHub's `xcode-27` runner (`.github/workflows/plaintext-device.yml`).
+
+1. In [App Store Connect → Users and Access → Integrations → App Store Connect API](https://appstoreconnect.apple.com/access/integrations/api), create a key with **Developer** or **Admin** access. Download the `.p8` once.
+2. Add repository secrets:
+   - `APP_STORE_CONNECT_ISSUER_ID` — the issuer UUID on that page
+   - `APP_STORE_CONNECT_KEY_ID` — the key id
+   - `APP_STORE_CONNECT_API_KEY` — the full `.p8` file body, including the `BEGIN`/`END` lines
+3. Register this iPhone on the team if it is not already there (Automatic signing will fail otherwise). Team ID defaults to `HN84P9VKBB`; override with the `PLAINTEXT_DEVELOPMENT_TEAM` variable if needed.
+4. Actions → **Plaintext device IPA** → **Run workflow**. Download the `plaintext-iphone` artifact.
+5. Unlock the phone, plug it into this Mac, and install:
+
+```bash
+plaintext/ios/scripts/install-device-ipa.sh ~/Downloads/Plaintext.ipa
+```
 
 ### Reviewing without a Mac
 

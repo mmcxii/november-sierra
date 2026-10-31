@@ -1,0 +1,160 @@
+name: Plaintext device IPA
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: plaintext-device-${{ github.ref }}
+  cancel-in-progress: true
+
+# Apple silicon runner with the Xcode 27 toolchain. Intel Macs cannot install that Xcode.
+# https://github.blog/changelog/2026-10-15-xcode-27-runner-image-generally-available/
+jobs:
+  ipa:
+    name: Signed iPhone build
+    runs-on: xcode-27
+    timeout-minutes: 45
+    env:
+      DEVELOPMENT_TEAM: ${{ vars.PLAINTEXT_DEVELOPMENT_TEAM || 'HN84P9VKBB' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Require signing secrets
+        env:
+          ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          missing=()
+          [ -n "$ISSUER" ] || missing+=("APP_STORE_CONNECT_ISSUER_ID")
+          [ -n "$KEY_ID" ] || missing+=("APP_STORE_CONNECT_KEY_ID")
+          [ -n "$API_KEY" ] || missing+=("APP_STORE_CONNECT_API_KEY")
+          if [ ${#missing[@]} -gt 0 ]; then
+            {
+              echo "### Missing signing secrets"
+              echo "Add these repository secrets, then run this workflow again:"
+              printf -- "- \`%s\`\n" "${missing[@]}"
+              echo
+              echo "Create an App Store Connect API key (Developer or Admin, with access to Certificates, Identifiers & Profiles),"
+              echo "then paste the issuer id, key id, and the \`.p8\` file body."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Select Xcode 27
+        run: |
+          ls /Applications | grep -i xcode || true
+          path=""
+          for candidate in \
+            /Applications/Xcode_27.2.app \
+            /Applications/Xcode_27.2_Release_Candidate.app \
+            /Applications/Xcode_27.1.app \
+            /Applications/Xcode_27.app \
+            /Applications/Xcode.app
+          do
+            if [ -d "$candidate" ]; then
+              path=$candidate
+              break
+            fi
+          done
+          [ -n "$path" ] || { echo "No Xcode 27 install on this runner"; exit 1; }
+          sudo xcode-select -s "$path"
+          xcodebuild -version
+          version=$(xcodebuild -version | awk 'NR==1 {print $2}')
+          echo "xcode=$version" >> "$GITHUB_OUTPUT"
+          case "$version" in
+            27.*) ;;
+            *)
+              echo "Need Xcode 27, found $version"
+              exit 1
+              ;;
+          esac
+        id: xcode
+
+      - name: Generate project
+        working-directory: plaintext/ios
+        run: |
+          brew install xcodegen
+          echo "DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM" > Config/Local.xcconfig
+          xcodegen generate
+
+      - name: Write App Store Connect key
+        env:
+          API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: printf '%s\n' "$API_KEY" > "$RUNNER_TEMP/AuthKey.p8"
+
+      - name: Archive for iPhone
+        working-directory: plaintext/ios
+        env:
+          AUTH_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          AUTH_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild archive \
+            -project Plaintext.xcodeproj \
+            -scheme Plaintext \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Plaintext.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$AUTH_KEY_ID" \
+            -authenticationKeyIssuerID "$AUTH_ISSUER" \
+            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+            CODE_SIGN_STYLE=Automatic
+
+      - name: Export development IPA
+        env:
+          AUTH_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          AUTH_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>development</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>teamID</key>
+            <string>$DEVELOPMENT_TEAM</string>
+            <key>compileBitcode</key>
+            <false/>
+            <key>stripSwiftSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Plaintext.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$AUTH_KEY_ID" \
+            -authenticationKeyIssuerID "$AUTH_ISSUER"
+
+      - name: Name artifact
+        run: |
+          mkdir -p "$RUNNER_TEMP/ipa"
+          cp "$RUNNER_TEMP/export/"*.ipa "$RUNNER_TEMP/ipa/Plaintext.ipa"
+          ls -la "$RUNNER_TEMP/ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plaintext-iphone
+          path: ${{ runner.temp }}/ipa/Plaintext.ipa
+          if-no-files-found: error
+
+      - name: Install notes
+        run: |
+          {
+            echo "### Device IPA"
+            echo "Built with **Xcode ${{ steps.xcode.outputs.xcode }}** for a physical iPhone."
+            echo
+            echo "Download the **plaintext-iphone** artifact, then on the Mac with the phone plugged in:"
+            echo
+            echo '```bash'
+            echo "plaintext/ios/scripts/install-device-ipa.sh ~/Downloads/Plaintext.ipa"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
