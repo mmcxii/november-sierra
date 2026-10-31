@@ -1,0 +1,130 @@
+name: Plaintext
+options:
+  bundleIdPrefix: com.novembersierra
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+configFiles:
+  Debug: Config/Plaintext.xcconfig
+  Release: Config/Plaintext.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+packages:
+  PlaintextKit:
+    path: PlaintextKit
+
+targets:
+  Plaintext:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Shared
+      - path: Plaintext.storekit
+        buildPhase: none
+    dependencies:
+      - package: PlaintextKit
+      - target: PlaintextWidgets
+    entitlements:
+      path: App/Plaintext.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.novembersierra.plaintext
+        com.apple.developer.weatherkit: true
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Plaintext
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.productivity
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        CFBundleURLTypes:
+          - CFBundleURLName: com.novembersierra.plaintext
+            CFBundleURLSchemes:
+              - plaintext
+        NSLocationWhenInUseUsageDescription: Plaintext uses your location only to show the weather in your header.
+        NSCalendarsFullAccessUsageDescription: Plaintext shows your next event in your header. Events never leave your iPhone.
+        NSPhotoLibraryAddUsageDescription: Plaintext saves a wallpaper that matches your theme to Photos.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.novembersierra.plaintext
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    scheme:
+      storeKitConfiguration: Plaintext.storekit
+      testTargets:
+        - PlaintextSnapshotTests
+        - PlaintextUITests
+
+  PlaintextWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widgets
+      - Shared
+    dependencies:
+      - package: PlaintextKit
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: Widgets/PlaintextWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.novembersierra.plaintext
+        com.apple.developer.weatherkit: true
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Plaintext
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSWidgetWantsLocation: true
+        NSLocationWhenInUseUsageDescription: Plaintext uses your location only to show the weather in your header.
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.novembersierra.plaintext.widgets
+
+  # Compiles the widget views directly, since a widget extension can't host tests.
+  PlaintextSnapshotTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests/Snapshots
+      - Shared
+      - path: Widgets
+        excludes:
+          - PlaintextWidgets.swift
+          - "*.plist"
+          - "*.entitlements"
+    dependencies:
+      - package: PlaintextKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.novembersierra.plaintext.snapshot-tests
+        GENERATE_INFOPLIST_FILE: YES
+
+  PlaintextUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - Tests/UI
+    dependencies:
+      - target: Plaintext
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.novembersierra.plaintext.ui-tests
+        GENERATE_INFOPLIST_FILE: YES

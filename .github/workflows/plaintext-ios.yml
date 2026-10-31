@@ -1,0 +1,155 @@
+name: Plaintext iOS
+
+on:
+  pull_request:
+    paths:
+      - "plaintext/**"
+      - ".github/workflows/plaintext-ios.yml"
+
+concurrency:
+  group: plaintext-ios-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kit:
+    name: PlaintextKit tests
+    runs-on: ubuntu-latest
+    container: swift:6.4
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test
+        working-directory: plaintext/ios/PlaintextKit
+        run: swift test
+
+  app:
+    name: Build app and widgets
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Show Xcode
+        run: xcodebuild -version
+      - name: Generate project
+        working-directory: plaintext/ios
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Build
+        working-directory: plaintext/ios
+        run: |
+          xcodebuild build \
+            -project Plaintext.xcodeproj \
+            -scheme Plaintext \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+
+  screens:
+    name: Widget snapshots and app walkthrough
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      SCREENS: ${{ github.workspace }}/screens
+    steps:
+      - uses: actions/checkout@v6
+      - name: Generate project
+        working-directory: plaintext/ios
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Boot simulator
+        id: simulator
+        run: |
+          xcrun simctl list runtimes
+          device=$(xcrun simctl list devices available -j | jq -c '
+            [.devices | to_entries[]
+              | select(.key | test("SimRuntime\\.iOS-"))
+              | (.key | capture("iOS-(?<major>[0-9]+)-(?<minor>[0-9]+)") | [(.major | tonumber), (.minor | tonumber)]) as $version
+              | .value[] | select(.name | test("^iPhone")) | {udid, name, version: $version, pro: (.name | test("Pro$"))}]
+            | sort_by(.version, .pro) | last')
+          echo "Using $device"
+          udid=$(jq -r .udid <<<"$device")
+          echo "udid=$udid" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+          # The first keyboard appearance offers a slide-to-type tip that covers the screen under test.
+          xcrun simctl spawn "$udid" defaults write com.apple.keyboard.preferences KeyboardContinuousPathEnabled -bool false
+          xcrun simctl spawn "$udid" defaults write com.apple.keyboard.preferences DidShowContinuousPathIntroduction -bool true
+          xcrun simctl spawn "$udid" defaults write com.apple.Preferences DidShowContinuousPathIntroduction -bool true
+          xcrun simctl status_bar "$udid" override --time 9:41 --dataNetwork wifi --wifiBars 3 \
+            --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+      - name: Build for testing
+        working-directory: plaintext/ios
+        run: |
+          xcodebuild build-for-testing \
+            -project Plaintext.xcodeproj \
+            -scheme Plaintext \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/derived" \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Render widget snapshots
+        working-directory: plaintext/ios
+        run: |
+          TEST_RUNNER_SNAPSHOT_DIR="$SCREENS/widgets" xcodebuild test-without-building \
+            -project Plaintext.xcodeproj \
+            -scheme Plaintext \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/derived" \
+            -resultBundlePath "$RUNNER_TEMP/results/widgets.xcresult" \
+            -only-testing:PlaintextSnapshotTests
+      - name: Record app walkthrough
+        working-directory: plaintext/ios
+        run: |
+          udid=${{ steps.simulator.outputs.udid }}
+          status=0
+          for appearance in light dark; do
+            xcrun simctl ui "$udid" appearance "$appearance"
+            mkdir -p "$SCREENS/walkthrough-$appearance"
+            xcrun simctl io "$udid" recordVideo --codec=h264 --force "$SCREENS/walkthrough-$appearance.mp4" &
+            recorder=$!
+            sleep 2
+            TEST_RUNNER_SCREENSHOT_DIR="$SCREENS/walkthrough-$appearance" xcodebuild test-without-building \
+              -project Plaintext.xcodeproj \
+              -scheme Plaintext \
+              -destination "id=$udid" \
+              -derivedDataPath "$RUNNER_TEMP/derived" \
+              -resultBundlePath "$RUNNER_TEMP/results/walkthrough-$appearance.xcresult" \
+              -only-testing:PlaintextUITests || status=$?
+            kill -INT "$recorder"
+            wait "$recorder" || true
+          done
+          exit "$status"
+      - name: Build gallery
+        if: always()
+        run: |
+          mkdir -p "$SCREENS" && cd "$SCREENS"
+          {
+            echo '<!doctype html><meta charset="utf-8"><title>Plaintext screens</title>'
+            echo '<style>body{font:13px -apple-system,sans-serif;margin:24px;background:#f4f4f4}'
+            echo 'figure{display:inline-block;margin:8px;vertical-align:top}img,video{width:300px;display:block}'
+            echo 'figcaption{width:300px;word-break:break-all;color:#555}</style>'
+            for section in walkthrough-light walkthrough-dark widgets; do
+              [ -d "$section" ] || continue
+              echo "<h2>$section</h2>"
+              [ -f "$section.mp4" ] && echo "<figure><video controls src=\"$section.mp4\"></video><figcaption>recording</figcaption></figure>"
+              for image in "$section"/*.png; do
+                echo "<figure><img loading=\"lazy\" src=\"$image\"><figcaption>$(basename "$image" .png)</figcaption></figure>"
+              done
+            done
+          } > index.html
+          {
+            echo "### Plaintext screens"
+            echo "Download the **plaintext-screens** artifact below and open \`index.html\`."
+            for section in widgets walkthrough-light walkthrough-dark; do
+              echo "- $section: $(find "$section" -name '*.png' 2>/dev/null | wc -l | tr -d ' ') screenshots"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plaintext-screens
+          path: ${{ env.SCREENS }}
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: plaintext-test-results
+          path: ${{ runner.temp }}/results

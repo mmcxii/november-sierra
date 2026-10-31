@@ -10,8 +10,11 @@ Monorepo for November Sierra products and shared tooling.
 │   └── docs/           Anchr brand guidelines
 ├── seventyfive/
 │   └── website/        @november-sierra/seventyfive-website    MIT
+├── plaintext/
+│   └── ios/            Plaintext iPhone app and widgets (Swift, see plaintext/README.md)
 ├── shared/
-│   └── eslint-config/  @november-sierra/eslint-config    MIT
+│   ├── eslint-config/  @november-sierra/eslint-config    MIT
+│   └── swift-style/    Swift style checker (SwiftSyntax)  MIT
 ├── november-sierra/    company website
 └── scripts/            Shared validation and build scripts
 ```
@@ -51,5 +54,6 @@ This repository contains packages under different licenses:
 | `seventyfive/`     | MIT               |
 | `shared/`          | MIT               |
 | `november-sierra/` | MIT               |
+| `plaintext/`       | Proprietary       |
 
 Each workspace package has its own `LICENSE` file. See [CONTRIBUTING.md](./CONTRIBUTING.md) for license boundary guidance.
